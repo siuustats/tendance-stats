@@ -3,27 +3,25 @@ name: Mise à jour stats football
 on:
   schedule:
     - cron: '0 22 * * *'  # 23h Paris (hiver) / minuit (été)
-  workflow_dispatch:       # Lancement manuel possible
+  workflow_dispatch:
 
 jobs:
   fetch-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Récupérer le code
         uses: actions/checkout@v4
 
-      - name: Installer Node.js 20
+      - name: Installer Node.js 24
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Lancer le script
         env:
           CLE_1: ${{ secrets.CLE_1 }}
-          CLE_2: ${{ secrets.CLE_2 }}
-          CLE_3: ${{ secrets.CLE_3 }}
-          CLE_4: ${{ secrets.CLE_4 }}
-          CLE_5: ${{ secrets.CLE_5 }}
         run: node fetch-stats.js
 
       - name: Sauvegarder data.json
