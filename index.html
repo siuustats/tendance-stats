@@ -402,7 +402,7 @@ function render() {
   const list = getPlayers();
 
   // KPIs
-  const totalGoals = list.reduce((s, p) => s + p.goals, 0);
+  const totalGoals = list.reduce((s, p) => s + (p.totalGoals||p.goals||0), 0);
   const hotCount = list.filter(p => p.hot || (p.trendScore||0) > 3).length;
   document.getElementById('k-players').textContent = list.length;
   document.getElementById('k-hot').textContent = hotCount;
@@ -442,7 +442,7 @@ function renderAlerts(list) {
       <div class="alert-ic">${icon}</div>
       <div class="alert-txt">
         <strong>${p.name}</strong> (${p.team}) — ${label}.
-        <span style="color:var(--m2)"> Saison : ${p.goals} buts / ${p.assists} passes.</span>
+        <span style="color:var(--m2)"> Saison : ${p.totalGoals||p.goals||0} buts / ${p.totalAssists||p.assists||0} passes.</span>
       </div>
       <div style="text-align:right;flex-shrink:0">
         <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:${colors[i%4]}">${last5G}B ${last5A}P</div>
@@ -492,10 +492,10 @@ function renderGrid(list) {
         <div class="fdots">${formHtml}</div>
       </div>
       <div class="chips">
-        <div class="chip"><div class="chip-n" style="color:var(--g)">${p.goals}</div><div class="chip-l">Buts</div></div>
-        <div class="chip"><div class="chip-n" style="color:var(--b)">${p.assists}</div><div class="chip-l">Passes</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--g)">${p.totalGoals||p.goals||0}</div><div class="chip-l">Buts</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--b)">${p.totalAssists||p.assists||0}</div><div class="chip-l">Passes</div></div>
         <div class="chip"><div class="chip-n" style="color:var(--o)">${recent_g}</div><div class="chip-l">Buts/5J</div></div>
-        <div class="chip"><div class="chip-n" style="color:var(--y)">${p.avg}</div><div class="chip-l">Moy.</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--y)">${p.avg||0}</div><div class="chip-l">Moy.</div></div>
       </div>
       <div class="sigbar">
         <div class="sigbar-head"><span>TendScore</span><span>${p.signal}%</span></div>
@@ -524,12 +524,12 @@ function renderTable(list) {
       </td>
       <td><span class="lpill ${p.leagueCls}">${p.leagueLabel}</span></td>
       <td>
-        <span class="num g">${p.goals}</span>
+        <span class="num g">${p.totalGoals||p.goals||0}</span>
         <div class="mbar"><div class="mfill" style="width:${pct}%"></div></div>
       </td>
-      <td><span class="num a">${p.assists}</span></td>
+      <td><span class="num a">${p.totalAssists||p.assists||0}</span></td>
       <td><span class="num">${p.games}</span></td>
-      <td><span class="num" style="color:${p.signal>85?'var(--o)':'var(--m2)'}">${p.avg}</span></td>
+      <td><span class="num" style="color:${p.signal>85?'var(--o)':'var(--m2)'}">${p.avg||0}</span></td>
     `;
     tbody.appendChild(tr);
   });
