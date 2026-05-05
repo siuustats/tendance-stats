@@ -5,7 +5,7 @@ const fs   = require('fs');
 const path = require('path');
 
 const API_KEY    = process.env.CLE_1;
-const SEASON     = 2024;
+const SEASON     = 2025;
 const DATA_FILE  = 'data.json';
 
 const LEAGUES = [
