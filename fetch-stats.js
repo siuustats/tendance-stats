@@ -1,11 +1,12 @@
 // fetch-stats.js — Tendance Stats
-// Stratégie optimisée : 5 dernières journées par ligue → stats de TOUS les joueurs
-// Budget : ~70 requêtes/jour pour 5 ligues
+// Logique : chaque soir, récupère les matchs du jour et stocke cumulativement
 
-const fs = require('fs');
+const fs   = require('fs');
+const path = require('path');
 
-const API_KEY = process.env.CLE_1;
-const SEASON  = 2024;
+const API_KEY    = process.env.CLE_1;
+const SEASON     = 2024;
+const DATA_FILE  = 'data.json';
 
 const LEAGUES = [
   { id: 61,  name: 'Ligue 1',        flag: 'fr',     flagAlt: 'FR', cls: 'l1',  label: 'L1'   },
@@ -17,244 +18,176 @@ const LEAGUES = [
 
 let reqCount = 0;
 
+// ── API ───────────────────────────────────────────────────────────────────────
+
 async function apiFetch(url) {
   reqCount++;
   console.log(`  [${reqCount}] ${url}`);
-  const res = await fetch(url, { headers: { 'x-apisports-key': API_KEY } });
+  await new Promise(r => setTimeout(r, 1500));
+  const res  = await fetch(url, { headers: { 'x-apisports-key': API_KEY } });
   const data = await res.json();
   if (data.errors && Object.keys(data.errors).length > 0) {
     console.warn(`  ⚠️  Erreurs:`, JSON.stringify(data.errors));
+  } else {
+    console.log(`  ← ${data.results ?? '?'} résultats`);
   }
-  await new Promise(r => setTimeout(r, 300));
   return data;
 }
 
-// ── Calculs ───────────────────────────────────────────────────────────────────
+// ── Récupérer les matchs terminés aujourd'hui pour une ligue ─────────────────
 
-function calcTrendScore(recentMatches) {
-  if (!recentMatches || recentMatches.length === 0) return 0;
+async function getTodayFixtures(leagueId) {
+  // Date d'aujourd'hui au format YYYY-MM-DD
+  const today = new Date().toISOString().slice(0, 10);
+  const data  = await apiFetch(
+    `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${SEASON}&date=${today}&status=FT`
+  );
+  return data.response || [];
+}
+
+// ── Récupérer les stats de tous les joueurs d'un match ───────────────────────
+
+async function getFixturePlayers(fixtureId) {
+  const data = await apiFetch(
+    `https://v3.football.api-sports.io/fixtures/players?fixture=${fixtureId}`
+  );
+  const players = [];
+  for (const teamData of (data.response || [])) {
+    const teamId   = teamData.team?.id;
+    const teamName = teamData.team?.name;
+    const teamLogo = teamData.team?.logo;
+    for (const p of (teamData.players || [])) {
+      const s = p.statistics?.[0];
+      if (!s) continue;
+      const minutes = s.games?.minutes || 0;
+      if (minutes === 0) continue; // N'a pas joué
+      players.push({
+        id:      p.player.id,
+        name:    p.player.name,
+        photo:   p.player.photo,
+        teamId,
+        teamName,
+        teamLogo,
+        goals:   s.goals?.total   || 0,
+        assists: s.goals?.assists || 0,
+        minutes,
+      });
+    }
+  }
+  return players;
+}
+
+// ── Calcul TendScore sur les 5 derniers matchs ────────────────────────────────
+
+function calcTrendScore(last5) {
+  if (!last5 || last5.length === 0) return 0;
   let score = 0;
-  recentMatches.forEach((m, i) => {
+  last5.forEach((m, i) => {
     const weight = i === 0 ? 1.0 : 0.9;
     score += (m.goals + m.assists) * weight;
     if (m.teamWon) score += 0.5;
   });
-  if (!recentMatches[0].played) score -= 3;
-  const wins = recentMatches.filter(m => m.teamWon).length;
+  if (!last5[0].played) score -= 3;
+  const wins = last5.filter(m => m.teamWon).length;
   if (wins >= 4)      score += 2;
   else if (wins >= 3) score += 1;
   return parseFloat(score.toFixed(2));
 }
 
-function buildFormDots(recentMatches) {
-  return recentMatches.map(m => {
-    if (!m.played) return 'x';
+function buildFormDots(last5) {
+  return last5.map(m => {
+    if (!m.played)     return 'x';
     if (m.goals > 0)   return 'g';
     if (m.assists > 0) return 'a';
     return 'x';
   });
 }
 
-function calcSeasonSignal(goals, assists, games, rank) {
-  const base = Math.min(98, 55 + goals * 1.5 + assists * 0.8);
-  return Math.max(40, Math.round(base - rank * 0.8));
-}
+// ── Charger / sauvegarder data.json ──────────────────────────────────────────
 
-// ── Fetch helpers ─────────────────────────────────────────────────────────────
-
-async function getTopPlayers(leagueId) {
-  const base = `https://v3.football.api-sports.io`;
-  const seen = new Map();
-  const endpoints = [
-    `${base}/players/topscorers?league=${leagueId}&season=${SEASON}`,
-    `${base}/players/topscorers?league=${leagueId}&season=${SEASON}&page=2`,
-    `${base}/players/topassists?league=${leagueId}&season=${SEASON}`,
-    `${base}/players/topassists?league=${leagueId}&season=${SEASON}&page=2`,
-  ];
-  for (const url of endpoints) {
-    const data = await apiFetch(url);
-    for (const item of (data.response || [])) {
-      const p = item.player;
-      if (seen.has(p.id)) continue;
-      const s = item.statistics?.find(st => st.league?.id === leagueId) || item.statistics?.[0];
-      if (!s) continue;
-      const goals   = s.goals?.total       || 0;
-      const assists = s.goals?.assists     || 0;
-      const games   = s.games?.appearences || 0;
-      seen.set(p.id, {
-        id: p.id, name: p.name, photo: p.photo,
-        teamId:   s.team?.id,
-        teamName: s.team?.name || '',
-        teamLogo: s.team?.logo || '',
-        goals, assists, games,
-        avg: games > 0 ? parseFloat((goals / games).toFixed(2)) : 0,
-      });
+function loadData() {
+  if (fs.existsSync(DATA_FILE)) {
+    try {
+      return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    } catch (e) {
+      console.warn('⚠️  data.json corrompu, on repart de zéro');
     }
   }
-  return [...seen.values()].sort((a, b) => b.goals - a.goals);
+  return { matches: [], players: {} };
 }
 
-async function getLast5Fixtures(leagueId) {
-  // 1 seule requête pour avoir les 5 derniers matchs de la ligue entière
-  const data = await apiFetch(
-    `https://v3.football.api-sports.io/fixtures?league=${leagueId}&season=${SEASON}&last=5&status=FT`
-  );
-  return data.response || [];
+function saveData(data) {
+  fs.writeFileSync(DATA_FILE, JSON.stringify(data));
+  console.log(`💾 data.json sauvegardé`);
 }
 
-async function getFixturePlayers(fixtureId) {
-  // 1 requête pour TOUS les joueurs des deux équipes dans ce match
-  const data = await apiFetch(
-    `https://v3.football.api-sports.io/fixtures/players?fixture=${fixtureId}`
-  );
-  // Retourne un Map playerId -> { goals, assists, minutes, teamId }
-  const playerMap = new Map();
-  for (const teamData of (data.response || [])) {
-    const teamId = teamData.team?.id;
-    for (const p of (teamData.players || [])) {
-      const s = p.statistics?.[0];
-      if (!s) continue;
-      playerMap.set(p.player.id, {
-        goals:   s.goals?.total   || 0,
-        assists: s.goals?.assists || 0,
-        minutes: s.games?.minutes || 0,
-        teamId,
-      });
-    }
-  }
-  return playerMap;
-}
+// ── Recalculer le classement joueurs depuis l'historique des matchs ───────────
 
-// ── Traitement principal par ligue ────────────────────────────────────────────
+function rebuildPlayers(matches, leagueMap) {
+  // Regrouper les matchs par joueur
+  const playerMatches = {}; // playerId -> [{ goals, assists, played, teamWon, date, leagueId }]
 
-async function fetchLeague(league) {
-  console.log(`\n📥 ${league.name}`);
-
-  // Étape 1 : stats saison (top buteurs/passeurs)
-  const seasonPlayers = await getTopPlayers(league.id);
-  console.log(`  📋 ${seasonPlayers.length} joueurs en base saison`);
-
-  // Étape 2 : 5 derniers matchs de la ligue (1 requête)
-  const fixtures = await getLast5Fixtures(league.id);
-  console.log(`  📅 ${fixtures.length} matchs récupérés`);
-
-  // Étape 3 : stats joueurs pour chaque match (1 req par match = 5 req)
-  // Structure : recentStats[playerId] = [{ goals, assists, played, teamWon, date }, ...]
-  const recentStats = new Map();
-
-  for (const fixture of fixtures) {
-    const fId      = fixture.fixture.id;
-    const homeId   = fixture.teams.home.id;
-    const awayId   = fixture.teams.away.id;
-    const homeGoals = fixture.goals.home ?? 0;
-    const awayGoals = fixture.goals.away ?? 0;
-    const date     = fixture.fixture.date;
-
-    const playerMap = await getFixturePlayers(fId);
-
-    for (const [playerId, pData] of playerMap) {
-      const teamWon = pData.teamId === homeId
-        ? homeGoals > awayGoals
-        : awayGoals > homeGoals;
-
-      if (!recentStats.has(playerId)) recentStats.set(playerId, []);
-      recentStats.get(playerId).push({
-        goals:   pData.goals,
-        assists: pData.assists,
-        played:  pData.minutes > 0,
-        teamWon,
-        date,
+  for (const match of matches) {
+    for (const p of (match.players || [])) {
+      if (!playerMatches[p.id]) playerMatches[p.id] = [];
+      playerMatches[p.id].push({
+        goals:    p.goals,
+        assists:  p.assists,
+        played:   true,
+        teamWon:  p.teamWon,
+        date:     match.date,
+        leagueId: match.leagueId,
       });
     }
   }
 
-  console.log(`  👥 ${recentStats.size} joueurs avec stats récentes`);
+  const players = {};
 
-  // Étape 4 : fusionner stats saison + tendance récente
-  // On garde tous les joueurs saison ET on ajoute ceux avec stats récentes uniquement
-  const allById = new Map();
-
-  // D'abord les joueurs saison
-  seasonPlayers.forEach((p, i) => {
-    allById.set(p.id, {
-      ...p,
-      leagueId:      league.id,
-      leagueName:    league.name,
-      leagueFlag:    league.flag,
-      leagueFlagAlt: league.flagAlt,
-      leagueCls:     league.cls,
-      leagueLabel:   league.label,
-      signal:        calcSeasonSignal(p.goals, p.assists, p.games, i),
-      recentMatches: [],
-      trendScore:    0,
-      form:          [],
-      recent_goals:  0,
-      recent_assists: 0,
-    });
-  });
-
-  // Ensuite enrichir avec les stats récentes
-  for (const [playerId, matches] of recentStats) {
+  for (const [playerId, allMatches] of Object.entries(playerMatches)) {
     // Trier du plus récent au plus ancien
-    matches.sort((a, b) => new Date(b.date) - new Date(a.date));
-    const last5 = matches.slice(0, 5);
+    allMatches.sort((a, b) => new Date(b.date) - new Date(a.date));
 
+    const last5         = allMatches.slice(0, 5);
     const trendScore    = calcTrendScore(last5);
     const form          = buildFormDots(last5);
     const recent_goals   = last5.reduce((s, m) => s + m.goals,   0);
     const recent_assists = last5.reduce((s, m) => s + m.assists, 0);
+    const totalGoals     = allMatches.reduce((s, m) => s + m.goals,   0);
+    const totalAssists   = allMatches.reduce((s, m) => s + m.assists, 0);
+    const totalGames     = allMatches.length;
 
-    if (allById.has(playerId)) {
-      // Joueur déjà dans le top saison → enrichir
-      const existing = allById.get(playerId);
-      allById.set(playerId, {
-        ...existing,
-        recentMatches: last5,
-        trendScore,
-        form,
-        recent_goals,
-        recent_assists,
-        hot: trendScore > 2 && last5.filter(m => m.played).length >= 2,
-      });
-    } else {
-      // Joueur avec stats récentes mais pas dans le top saison
-      // On l'ajoute uniquement s'il a au moins 1 contribution récente
-      if (recent_goals + recent_assists > 0) {
-        allById.set(playerId, {
-          id: playerId,
-          name: `Joueur #${playerId}`,
-          photo: '',
-          teamName: '', teamLogo: '', teamId: null,
-          leagueId:      league.id,
-          leagueName:    league.name,
-          leagueFlag:    league.flag,
-          leagueFlagAlt: league.flagAlt,
-          leagueCls:     league.cls,
-          leagueLabel:   league.label,
-          goals: 0, assists: 0, games: 0, avg: 0,
-          signal: 50,
-          recentMatches: last5,
-          trendScore,
-          form,
-          recent_goals,
-          recent_assists,
-          hot: trendScore > 2,
-        });
-      }
-    }
+    // Infos joueur depuis le dernier match
+    const lastMatch = matches.find(m => m.players?.some(p => p.id == playerId));
+    const pInfo     = lastMatch?.players?.find(p => p.id == playerId);
+    const leagueId  = lastMatch?.leagueId;
+    const league    = leagueMap[leagueId] || {};
+
+    players[playerId] = {
+      id:            parseInt(playerId),
+      name:          pInfo?.name   || '',
+      photo:         pInfo?.photo  || '',
+      teamName:      pInfo?.teamName || '',
+      teamLogo:      pInfo?.teamLogo || '',
+      leagueId,
+      leagueName:    league.name     || '',
+      leagueFlag:    league.flag     || '',
+      leagueFlagAlt: league.flagAlt  || '',
+      leagueCls:     league.cls      || '',
+      leagueLabel:   league.label    || '',
+      totalGoals,
+      totalAssists,
+      totalGames,
+      avg: totalGames > 0 ? parseFloat((totalGoals / totalGames).toFixed(2)) : 0,
+      recent_goals,
+      recent_assists,
+      trendScore,
+      form,
+      last5,
+      hot: trendScore > 2 && last5.filter(m => m.played).length >= 2,
+    };
   }
 
-  // Pour les joueurs saison sans stats récentes, leur assigner hot: false
-  for (const [id, p] of allById) {
-    if (p.recentMatches.length === 0) {
-      allById.set(id, { ...p, hot: false });
-    }
-  }
-
-  const result = [...allById.values()].sort((a, b) => b.trendScore - a.trendScore || b.goals - a.goals);
-  const hotCount = result.filter(p => p.hot).length;
-  console.log(`  ✅ ${result.length} joueurs | ${hotCount} en forme | top: ${result[0]?.name} (trend: ${result[0]?.trendScore})`);
-  return result;
+  return players;
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -264,33 +197,108 @@ async function main() {
   if (!API_KEY) { console.error('❌ Clé API manquante (CLE_1)'); process.exit(1); }
   console.log(`🔑 Clé: ${API_KEY.slice(0, 8)}...`);
 
-  const allPlayers = [];
-  const errors     = [];
+  // Charger les données existantes
+  const stored = loadData();
+  console.log(`📦 Données existantes: ${stored.matches?.length || 0} matchs, ${Object.keys(stored.players || {}).length} joueurs`);
 
+  // Index des matchs déjà stockés pour éviter les doublons
+  const storedFixtureIds = new Set((stored.matches || []).map(m => m.fixtureId));
+
+  const leagueMap = Object.fromEntries(LEAGUES.map(l => [l.id, l]));
+  const newMatches = [];
+  let totalNew = 0;
+
+  // Pour chaque ligue, récupérer les matchs du jour
   for (const league of LEAGUES) {
-    try {
-      allPlayers.push(...await fetchLeague(league));
-    } catch (err) {
-      console.error(`❌ ${league.name}: ${err.message}`);
-      errors.push({ league: league.name, error: err.message });
+    console.log(`\n⚽ ${league.name}`);
+    const fixtures = await getTodayFixtures(league.id);
+    console.log(`  📅 ${fixtures.length} match(s) terminé(s) aujourd'hui`);
+
+    for (const fixture of fixtures) {
+      const fId = fixture.fixture.id;
+
+      if (storedFixtureIds.has(fId)) {
+        console.log(`  ⏭️  Match ${fId} déjà stocké, on skip`);
+        continue;
+      }
+
+      const homeId    = fixture.teams.home.id;
+      const homeGoals = fixture.goals.home ?? 0;
+      const awayGoals = fixture.goals.away ?? 0;
+      const date      = fixture.fixture.date;
+
+      console.log(`  🎮 ${fixture.teams.home.name} ${homeGoals}-${awayGoals} ${fixture.teams.away.name}`);
+
+      // Stats des joueurs dans ce match
+      const matchPlayers = await getFixturePlayers(fId);
+
+      // Enrichir avec le résultat (victoire/défaite)
+      const enriched = matchPlayers.map(p => ({
+        ...p,
+        teamWon: p.teamId === homeId ? homeGoals > awayGoals : awayGoals > homeGoals,
+      }));
+
+      newMatches.push({
+        fixtureId:  fId,
+        date,
+        leagueId:   league.id,
+        leagueName: league.name,
+        homeTeam:   fixture.teams.home.name,
+        awayTeam:   fixture.teams.away.name,
+        homeGoals,
+        awayGoals,
+        players:    enriched,
+      });
+
+      totalNew++;
     }
   }
 
-  // Tri global : trendScore d'abord, puis goals saison
-  allPlayers.sort((a, b) => b.trendScore - a.trendScore || b.goals - a.goals);
+  if (totalNew === 0) {
+    console.log('\n😴 Aucun nouveau match aujourd\'hui — data.json inchangé');
+    // Mettre à jour juste le timestamp
+    stored.updatedAt     = new Date().toISOString();
+    stored.totalRequests = reqCount;
+    saveData(stored);
+    return;
+  }
+
+  // Fusionner nouveaux matchs avec l'historique
+  const allMatches = [...(stored.matches || []), ...newMatches];
+
+  // Garder seulement les 60 derniers matchs par ligue pour ne pas faire grossir le fichier indéfiniment
+  const matchesByLeague = {};
+  for (const m of allMatches) {
+    if (!matchesByLeague[m.leagueId]) matchesByLeague[m.leagueId] = [];
+    matchesByLeague[m.leagueId].push(m);
+  }
+  const trimmedMatches = [];
+  for (const [lid, lMatches] of Object.entries(matchesByLeague)) {
+    lMatches.sort((a, b) => new Date(b.date) - new Date(a.date));
+    trimmedMatches.push(...lMatches.slice(0, 60)); // garder les 60 derniers matchs
+  }
+
+  // Recalculer le classement joueurs
+  const players = rebuildPlayers(trimmedMatches, leagueMap);
+
+  // Trier les joueurs par trendScore puis totalGoals
+  const playersList = Object.values(players)
+    .sort((a, b) => b.trendScore - a.trendScore || b.totalGoals - a.totalGoals);
 
   const output = {
-    updatedAt:     new Date().toISOString(),
-    season:        SEASON,
-    totalPlayers:  allPlayers.length,
+    updatedAt:    new Date().toISOString(),
+    season:       SEASON,
+    totalMatches: trimmedMatches.length,
+    totalPlayers: playersList.length,
     totalRequests: reqCount,
-    errors,
-    players:       allPlayers,
+    newMatchesToday: totalNew,
+    matches:      trimmedMatches,
+    players:      playersList,
   };
 
-  fs.writeFileSync('data.json', JSON.stringify(output));
-  console.log(`\n✅ Terminé — ${allPlayers.length} joueurs | ${reqCount} requêtes utilisées`);
-  if (errors.length) console.warn(`⚠️  Erreurs:`, errors);
+  saveData(output);
+  console.log(`\n✅ Terminé — ${totalNew} nouveau(x) match(s) | ${playersList.length} joueurs | ${reqCount} requêtes`);
+  console.log(`🏆 Top tendance: ${playersList[0]?.name} (${playersList[0]?.trendScore}) | Top buteur: ${playersList.sort((a,b) => b.totalGoals - a.totalGoals)[0]?.name}`);
 }
 
 main().catch(err => { console.error('💥', err); process.exit(1); });
