@@ -1,39 +1,23 @@
 // fetch-stats.js — Tendance Stats
-// Source : football-data.org v4 (gratuit, saison en cours)
-// Logique : matchs du jour → buts/assists par joueur → stockage cumulatif
+// Source : SofaScore API non-officielle + Apify SofaScore Scraper PRO
+// Logique : matchs d'hier → buteurs/passeurs → stockage cumulatif
 
 const fs = require('fs');
 
-const API_KEY   = process.env.CLE_1;
-const DATA_FILE = 'data.json';
+const APIFY_TOKEN = process.env.APIFY_TOKEN;
+const DATA_FILE   = 'data.json';
 
-const LEAGUES = [
-  { code: 'FL1', id: 2015, name: 'Ligue 1',        flag: 'fr',     flagAlt: 'FR', cls: 'l1',  label: 'L1'   },
-  { code: 'PL',  id: 2021, name: 'Premier League', flag: 'gb-eng', flagAlt: 'EN', cls: 'pl',  label: 'PL'   },
-  { code: 'PD',  id: 2014, name: 'La Liga',        flag: 'es',     flagAlt: 'ES', cls: 'lg',  label: 'LIGA' },
-  { code: 'SA',  id: 2019, name: 'Serie A',        flag: 'it',     flagAlt: 'IT', cls: 'sa',  label: 'SA'   },
-  { code: 'BL1', id: 2002, name: 'Bundesliga',     flag: 'de',     flagAlt: 'DE', cls: 'bl',  label: 'BL'   },
-  { code: 'CL',  id: 2001, name: 'Ligue des Champions', flag: 'eu',     flagAlt: 'CL', cls: 'cl',  label: 'CL'   },
+// IDs SofaScore des 6 compétitions
+const TOURNAMENTS = [
+  { id: 34,   name: 'Ligue 1',          flag: 'fr',     flagAlt: 'FR', cls: 'l1',  label: 'L1'   },
+  { id: 17,   name: 'Premier League',   flag: 'gb-eng', flagAlt: 'EN', cls: 'pl',  label: 'PL'   },
+  { id: 8,    name: 'La Liga',          flag: 'es',     flagAlt: 'ES', cls: 'lg',  label: 'LIGA' },
+  { id: 23,   name: 'Serie A',          flag: 'it',     flagAlt: 'IT', cls: 'sa',  label: 'SA'   },
+  { id: 35,   name: 'Bundesliga',       flag: 'de',     flagAlt: 'DE', cls: 'bl',  label: 'BL'   },
+  { id: 7,    name: 'Ligue des Champions', flag: 'eu',  flagAlt: 'CL', cls: 'cl',  label: 'LDC'  },
 ];
 
 let reqCount = 0;
-
-// ── API ───────────────────────────────────────────────────────────────────────
-
-async function apiFetch(url) {
-  reqCount++;
-  console.log(`  [${reqCount}] ${url}`);
-  await new Promise(r => setTimeout(r, 6500));
-  const res  = await fetch(url, {
-    headers: { 'X-Auth-Token': API_KEY }
-  });
-  if (!res.ok) {
-    console.warn(`  ⚠️  HTTP ${res.status} : ${res.statusText}`);
-    return null;
-  }
-  const data = await res.json();
-  return data;
-}
 
 // ── Calculs ───────────────────────────────────────────────────────────────────
 
@@ -66,93 +50,125 @@ function buildFormDots(last5) {
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
     try { return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); }
-    catch (e) { console.warn('⚠️  data.json corrompu, on repart de zéro'); }
+    catch (e) { console.warn('⚠️  data.json corrompu'); }
   }
   return { matches: [], players: {} };
 }
 
-// ── Récupérer les matchs terminés aujourd'hui ─────────────────────────────────
+// ── SofaScore API : matchs d'une date par tournoi ─────────────────────────────
 
-async function getTodayMatches(league) {
-  // On prend la date d'hier pour être sûr de capturer les matchs du soir
-  // (le script tourne après minuit, les matchs ont eu lieu la veille)
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  const today = d.toISOString().slice(0, 10);
-  const data  = await apiFetch(
-    `https://api.football-data.org/v4/competitions/${league.code}/matches?dateFrom=${today}&dateTo=${today}&status=FINISHED`
-  );
-  if (!data) return [];
-  console.log(`  📅 ${data.matches?.length || 0} match(s) terminé(s)`);
-  return data.matches || [];
+async function getMatchesByDate(tournamentId, date) {
+  reqCount++;
+  const url = `https://api.sofascore.com/api/v1/sport/football/scheduled-events/${date}`;
+  console.log(`  [${reqCount}] SofaScore API: ${url}`);
+  await new Promise(r => setTimeout(r, 1000));
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'application/json',
+      }
+    });
+    if (!res.ok) { console.warn(`  ⚠️  HTTP ${res.status}`); return []; }
+    const data = await res.json();
+    // Filtrer par tournoi et matchs terminés
+    return (data.events || []).filter(e =>
+      e.tournament?.uniqueTournament?.id === tournamentId &&
+      e.status?.type === 'finished'
+    );
+  } catch(e) {
+    console.warn(`  ⚠️  Erreur SofaScore: ${e.message}`);
+    return [];
+  }
 }
 
-// ── Récupérer le détail d'un match (buts + assists par joueur) ────────────────
+// ── Apify : scraper les détails d'un match SofaScore ─────────────────────────
 
-async function getMatchDetail(matchId) {
-  const data = await apiFetch(`https://api.football-data.org/v4/matches/${matchId}`);
-  if (!data) return null;
-  return data;
+async function scrapeMatchDetails(matchUrl) {
+  reqCount++;
+  console.log(`  [${reqCount}] Apify scrape: ${matchUrl}`);
+  try {
+    const res = await fetch(
+      `https://api.apify.com/v2/acts/azzouzana~sofascore-scraper-pro/run-sync-get-dataset-items?token=${APIFY_TOKEN}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ startUrls: [matchUrl] }),
+      }
+    );
+    if (!res.ok) { console.warn(`  ⚠️  Apify HTTP ${res.status}`); return null; }
+    const items = await res.json();
+    return items?.[0] || null;
+  } catch(e) {
+    console.warn(`  ⚠️  Apify erreur: ${e.message}`);
+    return null;
+  }
 }
 
-// ── Extraire buts et passes d'un match ───────────────────────────────────────
+// ── Extraire buteurs + passeurs depuis les incidents ─────────────────────────
 
-function extractPlayerStats(match, league) {
+function extractGoalsAndAssists(item, tournament) {
   const players = [];
-  const goals   = match.goals || [];
+  if (!item?.data) return players;
+
+  const incidents   = item.data.incidents || [];
+  const homeTeam    = item.data.event?.homeTeam;
+  const awayTeam    = item.data.event?.awayTeam;
+  const homeScore   = item.data.event?.homeScore?.current ?? 0;
+  const awayScore   = item.data.event?.awayScore?.current ?? 0;
+  const matchDate   = item.data.event?.startTimestamp
+    ? new Date(item.data.event.startTimestamp * 1000).toISOString()
+    : new Date().toISOString();
 
   // Compteurs par joueur
   const goalsMap   = {};
   const assistsMap = {};
-  const playerInfo = {};
+  const infoMap    = {};
 
-  const homeId   = match.homeTeam?.id;
-  const homeGoal = match.score?.fullTime?.home ?? 0;
-  const awayGoal = match.score?.fullTime?.away ?? 0;
+  for (const inc of incidents) {
+    if (inc.incidentType !== 'goal') continue;
+    if (inc.incidentClass === 'ownGoal') continue; // ignorer CSC
 
-  for (const goal of goals) {
-    if (goal.type === 'OWN_GOAL') continue; // ignorer les csc
+    const isHome = inc.isHome;
+    const team   = isHome ? homeTeam : awayTeam;
+    const teamWon = isHome ? homeScore > awayScore : awayScore > homeScore;
 
-    const scorer  = goal.scorer;
-    const assist  = goal.assist;
-    const teamId  = goal.team?.id;
-    const teamWon = teamId === homeId ? homeGoal > awayGoal : awayGoal > homeGoal;
-
-    if (scorer?.id) {
-      goalsMap[scorer.id]  = (goalsMap[scorer.id]  || 0) + 1;
-      playerInfo[scorer.id] = {
-        id:       scorer.id,
-        name:     scorer.name,
-        photo:    '',
-        teamId,
-        teamName: goal.team?.name || '',
+    // Buteur
+    if (inc.player?.id) {
+      const pid = inc.player.id;
+      goalsMap[pid]  = (goalsMap[pid] || 0) + 1;
+      infoMap[pid]   = infoMap[pid] || {
+        id:       pid,
+        name:     inc.player.name,
+        photo:    `https://api.sofascore.com/api/v1/player/${pid}/image`,
+        teamName: team?.name || '',
         teamWon,
-        leagueId:      league.id,
-        leagueName:    league.name,
-        leagueFlag:    league.flag,
-        leagueFlagAlt: league.flagAlt,
-        leagueCls:     league.cls,
-        leagueLabel:   league.label,
+        leagueId:      tournament.id,
+        leagueName:    tournament.name,
+        leagueFlag:    tournament.flag,
+        leagueFlagAlt: tournament.flagAlt,
+        leagueCls:     tournament.cls,
+        leagueLabel:   tournament.label,
       };
     }
 
-    if (assist?.id) {
-      assistsMap[assist.id] = (assistsMap[assist.id] || 0) + 1;
-      // Si le passeur n'est pas encore dans playerInfo
-      if (!playerInfo[assist.id]) {
-        playerInfo[assist.id] = {
-          id:       assist.id,
-          name:     assist.name,
-          photo:    '',
-          teamId,
-          teamName: goal.team?.name || '',
+    // Passeur décisif
+    for (const shot of (inc.shotList || [])) {
+      if (shot.eventType === 'assist' && shot.player?.id) {
+        const aid = shot.player.id;
+        assistsMap[aid] = (assistsMap[aid] || 0) + 1;
+        infoMap[aid] = infoMap[aid] || {
+          id:       aid,
+          name:     shot.player.name,
+          photo:    `https://api.sofascore.com/api/v1/player/${aid}/image`,
+          teamName: team?.name || '',
           teamWon,
-          leagueId:      league.id,
-          leagueName:    league.name,
-          leagueFlag:    league.flag,
-          leagueFlagAlt: league.flagAlt,
-          leagueCls:     league.cls,
-          leagueLabel:   league.label,
+          leagueId:      tournament.id,
+          leagueName:    tournament.name,
+          leagueFlag:    tournament.flag,
+          leagueFlagAlt: tournament.flagAlt,
+          leagueCls:     tournament.cls,
+          leagueLabel:   tournament.label,
         };
       }
     }
@@ -161,44 +177,15 @@ function extractPlayerStats(match, league) {
   // Construire la liste finale
   const allIds = new Set([...Object.keys(goalsMap), ...Object.keys(assistsMap)]);
   for (const id of allIds) {
-    const info = playerInfo[id];
+    const info = infoMap[id];
     if (!info) continue;
     players.push({
       ...info,
       goals:   goalsMap[id]   || 0,
       assists: assistsMap[id] || 0,
       played:  true,
+      date:    matchDate,
     });
-  }
-
-  // Ajouter aussi les joueurs qui ont joué mais sans but/passe (pour le malus "pas joué")
-  // On les récupère depuis les lineups si disponibles
-  const lineup = match.lineups || [];
-  for (const team of lineup) {
-    const teamId  = team.team?.id;
-    const teamWon = teamId === homeId ? homeGoal > awayGoal : awayGoal > homeGoal;
-    for (const p of [...(team.startXI || []), ...(team.substitutes || [])]) {
-      const pid = p.player?.id;
-      if (!pid || allIds.has(String(pid))) continue;
-      // Joueur qui a joué mais n'a pas contribué — on l'enregistre pour le malus forme
-      players.push({
-        id:       pid,
-        name:     p.player?.name || '',
-        photo:    '',
-        teamId,
-        teamName: team.team?.name || '',
-        teamWon,
-        leagueId:      league.id,
-        leagueName:    league.name,
-        leagueFlag:    league.flag,
-        leagueFlagAlt: league.flagAlt,
-        leagueCls:     league.cls,
-        leagueLabel:   league.label,
-        goals:   0,
-        assists: 0,
-        played:  true,
-      });
-    }
   }
 
   return players;
@@ -211,30 +198,26 @@ function rebuildPlayers(matches) {
 
   for (const match of matches) {
     for (const p of (match.players || [])) {
-      if (!playerMatches[p.id]) playerMatches[p.id] = { info: null, matches: [] };
-      // Garder les infos les plus récentes
-      if (p.goals > 0 || p.assists > 0 || !playerMatches[p.id].info) {
-        playerMatches[p.id].info = p;
+      if (!playerMatches[p.id]) {
+        playerMatches[p.id] = { info: p, matches: [] };
       }
+      if (p.goals > 0 || p.assists > 0) playerMatches[p.id].info = p;
       playerMatches[p.id].matches.push({
-        goals:    p.goals,
-        assists:  p.assists,
-        played:   p.played,
-        teamWon:  p.teamWon,
-        date:     match.date,
+        goals:   p.goals,
+        assists: p.assists,
+        played:  p.played,
+        teamWon: p.teamWon,
+        date:    p.date || match.date,
       });
     }
   }
 
   const players = [];
-
-  for (const [playerId, data] of Object.entries(playerMatches)) {
+  for (const [, data] of Object.entries(playerMatches)) {
     const info = data.info;
     if (!info?.name) continue;
 
-    // Trier du plus récent
     data.matches.sort((a, b) => new Date(b.date) - new Date(a.date));
-
     const last5          = data.matches.slice(0, 5);
     const trendScore     = calcTrendScore(last5);
     const form           = buildFormDots(last5);
@@ -245,11 +228,10 @@ function rebuildPlayers(matches) {
     const totalGames     = data.matches.length;
 
     players.push({
-      id:            parseInt(playerId),
+      id:            info.id,
       name:          info.name,
       photo:         info.photo || '',
       teamName:      info.teamName || '',
-      teamLogo:      '',
       leagueId:      info.leagueId,
       leagueName:    info.leagueName,
       leagueFlag:    info.leagueFlag,
@@ -259,14 +241,14 @@ function rebuildPlayers(matches) {
       totalGoals,
       totalAssists,
       totalGames,
-      avg:           totalGames > 0 ? parseFloat((totalGoals / totalGames).toFixed(2)) : 0,
+      avg: totalGames > 0 ? parseFloat((totalGoals / totalGames).toFixed(2)) : 0,
       recent_goals,
       recent_assists,
       trendScore,
       form,
       last5,
-      signal:        Math.min(98, Math.round(50 + trendScore * 10)),
-      hot:           trendScore > 2 && recent_goals + recent_assists >= 2,
+      signal: Math.min(98, Math.round(50 + trendScore * 10)),
+      hot: trendScore > 2 && recent_goals + recent_assists >= 2,
     });
   }
 
@@ -277,43 +259,58 @@ function rebuildPlayers(matches) {
 
 async function main() {
   console.log('🚀 Début — ' + new Date().toISOString());
-  if (!API_KEY) { console.error('❌ Clé API manquante (CLE_1)'); process.exit(1); }
-  console.log(`🔑 Clé: ${API_KEY.slice(0, 8)}...`);
+  if (!APIFY_TOKEN) { console.error('❌ APIFY_TOKEN manquant'); process.exit(1); }
 
-  const stored = loadData();
-  console.log(`📦 Existant: ${stored.matches?.length || 0} matchs, ${stored.players?.length || 0} joueurs`);
+  // Date d'hier
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  const yesterday = d.toISOString().slice(0, 10);
+  console.log(`📅 Date cible : ${yesterday}`);
 
-  const storedIds  = new Set((stored.matches || []).map(m => m.fixtureId));
-  const newMatches = [];
+  const stored        = loadData();
+  const storedIds     = new Set((stored.matches || []).map(m => m.fixtureId));
+  const newMatches    = [];
 
-  for (const league of LEAGUES) {
-    console.log(`\n⚽ ${league.name}`);
-    const matches = await getTodayMatches(league);
+  for (const tournament of TOURNAMENTS) {
+    console.log(`\n⚽ ${tournament.name}`);
 
-    for (const match of matches) {
-      if (storedIds.has(match.id)) {
-        console.log(`  ⏭️  Match ${match.id} déjà stocké`);
-        continue;
-      }
+    // 1. Récupérer les matchs terminés hier
+    const events = await getMatchesByDate(tournament.id, yesterday);
+    console.log(`  📅 ${events.length} match(s) terminé(s)`);
 
-      console.log(`  🎮 ${match.homeTeam.name} ${match.score.fullTime.home}-${match.score.fullTime.away} ${match.awayTeam.name}`);
+    for (const event of events) {
+      const fId = event.id;
+      if (storedIds.has(fId)) { console.log(`  ⏭️  ${fId} déjà stocké`); continue; }
 
-      // Détail du match pour avoir les buts et assists
-      const detail  = await getMatchDetail(match.id);
-      if (!detail) continue;
+      const homeTeam  = event.homeTeam?.name || '?';
+      const awayTeam  = event.awayTeam?.name || '?';
+      const homeScore = event.homeScore?.current ?? 0;
+      const awayScore = event.awayScore?.current ?? 0;
+      const slug      = event.slug || `${event.homeTeam?.slug}-${event.awayTeam?.slug}`;
+      const matchUrl  = `https://www.sofascore.com/football/match/${slug}/${event.customId}`;
 
-      const players = extractPlayerStats(detail, league);
-      console.log(`  👥 ${players.filter(p => p.goals > 0 || p.assists > 0).length} joueurs avec contribution`);
+      console.log(`  🎮 ${homeTeam} ${homeScore}-${awayScore} ${awayTeam}`);
+      console.log(`     URL: ${matchUrl}`);
+
+      // 2. Scraper les détails via Apify
+      const detail  = await scrapeMatchDetails(matchUrl);
+      if (!detail) { console.warn(`  ⚠️  Pas de détails pour ce match`); continue; }
+
+      // 3. Extraire buteurs + passeurs
+      const players = extractGoalsAndAssists(detail, tournament);
+      const contributors = players.filter(p => p.goals > 0 || p.assists > 0);
+      console.log(`  👥 ${contributors.length} joueur(s) avec contribution`);
+      contributors.forEach(p => console.log(`     ${p.name}: ${p.goals}B ${p.assists}P`));
 
       newMatches.push({
-        fixtureId:  match.id,
-        date:       match.utcDate,
-        leagueId:   league.id,
-        leagueName: league.name,
-        homeTeam:   match.homeTeam.name,
-        awayTeam:   match.awayTeam.name,
-        homeGoals:  match.score.fullTime.home,
-        awayGoals:  match.score.fullTime.away,
+        fixtureId:  fId,
+        date:       new Date(event.startTimestamp * 1000).toISOString(),
+        leagueId:   tournament.id,
+        leagueName: tournament.name,
+        homeTeam,
+        awayTeam,
+        homeGoals:  homeScore,
+        awayGoals:  awayScore,
         players,
       });
     }
@@ -327,7 +324,7 @@ async function main() {
     return;
   }
 
-  // Fusionner et garder les 100 derniers matchs par ligue
+  // Fusionner et garder 100 matchs max par ligue
   const allMatches = [...(stored.matches || []), ...newMatches];
   const byLeague   = {};
   for (const m of allMatches) {
@@ -352,8 +349,10 @@ async function main() {
     players,
   }));
 
-  console.log(`\n✅ ${newMatches.length} nouveau(x) match(s) | ${players.length} joueurs | ${reqCount} requêtes`);
-  console.log(`🏆 Top tendance : ${players[0]?.name} (trend: ${players[0]?.trendScore})`);
+  console.log(`\n✅ ${newMatches.length} match(s) | ${players.length} joueurs | ${reqCount} requêtes`);
+  if (players.length > 0) {
+    console.log(`🏆 Top tendance : ${players[0].name} (trend: ${players[0].trendScore})`);
+  }
 }
 
 main().catch(err => { console.error('💥', err); process.exit(1); });
