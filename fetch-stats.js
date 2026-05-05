@@ -74,7 +74,11 @@ function loadData() {
 // ── Récupérer les matchs terminés aujourd'hui ─────────────────────────────────
 
 async function getTodayMatches(league) {
-  const today = new Date().toISOString().slice(0, 10);
+  // On prend la date d'hier pour être sûr de capturer les matchs du soir
+  // (le script tourne après minuit, les matchs ont eu lieu la veille)
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  const today = d.toISOString().slice(0, 10);
   const data  = await apiFetch(
     `https://api.football-data.org/v4/competitions/${league.code}/matches?dateFrom=${today}&dateTo=${today}&status=FINISHED`
   );
