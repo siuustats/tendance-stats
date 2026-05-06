@@ -242,7 +242,14 @@ async function main() {
     targetSports: ['Football (soccer)'],
     daysToFetch: [-1],
     matchStatus: 'Finished',
-    leagueTournamentFilter: [],
+    leagueTournamentFilter: [
+      'Champions League',
+      'Premier League',
+      'Ligue 1',
+      'LaLiga',
+      'Serie A',
+      'Bundesliga'
+    ],
   }, 300);
 
   // Filtrer nos ligues et matchs non encore stockés
