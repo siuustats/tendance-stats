@@ -443,7 +443,7 @@ function renderAlerts(list) {
     d.innerHTML = `
       <div class="alert-ic">${icon}</div>
       <div class="alert-txt">
-        <strong>${p.name}</strong> (${p.team}) — ${label}.
+        <strong>${p.name}</strong> (${p.teamName||p.team||''}) — ${label}.
         <span style="color:var(--m2)"> Saison : ${p.totalGoals||p.goals||0} buts / ${p.totalAssists||p.assists||0} passes.</span>
       </div>
       <div style="text-align:right;flex-shrink:0">
@@ -481,7 +481,7 @@ function renderGrid(list) {
           </div>
           <div>
             <div class="pname">${p.name}</div>
-            <div class="pteam">${p.team} <img src="https://flagcdn.com/w20/${p.leagueFlag}.png" alt="${p.leagueFlagAlt}" style="width:14px;height:10px;object-fit:cover;border-radius:1px;vertical-align:middle;margin-left:2px"></div>
+            <div class="pteam">${p.teamName||p.team||''} <img src="https://flagcdn.com/w20/${p.leagueFlag}.png" alt="${p.leagueFlagAlt}" style="width:14px;height:10px;object-fit:cover;border-radius:1px;vertical-align:middle;margin-left:2px"></div>
           </div>
         </div>
         <div class="pscore">
