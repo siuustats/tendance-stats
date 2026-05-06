@@ -302,8 +302,8 @@ footer span { color:var(--g); }
 <footer>
   <div class="wrap">
     <strong style="color:var(--text)">Tendance Stats</strong> &nbsp;·&nbsp;
-    Données : <span>API-Football</span> &nbsp;·&nbsp;
-    Saison 2024/2025 &nbsp;·&nbsp;
+    Données : <span>ESPN API</span> &nbsp;·&nbsp;
+    Saison 2025/2026 &nbsp;·&nbsp;
     <span id="last-update"></span>
   </div>
 </footer>
@@ -530,7 +530,7 @@ function renderTable(list) {
         <div class="mbar"><div class="mfill" style="width:${pct}%"></div></div>
       </td>
       <td><span class="num a">${p.totalAssists||p.assists||0}</span></td>
-      <td><span class="num">${p.games}</span></td>
+      <td><span class="num">${p.totalGames||p.games||0}</span></td>
       <td><span class="num" style="color:${p.signal>85?'var(--o)':'var(--m2)'}">${p.avg||0}</span></td>
     `;
     tbody.appendChild(tr);
