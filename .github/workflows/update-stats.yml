@@ -20,8 +20,6 @@ jobs:
           node-version: '24'
 
       - name: Lancer le script
-        env:
-          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
         run: node fetch-stats.js
 
       - name: Sauvegarder data.json
