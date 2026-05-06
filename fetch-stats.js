@@ -237,12 +237,25 @@ async function main() {
 
   // ── Étape 1 : récupérer les matchs terminés hier via Flashscore Data Extractor
   console.log('\n📋 Étape 1 : matchs terminés hier...');
+  // IDs de tournois Flashscore (extraits des URLs)
+  // OEEq9Yvp = Premier League, j9QeTLPP = Ligue 1
+  // vcm2MhGk = LaLiga, 8UYeqfiD = Bundesliga
+  // 6PWwAsA7 = Serie A, lMPimXln = LDC
+  const TOURNAMENT_IDS = ['OEEq9Yvp', 'j9QeTLPP', 'vcm2MhGk', '8UYeqfiD', '6PWwAsA7', 'lMPimXln'];
+
   const scoreItems = await apifyRun(ACTOR_SCORES, {
     extractionMode: 'score_mode',
     targetSports: ['Football (soccer)'],
     daysToFetch: [-1],
     matchStatus: 'Finished',
-    leagueTournamentFilter: [],
+    leagueTournamentFilter: [
+      'OEEq9Yvp',
+      'j9QeTLPP',
+      'vcm2MhGk',
+      '8UYeqfiD',
+      '6PWwAsA7',
+      'lMPimXln'
+    ],
   }, 300);
 
   // Filtrer côté script avec les URLs exactes des tournois
@@ -269,7 +282,8 @@ async function main() {
   for (const item of scoreItems) {
     // Vérifier d'abord l'URL du tournoi pour exclure les faux positifs
     const tournamentUrl = item.tournament_url || '';
-    const isValidLeague = VALID_TOURNAMENT_URLS.some(url => tournamentUrl.includes(url));
+    const isValidLeague = TOURNAMENT_IDS.includes(item.tournament_id) || 
+      VALID_TOURNAMENT_URLS.some(url => tournamentUrl.includes(url));
     if (!isValidLeague) continue;
 
     const league = identifyLeague(item.tournament_name, item.category_name);
