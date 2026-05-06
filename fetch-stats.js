@@ -59,15 +59,17 @@ async function fetchESPN(leagueCode, date) {
 
 // ── ESPN Summary : photos joueurs depuis le roster ───────────────────────────
 
-async function fetchPlayerPhotos(leagueCode, eventId) {
+async function fetchSummaryData(leagueCode, eventId) {
   const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueCode}/summary?event=${eventId}`;
   await new Promise(r => setTimeout(r, 500));
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
     });
-    if (!res.ok) return {};
+    if (!res.ok) return { photos: {}, assists: {} };
     const data = await res.json();
+
+    // Photos depuis le roster
     const photos = {};
     for (const team of (data.rosters || [])) {
       for (const player of (team.roster || [])) {
@@ -76,16 +78,39 @@ async function fetchPlayerPhotos(leagueCode, eventId) {
         if (id && headshot) photos[id] = headshot;
       }
     }
-    console.log(`  📸 ${Object.keys(photos).length} photo(s) trouvée(s)`);
-    return photos;
+
+    // Passes décisives depuis le commentary
+    // Format: "Goal! Team X-Y. PlayerName (Team) ... Assisted by AssisterName."
+    // Ou depuis keyEvents participants
+    const assists = {}; // { scorerName: assisterName }
+
+    for (const item of (data.commentary || [])) {
+      const text = item.text || '';
+      // Chercher les goals avec "Assisted by"
+      if (text.includes('Goal!') && text.includes('Assisted by')) {
+        // Extraire le buteur
+        const scorerMatch = text.match(/Goal!.*?\d-\d\.\s+(.+?)\s+\(/);
+        // Extraire le passeur
+        const assistMatch = text.match(/Assisted by ([^.]+?)(?:\s+with|\s+following|\.)/);
+        if (scorerMatch && assistMatch) {
+          const scorer  = scorerMatch[1].trim();
+          const assister = assistMatch[1].trim();
+          assists[scorer] = assister;
+          console.log(`  🎯 ${scorer} ← ${assister}`);
+        }
+      }
+    }
+
+    console.log(`  📸 ${Object.keys(photos).length} photo(s) | 🎯 ${Object.keys(assists).length} passe(s)`);
+    return { photos, assists };
   } catch(e) {
-    return {};
+    return { photos: {}, assists: {} };
   }
 }
 
 // ── Extraire les contributions depuis les details ESPN ────────────────────────
 
-function extractContributions(event, league, photos = {}) {
+function extractContributions(event, league, photos = {}, assists = {}) {
   const players = [];
   const comp     = event.competitions?.[0];
   if (!comp) return players;
@@ -100,7 +125,7 @@ function extractContributions(event, league, photos = {}) {
   const homeScore = parseInt(homeComp?.score || 0);
   const awayScore = parseInt(awayComp?.score || 0);
 
-  const goalsMap = {}, infoMap = {};
+  const goalsMap = {}, assistsMap = {}, infoMap = {};
 
   for (const detail of details) {
     if (!detail.scoringPlay) continue;
@@ -109,10 +134,10 @@ function extractContributions(event, league, photos = {}) {
     const athlete = detail.athletesInvolved?.[0];
     if (!athlete) continue;
 
-    const pid     = athlete.id;
-    const name    = athlete.displayName || athlete.shortName;
-    const teamId  = detail.team?.id;
-    const isHome  = teamId === homeId;
+    const pid      = athlete.id;
+    const name     = athlete.displayName || athlete.shortName;
+    const teamId   = detail.team?.id;
+    const isHome   = teamId === homeId;
     const teamName = isHome ? homeComp?.team?.displayName : awayComp?.team?.displayName;
     const teamWon  = isHome ? homeScore > awayScore : awayScore > homeScore;
 
@@ -125,6 +150,24 @@ function extractContributions(event, league, photos = {}) {
         leagueFlag: league.flag, leagueFlagAlt: league.flagAlt,
         leagueCls: league.cls, leagueLabel: league.label,
       };
+    }
+
+    // Passeur décisif depuis le commentary
+    const assisterName = assists[name];
+    if (assisterName) {
+      // Créer un ID unique basé sur le nom
+      const aid = 'assist_' + assisterName.toLowerCase().replace(/\s+/g, '_');
+      assistsMap[aid] = (assistsMap[aid] || 0) + 1;
+      if (!infoMap[aid]) {
+        infoMap[aid] = {
+          id: aid, name: assisterName,
+          photo: '',
+          teamName: teamName || '', teamWon,
+          leagueId: league.id, leagueName: league.name,
+          leagueFlag: league.flag, leagueFlagAlt: league.flagAlt,
+          leagueCls: league.cls, leagueLabel: league.label,
+        };
+      }
     }
   }
 
@@ -222,9 +265,9 @@ async function main() {
 
       console.log(`  🎮 ${homeName} ${homeScore}-${awayScore} ${awayName}`);
 
-      // Récupérer les photos depuis le summary
-      const photos = await fetchPlayerPhotos(league.code, fId);
-      const players  = extractContributions(event, league, photos);
+      // Récupérer photos et passes depuis le summary
+      const { photos, assists } = await fetchSummaryData(league.code, fId);
+      const players  = extractContributions(event, league, photos, assists);
       const contribs = players.filter(p => p.goals > 0);
       contribs.forEach(p => console.log(`     ⚽ ${p.name}: ${p.goals}B (${p.teamName})`));
 
