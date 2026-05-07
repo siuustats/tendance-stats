@@ -386,6 +386,13 @@ async function main() {
     console.log(`📸 photos.json mis à jour (${Object.keys(updatedPhotos).length} photos)`);
   }
 
+  // Générer photos-index.json : ID → nom du joueur
+  const photosIndex = {};
+  for (const p of players) {
+    if (p.id && p.name) photosIndex[p.id] = p.name;
+  }
+  fs.writeFileSync('photos-index.json', JSON.stringify(photosIndex, null, 2));
+
   // Injecter les photos dans les joueurs
   for (const p of players) {
     if (!p.photo && updatedPhotos[p.id]) p.photo = updatedPhotos[p.id];
