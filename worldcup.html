@@ -407,11 +407,10 @@ function updateCountdown() {
   if (mEl) mEl.textContent = String(m).padStart(2,'0');
   if (sEl) sEl.textContent = String(s).padStart(2,'0');
 }
-document.addEventListener('DOMContentLoaded', () => {
-  updateCountdown();
-  setInterval(updateCountdown, 1000);
-  renderGroups(); // Groupes statiques — pas besoin d'attendre les données
-});
+// Exécuter immédiatement — le script est en bas du body donc DOM prêt
+updateCountdown();
+setInterval(updateCountdown, 1000);
+renderGroups();
 
 // ── DONNÉES ────────────────────────────────────────────────────────────────
 let cdmPlayers = [];
@@ -550,7 +549,7 @@ const GROUPS = [
   { name: 'Groupe B', nations: [{name:'Canada',flag:'ca'},{name:'Bosnie-Herzégovine',flag:'ba'},{name:'Qatar',flag:'qa'},{name:'Suisse',flag:'ch'}] },
   { name: 'Groupe C', nations: [{name:'Brésil',flag:'br'},{name:'Maroc',flag:'ma'},{name:'Haïti',flag:'ht'},{name:'Écosse',flag:'gb-sct'}] },
   { name: 'Groupe D', nations: [{name:'États-Unis',flag:'us'},{name:'Paraguay',flag:'py'},{name:'Australie',flag:'au'},{name:'Turquie',flag:'tr'}] },
-  { name: 'Groupe E', nations: [{name:'Allemagne',flag:'de'},{name:'Curaçao',flag:'cw'},{name:'Côte d'Ivoire',flag:'ci'},{name:'Équateur',flag:'ec'}] },
+  { name: 'Groupe E', nations: [{name:'Allemagne',flag:'de'},{name:'Curaçao',flag:'cw'},{name:"Côte d'Ivoire",flag:'ci'},{name:'Équateur',flag:'ec'}] },
   { name: 'Groupe F', nations: [{name:'Pays-Bas',flag:'nl'},{name:'Japon',flag:'jp'},{name:'Suède',flag:'se'},{name:'Tunisie',flag:'tn'}] },
   { name: 'Groupe G', nations: [{name:'Belgique',flag:'be'},{name:'Égypte',flag:'eg'},{name:'Iran',flag:'ir'},{name:'Nouvelle-Zélande',flag:'nz'}] },
   { name: 'Groupe H', nations: [{name:'Espagne',flag:'es'},{name:'Cap-Vert',flag:'cv'},{name:'Arabie Saoudite',flag:'sa'},{name:'Uruguay',flag:'uy'}] },
