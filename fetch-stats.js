@@ -79,24 +79,19 @@ async function fetchSummaryData(leagueCode, eventId) {
       }
     }
 
-    // Passes décisives depuis le commentary
-    // Format: "Goal! Team X-Y. PlayerName (Team) ... Assisted by AssisterName."
-    // Ou depuis keyEvents participants
-    const assists = {}; // { scorerName: assisterName }
+    // Passes décisives depuis keyEvents (participants[1] = passeur)
+    const assists = {}; // { scorerId: { name, id } }
 
-    for (const item of (data.commentary || [])) {
-      const text = item.text || '';
-      // Chercher les goals avec "Assisted by"
-      if (text.includes('Goal!') && text.includes('Assisted by')) {
-        // Extraire le buteur
-        const scorerMatch = text.match(/Goal!.*?\d-\d\.\s+(.+?)\s+\(/);
-        // Extraire le passeur
-        const assistMatch = text.match(/Assisted by ([^.]+?)(?:\s+with|\s+following|\.)/);
-        if (scorerMatch && assistMatch) {
-          const scorer  = scorerMatch[1].trim();
-          const assister = assistMatch[1].trim();
-          assists[scorer] = assister;
-          console.log(`  🎯 ${scorer} ← ${assister}`);
+    for (const event of (data.keyEvents || [])) {
+      if (event.type?.type !== 'goal') continue;
+      if (!event.scoringPlay) continue;
+      const participants = event.participants || [];
+      if (participants.length >= 2) {
+        const scorer   = participants[0]?.athlete;
+        const assister = participants[1]?.athlete;
+        if (scorer?.id && assister?.id) {
+          assists[scorer.id] = { id: String(assister.id), name: assister.displayName };
+          console.log(`  🎯 ${scorer.displayName} ← ${assister.displayName}`);
         }
       }
     }
@@ -152,16 +147,15 @@ function extractContributions(event, league, photos = {}, assists = {}) {
       };
     }
 
-    // Passeur décisif depuis le commentary
-    const assisterName = assists[name];
-    if (assisterName) {
-      // Créer un ID unique basé sur le nom
-      const aid = 'assist_' + assisterName.toLowerCase().replace(/\s+/g, '_');
+    // Passeur décisif depuis keyEvents
+    const assisterInfo = assists[pid];
+    if (assisterInfo) {
+      const aid = assisterInfo.id;
       assistsMap[aid] = (assistsMap[aid] || 0) + 1;
       if (!infoMap[aid]) {
         infoMap[aid] = {
-          id: aid, name: assisterName,
-          photo: '',
+          id: aid, name: assisterInfo.name,
+          photo: photos[aid] || `https://a.espncdn.com/i/headshots/soccer/players/full/${aid}.png`,
           teamName: teamName || '', teamWon,
           leagueId: league.id, leagueName: league.name,
           leagueFlag: league.flag, leagueFlagAlt: league.flagAlt,
