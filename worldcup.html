@@ -358,7 +358,10 @@
 <section class="section">
   <div class="section-header">
     <div class="section-title">🌍 Les 48 nations</div>
-    <a href="squad.html" style="font-size:11px;font-weight:700;letter-spacing:1px;color:#d4a843;background:rgba(212,168,67,0.12);border:1px solid rgba(212,168,67,0.3);padding:6px 14px;border-radius:6px;text-decoration:none;white-space:nowrap;">Voir les effectifs →</a>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <span class="section-badge">CDM 2026</span>
+      <a href="squad.html" style="font-size:11px;font-weight:700;letter-spacing:1px;color:#d4a843;background:rgba(212,168,67,0.12);border:1px solid rgba(212,168,67,0.3);padding:5px 12px;border-radius:6px;text-decoration:none;white-space:nowrap;">Effectifs →</a>
+    </div>
   </div>
   <div class="groups-grid" id="groupsGrid">
     <div class="loading">Chargement des groupes...</div>
@@ -545,35 +548,32 @@ function renderRanking() {
 
 // ── GROUPES / NATIONS ──────────────────────────────────────────────────────
 const GROUPS = [
-  { name: 'Groupe A', nations: [{name:'Mexique',flag:'mx'},{name:'Afrique du Sud',flag:'za'},{name:'Corée du Sud',flag:'kr'},{name:'Tchéquie',flag:'cz'}] },
-  { name: 'Groupe B', nations: [{name:'Canada',flag:'ca'},{name:'Bosnie-Herzégovine',flag:'ba'},{name:'Qatar',flag:'qa'},{name:'Suisse',flag:'ch'}] },
-  { name: 'Groupe C', nations: [{name:'Brésil',flag:'br'},{name:'Maroc',flag:'ma'},{name:'Haïti',flag:'ht'},{name:'Écosse',flag:'gb-sct'}] },
-  { name: 'Groupe D', nations: [{name:'États-Unis',flag:'us'},{name:'Paraguay',flag:'py'},{name:'Australie',flag:'au'},{name:'Turquie',flag:'tr'}] },
-  { name: 'Groupe E', nations: [{name:'Allemagne',flag:'de'},{name:'Curaçao',flag:'cw'},{name:"Côte d'Ivoire",flag:'ci'},{name:'Équateur',flag:'ec'}] },
-  { name: 'Groupe F', nations: [{name:'Pays-Bas',flag:'nl'},{name:'Japon',flag:'jp'},{name:'Suède',flag:'se'},{name:'Tunisie',flag:'tn'}] },
-  { name: 'Groupe G', nations: [{name:'Belgique',flag:'be'},{name:'Égypte',flag:'eg'},{name:'Iran',flag:'ir'},{name:'Nouvelle-Zélande',flag:'nz'}] },
-  { name: 'Groupe H', nations: [{name:'Espagne',flag:'es'},{name:'Cap-Vert',flag:'cv'},{name:'Arabie Saoudite',flag:'sa'},{name:'Uruguay',flag:'uy'}] },
-  { name: 'Groupe I', nations: [{name:'France',flag:'fr'},{name:'Sénégal',flag:'sn'},{name:'Irak',flag:'iq'},{name:'Norvège',flag:'no'}] },
-  { name: 'Groupe J', nations: [{name:'Argentine',flag:'ar'},{name:'Algérie',flag:'dz'},{name:'Autriche',flag:'at'},{name:'Jordanie',flag:'jo'}] },
-  { name: 'Groupe K', nations: [{name:'Portugal',flag:'pt'},{name:'RD Congo',flag:'cd'},{name:'Ouzbékistan',flag:'uz'},{name:'Colombie',flag:'co'}] },
-  { name: 'Groupe L', nations: [{name:'Angleterre',flag:'gb-eng'},{name:'Croatie',flag:'hr'},{name:'Ghana',flag:'gh'},{name:'Panama',flag:'pa'}] },
+  { name: "Groupe A", nations: ["Mexique","Afrique du Sud","Corée du Sud","Tchéquie"] },
+  { name: "Groupe B", nations: ["Canada","Bosnie-Herzégovine","Qatar","Suisse"] },
+  { name: "Groupe C", nations: ["Brésil","Maroc","Haïti","Écosse"] },
+  { name: "Groupe D", nations: ["États-Unis","Paraguay","Australie","Turquie"] },
+  { name: "Groupe E", nations: ["Allemagne","Curaçao","Côte d'Ivoire","Équateur"] },
+  { name: "Groupe F", nations: ["Pays-Bas","Japon","Suède","Tunisie"] },
+  { name: "Groupe G", nations: ["Belgique","Égypte","Iran","Nouvelle-Zélande"] },
+  { name: "Groupe H", nations: ["Espagne","Cap-Vert","Arabie Saoudite","Uruguay"] },
+  { name: "Groupe I", nations: ["France","Sénégal","Irak","Norvège"] },
+  { name: "Groupe J", nations: ["Argentine","Algérie","Autriche","Jordanie"] },
+  { name: "Groupe K", nations: ["Portugal","RD Congo","Ouzbékistan","Colombie"] },
+  { name: "Groupe L", nations: ["Angleterre","Croatie","Ghana","Panama"] },
 ];
 
 function renderGroups() {
   const grid = document.getElementById('groupsGrid');
+  if (!grid) return;
   grid.innerHTML = '';
-  GROUPS.forEach(g => {
+  GROUPS.forEach(function(g) {
     const card = document.createElement('div');
     card.className = 'group-card';
-    card.innerHTML = `
-      <div class="group-header">${g.name}</div>
-      ${g.nations.map(n => `
-        <div class="nation-row">
-          <span class="nation-name">${n.name}</span>
-          <span class="nation-arrow">→</span>
-        </div>
-      `).join('')}
-    `;
+    let rows = '';
+    g.nations.forEach(function(n) {
+      rows += '<div class="nation-row"><span class="nation-name">' + n + '</span><a href="squad.html" style="font-size:10px;color:var(--gold);text-decoration:none;">Effectif →</a></div>';
+    });
+    card.innerHTML = '<div class="group-header">' + g.name + '</div>' + rows;
     grid.appendChild(card);
   });
 }
