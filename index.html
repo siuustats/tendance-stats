@@ -346,10 +346,10 @@ async function init() {
     const data = await res.json();
     const photosMap = photosRes?.ok ? await photosRes.json() : {};
 
-    // Injecter les photos SofaScore
+    // Injecter les photos SofaScore (convertir id en string et number pour matcher)
     allPlayers = (data.players || []).map(p => ({
       ...p,
-      photo: photosMap[p.id] || p.photo || ''
+      photo: photosMap[p.id] || photosMap[String(p.id)] || photosMap[Number(p.id)] || p.photo || ''
     }));
 
     const d = new Date(data.updatedAt);
