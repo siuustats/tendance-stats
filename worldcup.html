@@ -462,6 +462,17 @@ let currentPhase = 'all';
 
 
 
+const TEST_PLAYERS = [
+  {id:"t1", name:"Kylian Mbappe",     teamName:"France",     signal:85, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, last5:[], photo:"https://img.a.transfermarkt.technology/portrait/header/342229-1682683695.jpg"},
+  {id:"t2", name:"Vinicius Jr",        teamName:"Bresil",     signal:83, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, last5:[], photo:"https://img.a.transfermarkt.technology/portrait/header/371998-1698058455.jpg"},
+  {id:"t3", name:"Pedri",              teamName:"Espagne",    signal:80, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, last5:[], photo:"https://img.a.transfermarkt.technology/portrait/header/622612-1697467489.jpg"},
+  {id:"t4", name:"Cristiano Ronaldo",  teamName:"Portugal",   signal:82, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, last5:[], photo:"https://img.a.transfermarkt.technology/portrait/header/8198-1681484897.jpg"},
+  {id:"t5", name:"Erling Haaland",     teamName:"Norvege",    signal:84, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, last5:[], photo:"https://img.a.transfermarkt.technology/portrait/header/418560-1695292452.jpg"},
+  {id:"t6", name:"Jude Bellingham",    teamName:"Angleterre", signal:81, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, last5:[], photo:"https://img.a.transfermarkt.technology/portrait/header/581678-1695292054.jpg"},
+  {id:"t7", name:"Lamine Yamal",       teamName:"Espagne",    signal:79, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, last5:[], photo:"https://img.a.transfermarkt.technology/portrait/header/939624-1714117017.jpg"},
+  {id:"t8", name:"Lionel Messi",       teamName:"Argentine",  signal:88, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, last5:[], photo:"https://img.a.transfermarkt.technology/portrait/header/28003-1695290264.jpg"},
+];
+
 async function loadData() {
   try {
     const [dataRes, photosRes] = await Promise.all([
@@ -471,11 +482,8 @@ async function loadData() {
     const data      = await dataRes.json();
     const photosMap = photosRes?.ok ? await photosRes.json() : {};
     window._photosMap = photosMap;
-
-    // Uniquement les matchs CDM (leagueId === 6)
     cdmMatches = (data.matches || []).filter(m => m.leagueId === 6);
-    cdmPlayers = []; // On ne prend QUE les vrais joueurs CDM, pas les joueurs de club
-
+    cdmPlayers = [];
     renderHotPlayers();
     renderRanking();
   } catch(e) {
@@ -492,7 +500,7 @@ function renderHotPlayers() {
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:48px 24px;background:var(--s1);border:1px solid var(--border);border-radius:14px;">' +
       '<div style="font-family:Bebas Neue,sans-serif;font-size:48px;color:var(--gold);letter-spacing:4px;margin-bottom:8px;">🏆</div>' +
       '<div style="font-family:Bebas Neue,sans-serif;font-size:24px;letter-spacing:3px;color:var(--text);margin-bottom:8px;">LES STARS ARRIVENT LE 11 JUIN</div>' +
-      '<div style="font-size:13px;color:var(--muted2);">Les buteurs et passeurs de la CDM s'afficheront automatiquement dès le premier match</div>' +
+      '<div style="font-size:13px;color:var(--muted2);">Les buteurs et passeurs de la CDM s\'afficheront automatiquement dès le premier match</div>' +
     '</div>';
     return;
   }
@@ -517,7 +525,7 @@ function renderHotPlayers() {
       '<div class="ct">' +
         '<div class="pinfo">' +
           '<div class="pav">' +
-            (photo ? '<img src="' + photo + '" onerror="this.outerHTML='⚽'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:20px;">⚽</div>') +
+            (photo ? '<img src="' + photo + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%">' : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:20px;">⚽</div>') +
           '</div>' +
           '<div>' +
             '<div class="pname">' + p.name + '</div>' +
