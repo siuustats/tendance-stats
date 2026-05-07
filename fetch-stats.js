@@ -285,13 +285,23 @@ async function fetchMissingPhotos(players, photosCache) {
 async function main() {
   console.log('🚀 Début — ' + new Date().toISOString());
 
-  // Charger le cache de photos API-Football
+  // Charger le cache de photos
   let photosCache = {};
   if (fs.existsSync('photos.json')) {
     try { photosCache = JSON.parse(fs.readFileSync('photos.json', 'utf8')); }
     catch(e) { console.warn('⚠️  photos.json corrompu'); }
   }
   console.log(`📸 ${Object.keys(photosCache).length} photo(s) en cache`);
+
+  // Charger les joueurs connus (nouvelle saison) pour conserver photos/noms
+  const knownPlayers = stored.knownPlayers || {};
+  if (Object.keys(knownPlayers).length) {
+    console.log(`👥 ${Object.keys(knownPlayers).length} joueur(s) connus de la saison précédente`);
+    // Injecter leurs photos dans le cache si absentes
+    for (const [id, p] of Object.entries(knownPlayers)) {
+      if (!photosCache[id] && p.photo) photosCache[id] = p.photo;
+    }
+  }
 
   // Chercher sur les 3 derniers jours pour ne rater aucun match
   // (le script tourne à 21h50 UTC = 23h50 FR, donc aujourd'hui est encore en cours)
