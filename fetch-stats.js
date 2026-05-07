@@ -179,9 +179,13 @@ function extractContributions(event, league, photos = {}, assists = {}) {
 
 function rebuildPlayers(matches) {
   const pm = {};
+  const CHAMP_IDS = new Set([17, 34, 8, 23, 35]); // PL, L1, Liga, SA, BL
+
   for (const match of matches) {
     for (const p of (match.players || [])) {
-      if (!pm[p.id]) pm[p.id] = { info: p, matches: [] };
+      if (!pm[p.id]) pm[p.id] = { info: p, champInfo: null, matches: [] };
+      // Prioriser la ligue championnat pour l'affichage
+      if (CHAMP_IDS.has(p.leagueId)) pm[p.id].champInfo = p;
       if (p.goals > 0) pm[p.id].info = p;
       pm[p.id].matches.push({ goals: p.goals, assists: p.assists, played: p.played, teamWon: p.teamWon, date: p.date || match.date });
     }
@@ -198,12 +202,14 @@ function rebuildPlayers(matches) {
     const recent_assists = last5.reduce((s, m) => s + m.assists, 0);
     const totalGoals     = data.matches.reduce((s, m) => s + m.goals,   0);
     const totalAssists   = data.matches.reduce((s, m) => s + m.assists, 0);
+    // Utiliser la ligue championnat en priorité
+    const leagueInfo = data.champInfo || info;
     players.push({
       id: info.id, name: info.name, photo: info.photo || '',
       teamName: info.teamName,
-      leagueId: info.leagueId, leagueName: info.leagueName,
-      leagueFlag: info.leagueFlag, leagueFlagAlt: info.leagueFlagAlt,
-      leagueCls: info.leagueCls, leagueLabel: info.leagueLabel,
+      leagueId: leagueInfo.leagueId, leagueName: leagueInfo.leagueName,
+      leagueFlag: leagueInfo.leagueFlag, leagueFlagAlt: leagueInfo.leagueFlagAlt,
+      leagueCls: leagueInfo.leagueCls, leagueLabel: leagueInfo.leagueLabel,
       totalGoals, totalAssists, totalGames: data.matches.length,
       avg: data.matches.length > 0 ? parseFloat((totalGoals / data.matches.length).toFixed(2)) : 0,
       recent_goals, recent_assists, trendScore,
