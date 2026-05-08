@@ -238,7 +238,9 @@ footer span { color:var(--g); }
   .wrap { padding:0 12px; }
 
   /* ── HEADER ── */
-  .hinner { flex-wrap:wrap; gap:8px; }
+  .hinner { flex-direction:column; align-items:flex-start; height:auto; padding:10px 0; gap:10px; }
+  .hright { width:100%; justify-content:flex-start; gap:8px; flex-wrap:wrap; }
+  .logo { font-size:22px; }
 
   /* ── KPIs ── */
   .kpis { grid-template-columns:repeat(2,1fr); }
