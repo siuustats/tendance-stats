@@ -207,132 +207,75 @@
 async function init() {
   const params   = new URLSearchParams(window.location.search);
   const playerId = params.get('id');
-  const teamId   = params.get('team');
   const name     = params.get('name') ? decodeURIComponent(params.get('name')) : null;
   const photo    = params.get('photo') ? decodeURIComponent(params.get('photo')) : null;
-  const pos      = params.get('pos') ? decodeURIComponent(params.get('pos')) : null;
-  const jersey   = params.get('jersey') || '';
   const teamName = params.get('teamName') ? decodeURIComponent(params.get('teamName')) : null;
 
-  const [dataRes, photosRes] = await Promise.all([
-    fetch('data.json?v=' + Date.now()),
-    fetch('photos.json?v=' + Date.now()).catch(() => null)
-  ]);
-  const data      = await dataRes.json();
-  const photosMap = photosRes?.ok ? await photosRes.json() : {};
-
-  // Chercher d'abord dans data.json, sinon construire depuis les paramètres URL
-  let player = data.players?.find(p => String(p.id) === String(playerId))
-    || data.players?.find(p => String(p.espnId) === String(playerId));
-  if (!player && name) {
-    // Joueur de l'effectif ESPN — pas encore dans data.json
-    player = {
-      id: playerId || 'unknown',
-      name: name,
-      teamName: teamName || '',
-      leagueLabel: 'CDM',
-      leagueName: 'Coupe du Monde 2026',
-      photo: photo || '',
-      signal: 0, totalGoals: 0, totalAssists: 0, totalGames: 0, avg: 0,
-      recent_goals: 0, recent_assists: 0, trendScore: 0, last5: []
-    };
+  if (!name && !playerId) {
+    document.body.innerHTML = '<p style="padding:40px;color:#fff">Joueur introuvable</p>';
+    return;
   }
-  if (!player) { document.body.innerHTML = '<p style="padding:40px;color:#fff">Joueur introuvable</p>'; return; }
 
-  // Photo — priorité : photos.json (par id ou espnId) > paramètre URL > player.photo
-  const playerPhoto = photosMap[player.id] || photosMap[String(player.id)] || photosMap[Number(player.id)]
-    || (player.espnId && (photosMap[player.espnId] || photosMap[String(player.espnId)]))
-    || photo || player.photo || '';
+  // Photo — uniquement depuis photos.json (par espnId/id) ou paramètre URL
+  // On ne touche PAS à data.json pour éviter de récupérer des stats de club
+  let playerPhoto = photo || '';
+  try {
+    const photosRes = await fetch('photos.json?v=' + Date.now());
+    if (photosRes.ok) {
+      const photosMap = await photosRes.json();
+      playerPhoto = photosMap[playerId] || photosMap[String(playerId)] || photo || '';
+    }
+  } catch(e) {}
+
   const avatarEl = document.getElementById('avatar');
   if (playerPhoto) {
-    avatarEl.innerHTML = `<img src="${playerPhoto}" referrerpolicy="no-referrer" onerror="this.outerHTML='⚽'" alt="${player.name}">`;
+    avatarEl.innerHTML = `<img src="${playerPhoto}" referrerpolicy="no-referrer" onerror="this.outerHTML='⚽'" alt="${name || ''}">`;
   }
 
-  // Hero
-  document.title = `${player.name} — Tendance Stats`;
-  document.getElementById('playerName').textContent = player.name;
-  document.getElementById('playerTeam').textContent = player.teamName || '—';
-  document.getElementById('playerLeague').textContent = player.leagueLabel || '—';
-  document.getElementById('trendScore').textContent = player.signal || 0;
-  document.getElementById('trendFill').style.width = (player.signal || 0) + '%';
+  // Hero — données 100% depuis l'URL, pas depuis data.json
+  const displayName = name || '—';
+  document.title = `${displayName} — CDM 2026 — Tendance Stats`;
+  document.getElementById('playerName').textContent = displayName;
+  document.getElementById('playerTeam').textContent = teamName || '—';
+  document.getElementById('playerLeague').textContent = 'CDM 2026';
+  document.getElementById('trendScore').textContent = '—';
+  document.getElementById('trendFill').style.width = '0%';
 
-  // KPIs
-  document.getElementById('kGoals').textContent   = player.totalGoals || 0;
-  document.getElementById('kAssists').textContent = player.totalAssists || 0;
-  document.getElementById('kGames').textContent   = player.totalGames || 0;
-  document.getElementById('kAvg').textContent     = player.avg || 0;
+  // KPIs — tous à 0, la CDM n'a pas encore commencé
+  document.getElementById('kGoals').textContent   = 0;
+  document.getElementById('kAssists').textContent = 0;
+  document.getElementById('kGames').textContent   = 0;
+  document.getElementById('kAvg').textContent     = 0;
 
-  // Forme
-  const formEl = document.getElementById('formSection');
-  (player.last5 || []).forEach(m => {
-    const won   = m.teamWon;
-    const label = won === true ? 'V' : won === false ? 'D' : 'N';
-    const cls   = won === true ? 'w' : won === false ? 'l' : 'd';
-    const div   = document.createElement('div');
-    div.className = `fd ${cls}`;
-    div.textContent = label;
-    formEl.appendChild(div);
-  });
+  // Forme — vide avant le début de la CDM
+  document.getElementById('formSection').innerHTML =
+    '<span style="color:var(--m);font-size:13px">Aucun match CDM joué · Début le 11 juin 2026</span>';
 
-  // Historique matchs
-  const histEl = document.getElementById('matchHistory');
-  const playerMatches = [];
-  for (const m of (data.matches || [])) {
-    const found = (m.players || []).find(p => String(p.id) === String(playerId));
-    if (found) playerMatches.push({ match: m, stats: found });
-  }
-  playerMatches.sort((a, b) => new Date(b.match.date) - new Date(a.match.date));
-
-  if (!playerMatches.length) {
-    histEl.innerHTML = '<p style="color:var(--m);font-size:13px">Aucun match enregistré</p>';
-  } else {
-    playerMatches.forEach(({ match, stats }) => {
-      const date   = new Date(match.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'});
-      const won    = stats.teamWon;
-      const label  = won === true ? 'V' : won === false ? 'D' : 'N';
-      const cls    = won === true ? 'w' : won === false ? 'l' : 'd';
-      const row    = document.createElement('div');
-      row.className = 'match-row';
-      row.innerHTML = `
-        <span class="match-date">${date}</span>
-        <div class="match-teams">${match.homeTeam} <span style="color:var(--m)">vs</span> ${match.awayTeam}</div>
-        <span class="match-score">${match.homeGoals}-${match.awayGoals}</span>
-        <div class="match-stats">
-          ${stats.goals > 0 ? `<span class="stat-pill goal">⚽ ${stats.goals}B</span>` : ''}
-          ${stats.assists > 0 ? `<span class="stat-pill assist">🎯 ${stats.assists}P</span>` : ''}
-        </div>
-        <div class="result-badge ${cls}">${label}</div>
-      `;
-      histEl.appendChild(row);
-    });
-  }
+  // Historique — vide avant le début de la CDM
+  document.getElementById('matchHistory').innerHTML =
+    '<p style="color:var(--m);font-size:13px">Les matchs CDM apparaîtront ici dès le 11 juin 2026</p>';
 
   // Analyse
-  const wins  = (player.last5 || []).filter(m => m.teamWon === true).length;
-  const total = (player.last5 || []).length;
-  const winRate = total ? Math.round(wins / total * 100) : 0;
-  const hotStreak = player.recent_goals > 0 || player.recent_assists > 0;
-
   document.getElementById('analysis').innerHTML = `
     <div class="analysis-row">
-      <span class="analysis-label">Taux de victoire (5 derniers)</span>
-      <span class="analysis-value ${winRate >= 60 ? 'green' : winRate >= 40 ? 'orange' : ''}">${winRate}%</span>
+      <span class="analysis-label">Compétition</span>
+      <span class="analysis-value green">Coupe du Monde 2026</span>
     </div>
     <div class="analysis-row">
-      <span class="analysis-label">Buts sur 5 derniers matchs</span>
-      <span class="analysis-value green">${player.recent_goals || 0}</span>
+      <span class="analysis-label">Sélection nationale</span>
+      <span class="analysis-value">${teamName || '—'}</span>
     </div>
     <div class="analysis-row">
-      <span class="analysis-label">Passes sur 5 derniers matchs</span>
-      <span class="analysis-value" style="color:var(--b)">${player.recent_assists || 0}</span>
+      <span class="analysis-label">Buts en CDM</span>
+      <span class="analysis-value green">0</span>
     </div>
     <div class="analysis-row">
-      <span class="analysis-label">Tendance actuelle</span>
-      <span class="analysis-value ${hotStreak ? 'green' : ''}">${hotStreak ? '🔥 En forme' : '→ Stable'}</span>
+      <span class="analysis-label">Passes en CDM</span>
+      <span class="analysis-value" style="color:var(--b)">0</span>
     </div>
     <div class="analysis-row">
-      <span class="analysis-label">TendScore</span>
-      <span class="analysis-value green">${player.trendScore || 0} / 10</span>
+      <span class="analysis-label">Statut</span>
+      <span class="analysis-value" style="color:var(--y)">⏳ En attente · 11 juin 2026</span>
     </div>
   `;
 }
