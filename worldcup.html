@@ -377,9 +377,14 @@
     /* ── CADRES JOUEURS — 1 colonne ── */
     .pgrid { grid-template-columns:1fr; gap:10px; }
 
-    /* ── CLASSEMENT — scroll horizontal ── */
-    .ranking { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-    .ranking-head, .ranking-row { min-width:480px; }
+    /* ── CLASSEMENT — pas de scroll, colonnes adaptées ── */
+    .ranking-head { display:grid; grid-template-columns:32px 1fr 44px 44px 32px 44px; gap:4px; padding:8px 10px; }
+    .ranking-row { display:grid; grid-template-columns:32px 1fr 44px 44px 32px 44px; gap:4px; padding:10px 10px; }
+    .rplayer { min-width:0; }
+    .rname { font-size:12px; white-space:normal; word-break:break-word; }
+    .rteam { font-size:10px; }
+    .rnum { font-size:12px; text-align:center; }
+    .ravatar { width:28px; height:28px; flex-shrink:0; }
 
     /* ── PHASES ── */
     .phases { flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:4px; }
