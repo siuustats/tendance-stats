@@ -262,17 +262,36 @@ async function loadSquad(teamId, team, group) {
 
   try {
     const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams/${teamId}/roster`;
-    const res = await fetch(url, {headers:{'User-Agent':'Mozilla/5.0'}});
+    const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
     const athletes = data.athletes || [];
     if (!athletes.length) throw new Error('Aucun joueur');
 
+    // Traduction des positions en français
+    const POS_FR = {
+      'Goalkeeper':         'Gardien',
+      'Defender':           'Défenseur',
+      'Midfielder':         'Milieu',
+      'Forward':            'Attaquant',
+      'Attacking Midfielder':'Milieu offensif',
+      'Defensive Midfielder':'Milieu défensif',
+      'Central Midfielder': 'Milieu central',
+      'Right Back':         'Latéral droit',
+      'Left Back':          'Latéral gauche',
+      'Center Back':        'Défenseur central',
+      'Right Winger':       'Ailier droit',
+      'Left Winger':        'Ailier gauche',
+      'Striker':            'Attaquant',
+      'Center Forward':     'Avant-centre',
+    };
+
     // Grouper par position
     const positions = {};
     for (const a of athletes) {
-      const pos = a.position?.displayName || 'Joueurs';
+      const rawPos = a.position?.displayName || 'Joueurs';
+      const pos = POS_FR[rawPos] || rawPos;
       if (!positions[pos]) positions[pos] = [];
       positions[pos].push(a);
     }
