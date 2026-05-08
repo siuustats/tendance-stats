@@ -233,9 +233,45 @@ footer { border-top:1px solid var(--border); padding:20px 0; text-align:center; 
 footer span { color:var(--g); }
 
 /* ── RESPONSIVE ── */
-@media(max-width:700px){
+@media(max-width:768px){
+  /* ── GÉNÉRAL ── */
+  .wrap { padding:0 12px; }
+
+  /* ── HEADER ── */
+  .hinner { flex-wrap:wrap; gap:8px; }
+
+  /* ── KPIs ── */
   .kpis { grid-template-columns:repeat(2,1fr); }
-  th:nth-child(n+5),td:nth-child(n+5) { display:none; }
+
+  /* ── FILTRES LIGUES — scroll horizontal ── */
+  .filters {
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    padding-bottom:8px;
+    gap:6px;
+  }
+  .filters::-webkit-scrollbar { display:none; }
+  .filter-btn { flex-shrink:0; white-space:nowrap; }
+
+  /* ── CADRES JOUEURS — 1 colonne ── */
+  .pgrid { grid-template-columns:1fr; gap:10px; }
+
+  /* ── CLASSEMENT — scroll horizontal ── */
+  .tw { overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:10px; }
+  .tw table { min-width:520px; }
+  .tw th, .tw td { padding:10px 8px; font-size:11px; }
+
+  /* ── PAGINATION ── */
+  .pagination { gap:6px; }
+  .pag-btn { padding:5px 10px; font-size:11px; }
+
+  /* ── ALERTES ── */
+  .alerts { grid-template-columns:1fr 1fr; }
+
+  /* ── SECTIONS ── */
+  .section-title { font-size:18px; }
 }
 </style>
 </head>
