@@ -138,7 +138,7 @@
     }
 
     /* ── SECTIONS ─────────────────────────────────────────────────── */
-    .section { max-width:1100px; margin:0 auto; padding:60px 24px; }
+    .section { max-width:1280px; margin:0 auto; padding:60px 24px; }
     .section-header {
       display:flex; align-items:center; gap:16px; margin-bottom:36px;
     }
@@ -498,6 +498,29 @@ const TEST_PLAYERS = [
 
 let allPlayers = [];
 
+const RANKING_PLAYERS = [
+  {id:"r1", name:"Kylian Mbappe",      teamName:"France",     totalGoals:5, totalAssists:3, totalGames:4, avg:2.0,  signal:95, photo:"", leagueFlag:"fr"},
+  {id:"r2", name:"Lionel Messi",       teamName:"Argentine",  totalGoals:4, totalAssists:4, totalGames:4, avg:2.0,  signal:92, photo:"", leagueFlag:"ar"},
+  {id:"r3", name:"Erling Haaland",     teamName:"Norvege",    totalGoals:6, totalAssists:1, totalGames:4, avg:1.75, signal:90, photo:"", leagueFlag:"no"},
+  {id:"r4", name:"Vinicius Jr",        teamName:"Bresil",     totalGoals:3, totalAssists:4, totalGames:4, avg:1.75, signal:88, photo:"", leagueFlag:"br"},
+  {id:"r5", name:"Cristiano Ronaldo",  teamName:"Portugal",   totalGoals:4, totalAssists:2, totalGames:4, avg:1.5,  signal:85, photo:"", leagueFlag:"pt"},
+  {id:"r6", name:"Jude Bellingham",    teamName:"Angleterre", totalGoals:2, totalAssists:4, totalGames:4, avg:1.5,  signal:83, photo:"", leagueFlag:"gb-eng"},
+  {id:"r7", name:"Lamine Yamal",       teamName:"Espagne",    totalGoals:2, totalAssists:3, totalGames:4, avg:1.25, signal:82, photo:"", leagueFlag:"es"},
+  {id:"r8", name:"Pedri",              teamName:"Espagne",    totalGoals:1, totalAssists:4, totalGames:4, avg:1.25, signal:80, photo:"", leagueFlag:"es"},
+  {id:"r9", name:"Bukayo Saka",        teamName:"Angleterre", totalGoals:2, totalAssists:2, totalGames:4, avg:1.0,  signal:78, photo:"", leagueFlag:"gb-eng"},
+  {id:"r10",name:"Gavi",               teamName:"Espagne",    totalGoals:1, totalAssists:3, totalGames:4, avg:1.0,  signal:76, photo:"", leagueFlag:"es"},
+  {id:"r11",name:"Phil Foden",         teamName:"Angleterre", totalGoals:2, totalAssists:1, totalGames:4, avg:0.75, signal:74, photo:"", leagueFlag:"gb-eng"},
+  {id:"r12",name:"Raphinha",           teamName:"Bresil",     totalGoals:1, totalAssists:2, totalGames:4, avg:0.75, signal:72, photo:"", leagueFlag:"br"},
+  {id:"r13",name:"Antoine Griezmann",  teamName:"France",     totalGoals:2, totalAssists:1, totalGames:4, avg:0.75, signal:71, photo:"", leagueFlag:"fr"},
+  {id:"r14",name:"Bruno Fernandes",    teamName:"Portugal",   totalGoals:1, totalAssists:2, totalGames:4, avg:0.75, signal:70, photo:"", leagueFlag:"pt"},
+  {id:"r15",name:"Rodrigo De Paul",    teamName:"Argentine",  totalGoals:0, totalAssists:3, totalGames:4, avg:0.75, signal:68, photo:"", leagueFlag:"ar"},
+  {id:"r16",name:"Declan Rice",        teamName:"Angleterre", totalGoals:1, totalAssists:1, totalGames:4, avg:0.5,  signal:66, photo:"", leagueFlag:"gb-eng"},
+  {id:"r17",name:"Aurelien Tchouameni",teamName:"France",     totalGoals:1, totalAssists:1, totalGames:4, avg:0.5,  signal:64, photo:"", leagueFlag:"fr"},
+  {id:"r18",name:"Joshua Kimmich",     teamName:"Allemagne",  totalGoals:0, totalAssists:2, totalGames:4, avg:0.5,  signal:62, photo:"", leagueFlag:"de"},
+  {id:"r19",name:"Niclas Fullkrug",    teamName:"Allemagne",  totalGoals:2, totalAssists:0, totalGames:4, avg:0.5,  signal:60, photo:"", leagueFlag:"de"},
+  {id:"r20",name:"Alvaro Morata",      teamName:"Espagne",    totalGoals:1, totalAssists:1, totalGames:4, avg:0.5,  signal:58, photo:"", leagueFlag:"es"},
+];
+
 async function loadData() {
   try {
     const [dataRes, photosRes] = await Promise.all([
@@ -561,7 +584,12 @@ function renderHotPlayers() {
     card.className = 'pc';
     card.style.animationDelay = (i*0.06)+'s';
     card.style.cursor = 'pointer';
-    if (!p.id.startsWith('t')) card.onclick = () => window.location.href = `player.html?id=${p.id}`;
+    if (!p.id.startsWith('t')) card.onclick = () => {
+      const url = p.id.startsWith('t')
+        ? `player-cdm.html?name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}&photo=${encodeURIComponent(p.photo||'')}`
+        : `player-cdm.html?id=${p.id}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}&photo=${encodeURIComponent(p.photo||'')}`;
+      window.location.href = url;
+    };
     card.innerHTML = `
       <div class="hot-tag">🔥 EN FORME</div>
       <div class="ct">
@@ -610,13 +638,8 @@ function renderRanking() {
   const table = document.getElementById('rankingTable');
   const empty = document.getElementById('rankingEmpty');
 
-  let players = cdmPlayers;
-  if (currentPhase !== 'all') {
-    // Filtrer par phase quand on aura les données CDM
-    players = cdmPlayers;
-  }
-
-  const sorted = [...players].filter(p => p.totalGoals > 0 || p.totalAssists > 0)
+  const source = cdmPlayers.length ? cdmPlayers : RANKING_PLAYERS;
+  const sorted = [...source]
     .sort((a,b) => (b.totalGoals+b.totalAssists) - (a.totalGoals+a.totalAssists));
 
   // Garder seulement le head + empty ou rows
@@ -633,7 +656,7 @@ function renderRanking() {
     const photo = p.photo || '';
     const tr = document.createElement('div');
     tr.className = 'ranking-row';
-    tr.onclick = () => window.location.href = `player.html?id=${p.id}`;
+    tr.onclick = () => window.location.href = `player-cdm.html?id=${p.id}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}&photo=${encodeURIComponent(p.photo||'')}`;
     tr.innerHTML = `
       <div class="rk ${i<3?'top':''}">${i+1}</div>
       <div class="rplayer">
