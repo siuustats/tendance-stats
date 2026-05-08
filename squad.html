@@ -101,6 +101,26 @@
     }
     .wina-text { color:#fff; font-size:13px; font-weight:600; }
     .wina-btn { background:#fff; color:#e30613; font-size:11px; font-weight:700; padding:7px 16px; border-radius:5px; text-decoration:none; white-space:nowrap; }
+
+  @media(max-width:768px){
+    /* ── GÉNÉRAL ── */
+    body { padding:0; }
+
+    /* ── GRILLE NATIONS — 2 colonnes ── */
+    .teams-grid { grid-template-columns:repeat(2,1fr); gap:8px; padding:0 12px; }
+
+    /* ── HEADER EFFECTIF ── */
+    .squad-header { padding:20px 16px; flex-direction:column; text-align:center; gap:12px; }
+    .squad-logo { width:56px; height:56px; }
+    .squad-name { font-size:32px; }
+
+    /* ── GRILLE JOUEURS — 2 colonnes ── */
+    .players-grid { grid-template-columns:repeat(2,1fr); gap:8px; }
+    .player-card { padding:10px; }
+
+    /* ── BOUTON RETOUR ── */
+    .back-btn { margin:12px 12px 0; }
+  }
   </style>
 </head>
 <body>
