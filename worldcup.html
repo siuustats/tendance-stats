@@ -725,7 +725,7 @@ function renderHotPlayers() {
       <div class="chips">
         <div class="chip"><div class="chip-n" style="color:var(--g)">${p.totalGoals||p.goals||0}</div><div class="chip-l">Buts</div></div>
         <div class="chip"><div class="chip-n" style="color:var(--b)">${p.totalAssists||p.assists||0}</div><div class="chip-l">Passes</div></div>
-        <div class="chip"><div class="chip-n" style="color:var(--o)">${recent_g}</div><div class="chip-l">Buts/5J</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--o)">${recent_g + recent_a}</div><div class="chip-l">GA/5J</div></div>
         <div class="chip"><div class="chip-n" style="color:var(--y)">${p.avg||0}</div><div class="chip-l">Moy.</div></div>
       </div>
       <div class="sigbar">
