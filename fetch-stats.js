@@ -328,6 +328,22 @@ async function main() {
   const stored    = loadData();
   const storedIds = new Set((stored.matches || []).map(m => m.fixtureId));
 
+  // IDs des matchs des 3 derniers jours → forcer re-traitement pour récupérer passes manquantes
+  const recentDates = new Set();
+  for (let i = 0; i <= 2; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    recentDates.add(d.toISOString().slice(0, 10));
+  }
+  const recentIds = new Set(
+    (stored.matches || [])
+      .filter(m => recentDates.has(m.date?.slice(0, 10)))
+      .map(m => m.fixtureId)
+  );
+  // Retirer les matchs récents des storedIds pour forcer leur mise à jour
+  for (const id of recentIds) storedIds.delete(id);
+  if (recentIds.size) console.log(`🔄 ${recentIds.size} match(s) récent(s) forcés en re-traitement`);
+
   // Charger le cache de photos
   let photosCache = {};
   if (fs.existsSync('photos.json')) {
@@ -415,7 +431,10 @@ async function main() {
     return;
   }
 
-  const allMatches = [...(stored.matches || []), ...newMatches];
+  // Supprimer les anciennes versions des matchs re-traités avant de les rajouter
+  const reProcessedIds = new Set(newMatches.filter(m => recentIds.has(m.fixtureId)).map(m => m.fixtureId));
+  const existingMatches = (stored.matches || []).filter(m => !reProcessedIds.has(m.fixtureId));
+  const allMatches = [...existingMatches, ...newMatches];
   const byLeague   = {};
   for (const m of allMatches) {
     if (!byLeague[m.leagueId]) byLeague[m.leagueId] = [];
