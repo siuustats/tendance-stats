@@ -290,7 +290,11 @@ footer span { color:var(--g); }
   .pagination { gap:6px; }
   .pag-btn { padding:5px 10px; font-size:11px; }
 
-  /* ── ALERTES ── */
+  /* ── SECTIONS ALTERNÉES ── */
+.section-block { margin:0 -24px; padding:32px 24px; }
+.section-block.alt { background:var(--s1); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+
+/* ── ALERTES ── */
   .alerts { grid-template-columns:1fr; }
 
   /* ── SECTIONS ── */
@@ -357,20 +361,23 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
 
     <!-- PRÉDICTIONS -->
-    <div class="sh"><div class="st">🔮 Prédictions</div><div class="sb">TENDANCE</div></div>
-    <div class="alerts" id="alerts"></div>
-
-    <!-- LIEN PRÉDICTIONS -->
-    <div style="text-align:right;margin:-20px 0 16px">
-      <a href="predictions.html" style="font-size:12px;font-weight:600;color:var(--m2);text-decoration:none;padding:6px 14px;border:1px solid var(--border);border-radius:8px;transition:all .2s;display:inline-block" onmouseover="this.style.color='var(--g)';this.style.borderColor='var(--g)';this.style.background='rgba(0,229,160,0.06)'" onmouseout="this.style.color='var(--m2)';this.style.borderColor='var(--border)';this.style.background='transparent'">Voir toutes les prédictions →</a>
+    <div class="section-block alt">
+      <div class="sh"><div class="st">🔮 Prédictions</div><div class="sb">TENDANCE</div></div>
+      <div class="alerts" id="alerts"></div>
+      <div style="text-align:right;margin-top:8px">
+        <a href="predictions.html" style="font-size:12px;font-weight:600;color:var(--m2);text-decoration:none;padding:6px 14px;border:1px solid var(--border);border-radius:8px;transition:all .2s;display:inline-block" onmouseover="this.style.color='var(--g)';this.style.borderColor='var(--g)';this.style.background='rgba(0,229,160,0.06)'" onmouseout="this.style.color='var(--m2)';this.style.borderColor='var(--border)';this.style.background='transparent'">Voir toutes les prédictions →</a>
+      </div>
     </div>
 
     <!-- JOUEURS EN FORME -->
-    <div class="sh"><div class="st">🔥 Joueurs en série</div><div class="sb">TOP</div></div>
-    <div class="pgrid" id="pgrid"></div>
+    <div class="section-block">
+      <div class="sh"><div class="st">🔥 Joueurs en série</div><div class="sb">TOP</div></div>
+      <div class="pgrid" id="pgrid"></div>
+    </div>
 
     <!-- CLASSEMENT -->
-    <div class="sh"><div class="st">📊 Classement joueurs</div><div class="sb">SAISON</div></div>
+    <div class="section-block alt">
+      <div class="sh"><div class="st">📊 Classement joueurs</div><div class="sb">SAISON</div></div>
     <div class="tw">
       <table>
         <thead>
@@ -600,19 +607,22 @@ function renderAlerts(list, fixtures) {
   const leaguesSeen = new Set();
   const picked = [];
 
-  // Trier par trendScore décroissant
-  const sorted = [...list].sort((a,b) => (b.trendScore||0) - (a.trendScore||0));
+  // Calculer le score de prédiction pour chaque joueur et trier par score décroissant
+  const withScores = [...list].map(p => ({
+    ...p,
+    _predScore: calcPredScore(p, fixtures, list).score
+  })).sort((a,b) => b._predScore - a._predScore);
 
-  // Essayer 1 par ligue d'abord
-  for (const p of sorted) {
+  // Essayer 1 par ligue d'abord (parmi les meilleurs scores)
+  for (const p of withScores) {
     if (picked.length >= 4) break;
     if (!leaguesSeen.has(p.leagueId)) {
       leaguesSeen.add(p.leagueId);
       picked.push(p);
     }
   }
-  // Compléter si moins de 4
-  for (const p of sorted) {
+  // Compléter si moins de 4 — toujours par score décroissant
+  for (const p of withScores) {
     if (picked.length >= 4) break;
     if (!picked.find(x => x.id === p.id)) picked.push(p);
   }
@@ -626,8 +636,10 @@ function renderAlerts(list, fixtures) {
     const predLabel = getPredLabel(score);
     if (!predLabel) return;
 
-    const ga5  = (p.recent_goals||0) + (p.recent_assists||0);
-    const fill  = Math.round(score);
+    const g5   = p.recent_goals || 0;
+    const a5   = p.recent_assists || 0;
+    const ga5  = g5 + a5;
+    const fill = score; // % de probabilité directement
     const dateStr = matchDate
       ? new Date(matchDate).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})
       : '—';
@@ -650,7 +662,11 @@ function renderAlerts(list, fixtures) {
           </div>
           <span style="font-size:11px;font-weight:700;color:${predLabel.color};white-space:nowrap;min-width:80px">${predLabel.label}</span>
         </div>
-        <div style="font-size:11px;color:var(--m);margin-top:4px">GA/5J : ${ga5} · TendScore : ${p.trendScore||0}</div>
+        <div style="font-size:11px;color:var(--m);margin-top:6px;display:flex;gap:12px">
+          <span>⚽ <strong style="color:var(--g)">${g5}B</strong> sur 5J</span>
+          <span>🎯 <strong style="color:var(--b)">${a5}P</strong> sur 5J</span>
+          <span style="margin-left:auto">TendScore : ${p.trendScore||0}</span>
+        </div>
       </div>
     `;
     c.appendChild(d);
