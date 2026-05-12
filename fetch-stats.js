@@ -62,6 +62,22 @@ async function fetchESPN(leagueCode, date) {
 
 // ── ESPN Summary : photos joueurs depuis le roster ───────────────────────────
 
+const TEAM_FIX = {
+  'Brighton & Hove Albion': 'Brighton',
+  'Internazionale':         'Inter Milan',
+  'Liverpool FC':           'Liverpool',
+  'Manchester City FC':     'Manchester City',
+  'Arsenal FC':             'Arsenal',
+  'Chelsea FC':             'Chelsea',
+  'Tottenham Hotspur':      'Tottenham',
+  'Newcastle United':       'Newcastle United',
+  'Aston Villa FC':         'Aston Villa',
+  'West Ham United':        'West Ham United',
+  'Nottingham Forest':      'Nottingham Forest',
+  'Paris Saint-Germain':    'Paris Saint-Germain',
+  'Atletico de Madrid':     'Atletico Madrid',
+  'Athletic Club':          'Athletic Bilbao',
+};
 async function fetchFixtures() {
   const fixtures = [];
   const today = new Date();
@@ -86,7 +102,6 @@ async function fetchFixtures() {
           const awayComp   = comp?.competitors?.find(c => c.homeAway === 'away');
           const homeName   = homeComp?.team?.displayName || '?';
           const awayName   = awayComp?.team?.displayName || '?';
-          const TEAM_FIX   = { 'Brighton & Hove Albion': 'Brighton' };
           fixtures.push({
             id:         event.id,
             date:       event.date,
