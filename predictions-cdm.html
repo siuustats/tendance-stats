@@ -181,7 +181,7 @@ for (const [group, teams] of Object.entries(CDM_GROUPS)) {
   for (const team of teams) TEAM_TO_GROUP[team] = group;
 }
 
-let allPlayers = [], allFixtures = [], currentFilter = 'all';
+let allPlayers = [], allFixtures = [], allCdmPlayers = [], currentFilter = 'all';
 
 // Compte à rebours
 function updateCountdown() {
@@ -253,27 +253,28 @@ function render() {
   const cdmStarted = new Date() >= new Date('2026-06-11T19:00:00Z');
 
   if (!cdmStarted) {
-    // Avant le 11 juin — afficher compte à rebours + joueurs à surveiller par forme club
     const target = new Date('2026-06-11T19:00:00Z');
     const days = Math.floor((target - new Date()) / 86400000);
 
-    // Joueurs CDM (basés sur la forme club) filtrés par groupe
-    let players = allPlayers.filter(p => p.leagueId !== 6);
+    // Utiliser uniquement les joueurs CDM inscrits (RANKING_PLAYERS avec espnId)
+    let cdmPlayers = allCdmPlayers;
     if (currentFilter !== 'all') {
-      players = players.filter(p => TEAM_TO_GROUP[p.teamName] === currentFilter);
+      cdmPlayers = cdmPlayers.filter(p => TEAM_TO_GROUP[p.teamName] === currentFilter);
     }
 
-    const sorted = [...players]
-      .sort((a,b) => (b.trendScore||0) - (a.trendScore||0))
+    const sorted = [...cdmPlayers]
+      .sort((a,b) => (b.signal||b.trendScore||0) - (a.signal||a.trendScore||0))
       .slice(0, 12);
 
     const playersHtml = sorted.length ? sorted.map(p => {
-      const { score } = calcPredScore(p, allFixtures, allPlayers);
+      const score = Math.min(98, Math.round((p.signal||50) * 0.8));
       const predLabel = getPredLabel(score);
       if (!predLabel) return '';
-      const ga5 = (p.recent_goals||0) + (p.recent_assists||0);
-      const group = TEAM_TO_GROUP[p.teamName] || '?';
-      return `<div class="pred-row" onclick="window.location.href='player-cdm.html?id=${p.id}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}'"">
+      const goals   = p.totalGoals || 0;
+      const assists = p.totalAssists || 0;
+      const group   = TEAM_TO_GROUP[p.teamName] || '?';
+      const pid     = p.espnId || p.id;
+      return `<div class="pred-row" onclick="window.location.href='player-cdm.html?id=${pid}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}&photo=${encodeURIComponent(p.photo||'')}'"">
         <div class="pred-avatar">
           ${p.photo ? `<img src="${p.photo}" onerror="this.outerHTML='⚽'" alt="${p.name}">` : '⚽'}
         </div>
@@ -283,13 +284,13 @@ function render() {
         </div>
         <div class="pred-bar-wrap">
           <div class="pred-bar-bg">
-            <div class="pred-bar-fill" style="width:${score}%;background:linear-gradient(90deg,${predLabel.color},${predLabel.color}88)"></div>
+            <div class="pred-bar-fill" data-fill="${score}" style="width:0%;background:linear-gradient(90deg,${predLabel.color},${predLabel.color}88);border-radius:3px;transition:width .8s ease"></div>
           </div>
           <div class="pred-label" style="color:${predLabel.color}">${predLabel.label}</div>
         </div>
         <div class="pred-stats">
-          <div class="pred-ga" style="color:${predLabel.color}">${ga5} GA</div>
-          <div class="pred-sub">sur 5J</div>
+          <div style="font-size:13px;font-weight:600;color:${predLabel.color}">⚽${goals} 🎯${assists}</div>
+          <div class="pred-sub">CDM</div>
         </div>
       </div>`;
     }).filter(Boolean).join('') : '<div class="empty">Aucun joueur trouvé pour ce groupe.</div>';
@@ -297,16 +298,26 @@ function render() {
     container.innerHTML = `
       <div class="waiting-card">
         <h2>🏆 CDM 2026 — Dans ${days} jours</h2>
-        <p>Les prédictions CDM seront basées sur les vraies stats de la compétition dès le coup d'envoi le 11 juin 2026.<br>En attendant, voici les joueurs à surveiller basés sur leur forme actuelle en club.</p>
+        <p>Les prédictions CDM seront basées sur les vraies stats de la compétition dès le coup d'envoi le 11 juin 2026.<br>En attendant, voici les joueurs les plus attendus par sélection nationale.</p>
         <div class="countdown-mini" id="cdm-countdown"></div>
       </div>
       <div style="margin-bottom:20px">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--g);margin-bottom:4px">⭐ Joueurs à surveiller</div>
-        <div style="font-size:13px;color:var(--m2)">Basé sur la forme actuelle en club</div>
+        <div style="font-size:13px;color:var(--m2)">Classement des joueurs CDM 2026 inscrits</div>
       </div>
       <div class="match-section">
         <div class="players-list">${playersHtml}</div>
       </div>`;
+
+    // Animer les barres
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        document.querySelectorAll('.pred-bar-fill').forEach(bar => {
+          bar.style.width = bar.dataset.fill + '%';
+        });
+      }, 50);
+    });
+
     updateCountdown();
     setInterval(updateCountdown, 1000);
     return;
@@ -395,6 +406,12 @@ async function init() {
       ...p, photo: photos[p.id] || photos[String(p.id)] || p.photo || ''
     }));
     allFixtures = data.fixtures || [];
+
+    // Joueurs CDM inscrits (RANKING_PLAYERS) avec photos injectées
+    allCdmPlayers = RANKING_PLAYERS.map(p => ({
+      ...p,
+      photo: photos[p.espnId] || photos[String(p.espnId)] || p.photo || ''
+    }));
 
     render();
   } catch(e) {
