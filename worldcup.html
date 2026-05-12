@@ -702,9 +702,10 @@ async function loadData() {
 
 // ── PRÉDICTIONS CDM ──────────────────────────────────────────────────────────
 function calcPredScore(player, fixtures, allP) {
-  const ga5 = (player.recent_goals||0) + (player.recent_assists||0);
-  const ts  = player.trendScore || player.signal || 0;
-  const playerScore = Math.min(100, (ga5 * 15) + (ts * 0.7));
+  const gaCdm = (player.totalGoals||0) + (player.totalAssists||0);
+  const ts    = player.trendScore || player.signal || 0;
+  // CDM : pondérer sur les stats totales de compétition (max ~8 matchs)
+  const playerScore = Math.min(100, (gaCdm * 12) + (ts * 0.6));
 
   const nextMatch = (fixtures||[]).find(f =>
     f.homeTeam === player.teamName || f.awayTeam === player.teamName
@@ -743,16 +744,18 @@ function getPredLabel(score) {
 function renderCdmPredictions(players, fixtures) {
   const leaguesSeen = new Set();
   const picked = [];
-  const sorted = [...players].sort((a,b) => (b.trendScore||b.signal||0) - (a.trendScore||a.signal||0));
+  const withScores = [...players].map(p => ({
+    ...p, _predScore: calcPredScore(p, fixtures, players).score
+  })).sort((a,b) => b._predScore - a._predScore);
 
-  for (const p of sorted) {
+  for (const p of withScores) {
     if (picked.length >= 4) break;
     if (!leaguesSeen.has(p.teamName)) {
       leaguesSeen.add(p.teamName);
       picked.push(p);
     }
   }
-  for (const p of sorted) {
+  for (const p of withScores) {
     if (picked.length >= 4) break;
     if (!picked.find(x => x.id === p.id)) picked.push(p);
   }
@@ -766,7 +769,8 @@ function renderCdmPredictions(players, fixtures) {
     const predLabel = getPredLabel(score);
     if (!predLabel) return;
 
-    const ga5 = (p.recent_goals||0) + (p.recent_assists||0);
+    const g5  = p.totalGoals || 0;
+    const a5  = p.totalAssists || 0;
     const dateStr = matchDate
       ? new Date(matchDate).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})
       : null;
@@ -794,7 +798,11 @@ function renderCdmPredictions(players, fixtures) {
         </div>
         <span style="font-size:11px;font-weight:700;color:${predLabel.color};white-space:nowrap;min-width:80px">${predLabel.label}</span>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:6px">GA/5J : ${ga5} · TendScore : ${p.trendScore||p.signal||0}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;display:flex;gap:12px">
+        <span>⚽ <strong style="color:var(--gold)">${g5}</strong></span>
+        <span>🎯 <strong style="color:var(--b)">${a5}</strong></span>
+        <span style="margin-left:auto">TendScore : ${p.trendScore||p.signal||0}</span>
+      </div>
     `;
     c.appendChild(d);
   });
@@ -855,7 +863,7 @@ function renderHotPlayers() {
       <div class="chips">
         <div class="chip"><div class="chip-n" style="color:var(--g)">${p.totalGoals||p.goals||0}</div><div class="chip-l">Buts</div></div>
         <div class="chip"><div class="chip-n" style="color:var(--b)">${p.totalAssists||p.assists||0}</div><div class="chip-l">Passes</div></div>
-        <div class="chip"><div class="chip-n" style="color:var(--o)">${recent_g + recent_a}</div><div class="chip-l">GA/5J</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--o)">${(p.totalGoals||0) + (p.totalAssists||0)}</div><div class="chip-l">G+A</div></div>
         <div class="chip"><div class="chip-n" style="color:var(--y)">${p.avg||0}</div><div class="chip-l">Moy.</div></div>
       </div>
       <div class="sigbar">
