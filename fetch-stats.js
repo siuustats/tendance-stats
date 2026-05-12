@@ -62,6 +62,50 @@ async function fetchESPN(leagueCode, date) {
 
 // ── ESPN Summary : photos joueurs depuis le roster ───────────────────────────
 
+async function fetchFixtures() {
+  const fixtures = [];
+  const today = new Date();
+  const dates = [];
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() + i);
+    dates.push(d.toISOString().slice(0,10).replace(/-/g,''));
+  }
+
+  for (const league of LEAGUES) {
+    if (league.id === 6) continue; // CDM gérée séparément
+    for (const date of dates) {
+      try {
+        const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${league.code}/scoreboard?dates=${date}`;
+        const res = await fetch(url);
+        if (!res.ok) continue;
+        const data = await res.json();
+        for (const event of (data.events || [])) {
+          const comp       = event.competitions?.[0];
+          const homeComp   = comp?.competitors?.find(c => c.homeAway === 'home');
+          const awayComp   = comp?.competitors?.find(c => c.homeAway === 'away');
+          const homeName   = homeComp?.team?.displayName || '?';
+          const awayName   = awayComp?.team?.displayName || '?';
+          const TEAM_FIX   = { 'Brighton & Hove Albion': 'Brighton' };
+          fixtures.push({
+            id:         event.id,
+            date:       event.date,
+            leagueId:   league.id,
+            leagueLabel:league.label,
+            leagueCls:  league.cls,
+            homeTeam:   TEAM_FIX[homeName] || homeName,
+            awayTeam:   TEAM_FIX[awayName] || awayName,
+            homeLogo:   homeComp?.team?.logo || '',
+            awayLogo:   awayComp?.team?.logo || '',
+          });
+        }
+      } catch(e) {}
+    }
+  }
+  console.log(`📅 ${fixtures.length} prochain(s) match(s) collecté(s)`);
+  return fixtures;
+}
+
 async function fetchSummaryData(leagueCode, eventId) {
   const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${leagueCode}/summary?event=${eventId}`;
   await new Promise(r => setTimeout(r, 500));
@@ -522,6 +566,9 @@ async function main() {
     if (!p.photo && updatedPhotos[p.id]) p.photo = updatedPhotos[p.id];
   }
 
+  // Collecter les prochains matchs
+  const fixtures = await fetchFixtures();
+
   fs.writeFileSync(DATA_FILE, JSON.stringify({
     updatedAt:       new Date().toISOString(),
     totalMatches:    trimmed.length,
@@ -530,6 +577,7 @@ async function main() {
     newMatchesToday: newMatches.length,
     matches:         trimmed,
     players,
+    fixtures,
   }));
 
   console.log(`\n✅ ${newMatches.length} match(s) | ${players.length} joueurs | ${LEAGUES.length} requêtes ESPN`);
