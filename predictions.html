@@ -49,6 +49,14 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
 .filter-btn { background:var(--s2); border:1px solid var(--border); color:var(--m2); font-size:12px; padding:6px 14px; border-radius:20px; cursor:pointer; transition:all .2s; font-family:'DM Sans',sans-serif; }
 .filter-btn:hover, .filter-btn.on { border-color:var(--g); color:var(--g); background:rgba(0,229,160,0.06); }
 
+.day-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; margin-top:-12px; }
+.day-btn { background:var(--s2); border:1px solid var(--border); color:var(--m2); font-size:12px; padding:5px 14px; border-radius:20px; cursor:pointer; transition:all .2s; font-family:'DM Sans',sans-serif; }
+.day-btn:hover, .day-btn.on { border-color:var(--g); color:var(--g); background:rgba(0,229,160,0.06); }
+.day-filter-wrap { margin-bottom:16px; }
+.day-filter-label { font-size:11px; color:var(--m); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
+.day-filters { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:20px; }
+.day-btn { background:var(--s2); border:1px solid var(--border); color:var(--m2); font-size:11px; padding:5px 12px; border-radius:20px; cursor:pointer; transition:all .2s; font-family:'DM Sans',sans-serif; white-space:nowrap; }
+.day-btn:hover, .day-btn.on { border-color:var(--g); color:var(--g); background:rgba(0,229,160,0.06); }
 .match-section { margin-bottom:40px; }
 .match-header { display:flex; align-items:center; gap:12px; padding:14px 18px; background:var(--s2); border:1px solid var(--border); border-radius:12px 12px 0 0; border-bottom:none; }
 .match-teams { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; }
@@ -111,17 +119,15 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
   </nav>
 </header>
 
-<a href="https://www.winamax.fr/paris-sportifs/sports/1?code=CMONBN" target="_blank" rel="nofollow noopener" class="wina-banner">
-  <span>🎁 Winamax — Jusqu'à <strong>200€ offerts</strong> sur votre 1er dépôt</span>
-  <span class="wina-cta">J'en profite →</span>
-</a>
-
 <div class="hero">
-  <h1>🔮 Prédictions</h1>
+  <h1><span style="-webkit-text-fill-color:initial;font-size:0.8em">🔮</span> Prédictions</h1>
   <p>Joueurs susceptibles de marquer ou passer sur les prochains matchs, calculés à partir de leur forme récente et de celle de leurs équipes.</p>
 </div>
 
 <div class="content">
+  <!-- Filtres par jour -->
+  <div class="day-filters" id="day-filters"></div>
+
   <div class="filters" id="filters">
     <button class="filter-btn on" onclick="setFilter('all',this)">Tous</button>
     <button class="filter-btn" onclick="setFilter(17,this)">PL</button>
@@ -139,6 +145,11 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
   </div>
 </div>
 
+<a href="https://www.winamax.fr/paris-sportifs/sports/1?code=CMONBN" target="_blank" rel="nofollow noopener" class="wina-banner" style="margin-top:32px;display:flex">
+  <span>⚽ Pariez sur vos joueurs en forme avec Winamax — <strong>200€ offerts</strong> à l'inscription</span>
+  <span class="wina-cta">Voir les cotes →</span>
+</a>
+
 <div class="legal">
   Les jeux d'argent et de hasard sont interdits aux mineurs. Jouer comporte des risques.<br>
   Appelez le <strong>09 74 75 13 13</strong> | <a href="https://www.joueurs-info-service.fr" target="_blank">joueurs-info-service.fr</a> | 18+ | Winamax agréé ANJ<br><br>
@@ -152,7 +163,7 @@ const LEAGUE_MAP = {
   5:{label:'UEL',cls:'uel'}, 20296:{label:'ECL',cls:'ecl'},
 };
 
-let allPlayers = [], allFixtures = [], currentFilter = 'all';
+let allPlayers = [], allFixtures = [], currentFilter = 'all', currentDay = 'all';
 
 function calcPredScore(player, fixtures, players) {
   const ga5 = (player.recent_goals||0) + (player.recent_assists||0);
@@ -194,6 +205,33 @@ function getPredLabel(score) {
   return null;
 }
 
+function renderDayFilters() {
+  const container = document.getElementById('day-filters');
+  if (!container) return;
+
+  // Extraire les jours uniques des fixtures
+  const days = [...new Set(allFixtures.map(f => f.date?.slice(0,10)).filter(Boolean))].sort();
+  if (!days.length) { container.innerHTML = ''; return; }
+
+  const today = new Date().toISOString().slice(0,10);
+  let html = '<div class="day-filter-label">Jour</div>';
+  html += `<div class="day-filters"><button class="day-btn on" onclick="setDay('all',this)">Tous</button>`;
+  days.forEach(d => {
+    const date = new Date(d + 'T12:00:00');
+    const label = date.toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'2-digit'});
+    html += `<button class="day-btn" onclick="setDay('${d}',this)">${label}</button>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function setDay(day, btn) {
+  currentDay = day;
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  render();
+}
+
 function setFilter(league, btn) {
   currentFilter = league;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('on'));
@@ -201,23 +239,57 @@ function setFilter(league, btn) {
   render();
 }
 
+function setDay(day, btn) {
+  currentDay = day;
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  render();
+}
+
+function buildDayFilters(fixtures) {
+  const days = new Set();
+  for (const f of fixtures) {
+    if (f.date) days.add(f.date.slice(0,10));
+  }
+  const sorted = [...days].sort();
+  const container = document.getElementById('day-filters');
+  if (!container || sorted.length === 0) return;
+
+  const today = new Date().toISOString().slice(0,10);
+  const allBtn = `<button class="day-btn${currentDay==='all'?' on':''}" onclick="setDay('all',this)">Tous</button>`;
+  const dayBtns = sorted.map(d => {
+    const date = new Date(d + 'T12:00:00');
+    const label = d === today ? 'Aujourd'hui'
+      : date.toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'2-digit'});
+    return `<button class="day-btn${currentDay===d?' on':''}" onclick="setDay('${d}',this)">${label}</button>`;
+  }).join('');
+  container.innerHTML = allBtn + dayBtns;
+}
+
 function render() {
   const container = document.getElementById('predictions-container');
 
-  // Filtrer joueurs
   let players = currentFilter === 'all'
     ? allPlayers.filter(p => p.leagueId !== 6)
     : allPlayers.filter(p => p.leagueId === currentFilter);
 
-  // Grouper par prochain match
+  // Filtrer les fixtures par jour
+  let fixtures = allFixtures;
+  if (currentDay !== 'all') {
+    fixtures = allFixtures.filter(f => f.date && f.date.slice(0,10) === currentDay);
+  }
+
+  // Grouper par match (fusionner les deux équipes dans un seul bloc)
   const matchMap = {};
   for (const p of players) {
-    const { score, opponent, matchDate, matchLeague } = calcPredScore(p, allFixtures, allPlayers);
+    const { score, opponent, matchDate, matchLeague } = calcPredScore(p, fixtures, allPlayers);
     if (!opponent) continue;
     const predLabel = getPredLabel(score);
     if (!predLabel) continue;
 
-    const key = `${p.teamName}__${opponent}__${matchDate}`;
+    // Clé unique indépendante de quel côté on est
+    const teams = [p.teamName, opponent].sort().join('__');
+    const key = `${teams}__${matchDate}`;
     if (!matchMap[key]) {
       matchMap[key] = {
         homeTeam: p.teamName, awayTeam: opponent,
@@ -228,14 +300,29 @@ function render() {
     matchMap[key].players.push({ player: p, score, predLabel });
   }
 
-  // Trier chaque match par score décroissant et garder top 3
+  // Pour chaque match : 1 buteur probable + 1 passeur probable + 3 décisifs
   const matches = Object.values(matchMap)
-    .map(m => ({ ...m, players: m.players.sort((a,b) => b.score - a.score).slice(0, 3) }))
-    .filter(m => m.players.length > 0)
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
+    .map(m => {
+      const all = m.players.sort((a,b) => b.score - a.score);
+      // Buteur probable = meilleur recent_goals
+      const striker = [...all].sort((a,b) => (b.player.recent_goals||0) - (a.player.recent_goals||0))[0];
+      // Passeur probable = meilleur recent_assists parmi les autres
+      const passer = [...all].filter(x => x.player.id !== striker?.player.id)
+        .sort((a,b) => (b.player.recent_assists||0) - (a.player.recent_assists||0))[0];
+      // 3 décisifs = top 3 restants par score
+      const usedIds = new Set([striker?.player.id, passer?.player.id].filter(Boolean));
+      const decisive = all.filter(x => !usedIds.has(x.player.id)).slice(0, 3);
+      return {
+        ...m,
+        striker, passer, decisive,
+        selected: [striker, passer, ...decisive].filter(Boolean)
+      };
+    })
+    .filter(m => m.selected.length > 0)
+    .sort((a,b) => new Date(a.date) - new Date(b.date));
 
   if (!matches.length) {
-    container.innerHTML = '<div class="empty">Aucune prédiction disponible pour ce filtre.<br>Les prédictions apparaissent quand les prochains matchs sont connus.</div>';
+    container.innerHTML = '<div class="empty">Aucune prédiction disponible.<br>Les prédictions apparaissent quand les prochains matchs sont connus.</div>';
     return;
   }
 
@@ -245,29 +332,41 @@ function render() {
       ? new Date(match.date).toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'2-digit'})
       : '—';
 
-    const playersHtml = match.players.map(({ player: p, score, predLabel }) => {
-      const ga5 = (p.recent_goals||0) + (p.recent_assists||0);
+    const rowHtml = (entry, role) => {
+      if (!entry) return '';
+      const { player: p, score, predLabel } = entry;
+      const g5  = p.recent_goals || 0;
+      const a5  = p.recent_assists || 0;
       const photo = p.photo || '';
+      const roleTag = role === 'striker' ? `<span style="font-size:9px;background:rgba(0,229,160,0.12);color:var(--g);border-radius:4px;padding:1px 6px;font-weight:700">⚽ BUTEUR</span>`
+        : role === 'passer' ? `<span style="font-size:9px;background:rgba(94,129,244,0.12);color:var(--b);border-radius:4px;padding:1px 6px;font-weight:700">🎯 PASSEUR</span>`
+        : `<span style="font-size:9px;background:rgba(255,159,67,0.12);color:var(--o);border-radius:4px;padding:1px 6px;font-weight:700">⚡ DÉCISIF</span>`;
       return `<div class="pred-row" onclick="window.location.href='player.html?id=${p.id}'">
         <div class="pred-avatar">
           ${photo ? `<img src="${photo}" onerror="this.outerHTML='⚽'" alt="${p.name}">` : '⚽'}
         </div>
         <div class="pred-info">
-          <div class="pred-name">${p.name}</div>
+          <div class="pred-name" style="display:flex;align-items:center;gap:6px">${p.name} ${roleTag}</div>
           <div class="pred-team">${p.teamName}</div>
         </div>
         <div class="pred-bar-wrap">
           <div class="pred-bar-bg">
-            <div class="pred-bar-fill" style="width:${score}%;background:linear-gradient(90deg,${predLabel.color},${predLabel.color}88)"></div>
+            <div class="pred-bar-fill" data-fill="${score}" style="width:0%;background:linear-gradient(90deg,${predLabel.color},${predLabel.color}88)"></div>
           </div>
           <div class="pred-label" style="color:${predLabel.color}">${predLabel.label}</div>
         </div>
         <div class="pred-stats">
-          <div class="pred-ga" style="color:${predLabel.color}">${ga5} GA</div>
-          <div class="pred-sub">sur 5J</div>
+          <div style="font-size:13px;font-weight:600;color:${predLabel.color}">⚽${g5} 🎯${a5}</div>
+          <div class="pred-sub">/5J</div>
         </div>
       </div>`;
-    }).join('');
+    };
+
+    const playersHtml = [
+      rowHtml(match.striker, 'striker'),
+      rowHtml(match.passer, 'passer'),
+      ...match.decisive.map(d => rowHtml(d, 'decisive'))
+    ].join('');
 
     return `<div class="match-section">
       <div class="match-header">
@@ -278,6 +377,14 @@ function render() {
       <div class="players-list">${playersHtml}</div>
     </div>`;
   }).join('');
+
+  // Animer les barres
+  requestAnimationFrame(() => {
+    document.querySelectorAll('.pred-bar-fill').forEach(bar => {
+      bar.style.transition = 'width .8s ease';
+      bar.style.width = bar.dataset.fill + '%';
+    });
+  });
 }
 
 async function init() {
@@ -289,12 +396,14 @@ async function init() {
     const data   = await dataRes.json();
     const photos = photosRes?.ok ? await photosRes.json() : {};
 
+    renderDayFilters();
     allPlayers  = (data.players || []).filter(p => p.leagueId !== 6).map(p => ({
       ...p,
       photo: photos[p.id] || photos[String(p.id)] || p.photo || ''
     }));
     allFixtures = data.fixtures || [];
 
+    buildDayFilters(allFixtures);
     render();
   } catch(e) {
     document.getElementById('predictions-container').innerHTML =
