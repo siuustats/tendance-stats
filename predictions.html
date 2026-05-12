@@ -106,6 +106,7 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
   .pred-bar-wrap { max-width:120px; }
   .pred-row { gap:10px; padding:12px 14px; }
 }
+@keyframes growBar { from { width:0% } to { width:inherit } }
 </style>
 </head>
 <body>
@@ -337,7 +338,7 @@ function render() {
         </div>
         <div class="pred-bar-wrap">
           <div class="pred-bar-bg">
-            <div class="pred-bar-fill" data-fill="${score}" style="width:0%;background:linear-gradient(90deg,${predLabel.color},${predLabel.color}88);border-radius:3px"></div>
+            <div class="pred-bar-fill" style="width:${score}%;background:linear-gradient(90deg,${predLabel.color},${predLabel.color}88);border-radius:3px;animation:growBar .8s ease"></div>
           </div>
           <div class="pred-label" style="color:${predLabel.color}">${predLabel.label}</div>
         </div>
@@ -395,7 +396,7 @@ function render() {
         </div>
         <div class="pred-bar-wrap">
           <div class="pred-bar-bg">
-            <div class="pred-bar-fill" data-fill="${score}" style="width:0%;background:linear-gradient(90deg,${predLabel.color},${predLabel.color}88);border-radius:3px"></div>
+            <div class="pred-bar-fill" style="width:${score}%;background:linear-gradient(90deg,${predLabel.color},${predLabel.color}88);border-radius:3px;animation:growBar .8s ease"></div>
           </div>
           <div class="pred-label" style="color:${predLabel.color}">${predLabel.label}</div>
         </div>
