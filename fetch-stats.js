@@ -119,7 +119,7 @@ async function fetchSummaryData(leagueCode, eventId) {
     // Photos + joueurs ayant joué (titulaires + remplaçants entrés) par équipe
     const photos = {};
     const playedByTeam = {}; // { teamName: [{ id, name, photo }] }
-    const TEAM_FIX = { 'Brighton & Hove Albion': 'Brighton' };
+    const TEAM_FIX = { 'Brighton & Hove Albion': 'Brighton', 'Internazionale': 'Inter Milan' };
 
     for (const team of (data.rosters || [])) {
       const rawTeam = team.team?.displayName || team.team?.name || '';
@@ -217,7 +217,7 @@ function extractContributions(event, league, photos = {}, assists = {}) {
     const teamId   = detail.team?.id;
     const isHome   = teamId === homeId;
     const rawTeamName = isHome ? homeComp?.team?.displayName : awayComp?.team?.displayName;
-    const TEAM_FIX = { 'Brighton & Hove Albion': 'Brighton' };
+    const TEAM_FIX = { 'Brighton & Hove Albion': 'Brighton', 'Internazionale': 'Inter Milan' };
     const teamName = TEAM_FIX[rawTeamName] || rawTeamName;
     const teamWon  = isHome ? (homeScore > awayScore ? true : homeScore === awayScore ? null : false) : (awayScore > homeScore ? true : awayScore === homeScore ? null : false);
 
@@ -529,7 +529,7 @@ async function main() {
       contribs.forEach(p => console.log(`     ⚽ ${p.name}: ${p.goals}B (${p.teamName})`));
 
       // Ajouter tous les joueurs ayant joué (starter/subbedIn), même sans stats
-      const TEAM_FIX = { 'Brighton & Hove Albion': 'Brighton' };
+      const TEAM_FIX = { 'Brighton & Hove Albion': 'Brighton', 'Internazionale': 'Inter Milan' };
       const matchDate = event.date;
       const homeWon = homeScore > awayScore ? true : homeScore === awayScore ? null : false;
       const awayWon = awayScore > homeScore ? true : awayScore === homeScore ? null : false;
