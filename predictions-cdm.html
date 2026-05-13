@@ -105,7 +105,6 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
   .countdown-mini { gap:10px; }
   .cd-val { font-size:28px; }
 }
-@keyframes growBar { from { width:0% } to { width:inherit } }
 </style>
 </head>
 <body>
@@ -292,7 +291,7 @@ function render() {
         </div>
         <div class="pred-bar-wrap">
           <div class="pred-bar-bg">
-            <div class="pred-bar-fill" style="width:${score}%;height:100%;background:linear-gradient(90deg,${predLabel.color},${predLabel.color}88);border-radius:3px"></div>
+            <div class="pred-bar-fill" class="pred-anim-bar" data-w="${score}" style="width:0%;height:100%;background:linear-gradient(90deg,${predLabel.color},${predLabel.color}88);border-radius:3px"></div>
           </div>
           <div class="pred-label" style="color:${predLabel.color}">${predLabel.label}</div>
         </div>
@@ -319,9 +318,9 @@ function render() {
 
     // Animer les barres
     setTimeout(() => {
-      document.querySelectorAll('.pred-bar-fill').forEach(bar => {
+      document.querySelectorAll('.pred-anim-bar').forEach(bar => {
         bar.style.transition = 'width .8s ease';
-        bar.style.width = (bar.dataset.fill || 0) + '%';
+        bar.style.width = (bar.dataset.w || 0) + '%';
       });
     }, 100);
 
