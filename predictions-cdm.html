@@ -71,7 +71,7 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
 .pred-team { font-size:11px; color:var(--m2); margin-top:1px; }
 .pred-bar-wrap { flex:1; max-width:200px; }
 .pred-bar-bg { height:6px; background:var(--s3); border-radius:3px; overflow:hidden; margin-bottom:4px; }
-.pred-bar-fill { height:100%; border-radius:3px; transition:width .8s ease; }
+.pred-bar-fill { height:6px; border-radius:3px; }
 .pred-label { font-size:11px; font-weight:700; white-space:nowrap; }
 .pred-stats { text-align:right; flex-shrink:0; }
 .pred-ga { font-family:'DM Mono',monospace; font-size:15px; font-weight:600; }
@@ -290,9 +290,7 @@ function render() {
           <div class="pred-team">${p.teamName} · <span style="color:var(--g)">Groupe ${group}</span></div>
         </div>
         <div class="pred-bar-wrap">
-          <div class="pred-bar-bg">
-            <div class="pred-bar-fill" style="width:${score}%;height:100%;background:linear-gradient(90deg,${predLabel.color},${predLabel.color}88);border-radius:3px"></div>
-          </div>
+          <div class="pred-bar-bg"><div class="pred-bar-fill" style="width:${score}%;background:linear-gradient(90deg,${predLabel.color},${predLabel.colorDim})"></div></div>
           <div class="pred-label" style="color:${predLabel.color}">${predLabel.label}</div>
         </div>
         <div class="pred-stats">
