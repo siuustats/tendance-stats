@@ -21,15 +21,28 @@ const LEAGUES = [
 
 function calcTrendScore(last5) {
   if (!last5?.length) return 0;
+
+  // Poids décroissants : match récent (i=0) pèse 5x plus que le 5ème (i=4)
+  const WEIGHTS = [1.0, 0.8, 0.6, 0.4, 0.2];
+
   let score = 0;
   last5.forEach((m, i) => {
-    score += (m.goals + m.assists) * (i === 0 ? 1.0 : 0.9);
-    if (m.teamWon) score += 0.5;
+    const w = WEIGHTS[i] ?? 0.2;
+    if (!m.played) {
+      // Non joué (blessure/suspension) → pénalité légère
+      score -= 0.3 * w;
+    } else if (m.goals === 0 && m.assists === 0) {
+      // Joué sans contribution → pénalité
+      score -= 0.4 * w;
+    } else {
+      // Contribution pondérée par récence (but > passe)
+      score += (m.goals * 1.0 + m.assists * 1.0) * w;
+    }
+    // Bonus victoire pondéré par récence
+    if (m.teamWon) score += 0.3 * w;
   });
-  if (!last5[0].played) score -= 3;
-  const wins = last5.filter(m => m.teamWon).length;
-  if (wins >= 4) score += 2; else if (wins >= 3) score += 1;
-  return parseFloat(score.toFixed(2));
+
+  return parseFloat(Math.max(0, score).toFixed(2));
 }
 
 function buildFormDots(last5) {
@@ -320,7 +333,7 @@ function rebuildPlayers(matches) {
       avg: matches.length > 0 ? parseFloat(((totalGoals + totalAssists) / matches.length).toFixed(2)) : 0,
       recent_goals, recent_assists, trendScore,
       form: buildFormDots(last5), last5,
-      signal: Math.min(98, Math.round(50 + trendScore * 10)),
+      signal: Math.min(98, Math.max(0, Math.round(trendScore * 13))),
       hot: trendScore > 2 && recent_goals >= 2,
     };
   }
