@@ -432,7 +432,7 @@ async function init() {
     const dateStr = matchDate
       ? new Date(matchDate).toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'2-digit'})
       : '—';
-    const LEAGUE_COLORS = { PL:'#3d195b', L1:'#001489', Liga:'#ee8707', SA:'#1b4693', BL:'#d20515', LDC:'#001489', UEL:'#f57c00', ECL:'#2e7d32' };
+    const LEAGUE_COLORS = { PL:'rgba(88,28,200,.6)', L1:'rgba(0,80,179,.6)', Liga:'rgba(200,150,0,.6)', SA:'rgba(0,100,60,.6)', BL:'rgba(180,30,30,.6)', LDC:'rgba(0,20,120,.8)', EL:'rgba(200,80,0,.6)', ECL:'rgba(0,150,80,.6)' };
     const lgBg = LEAGUE_COLORS[matchLeague] || '#1e2130';
     predEl.innerHTML = `
       <div class="pred-next">
