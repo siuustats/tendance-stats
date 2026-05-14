@@ -366,17 +366,115 @@ function rebuildPlayers(matches) {
 // ── API-Football : photos des nouveaux joueurs ───────────────────────────────
 
 async function fetchMissingPhotos(players, photosCache) {
-  // Les photos sont capturées depuis ESPN lors des matchs (fetchSummaryData).
-  // Pour les joueurs sans photo en cache, on génère une URL ESPN CDN qui sera
-  // résolue côté navigateur — pas besoin d'appel réseau depuis le script.
+  const TM_API = 'https://transfermarkt-api-grqvbg.fly.dev';
+
+  // Stratégie de recherche :
+  // - undefined  → jamais cherché → toujours retenter
+  // - ""         → déjà tenté sans succès → retenter 1x/semaine (au cas où l'API était down)
+  // - "https://…" → photo en cache → ignorer
+  const oneWeekAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
+  const retrySet = new Set((photosCache.__retried_at
+    ? Object.entries(photosCache.__retried_at)
+        .filter(([, ts]) => ts > oneWeekAgo)
+        .map(([id]) => id)
+    : []));
+
+  const missing = players.filter(p => {
+    if (!p.name) return false;
+    if (photosCache[p.id] === undefined) return true;          // jamais cherché
+    if (photosCache[p.id] === '' && !retrySet.has(String(p.id))) return true; // échec ancien → retenter
+    return false;
+  });
+  if (!missing.length) { console.log('✅ Toutes les photos sont en cache'); return photosCache; }
+
+  console.log(`\n📸 Recherche de ${missing.length} photo(s) via Transfermarkt...`);
   const updated = { ...photosCache };
-  const missing = players.filter(p => !photosCache[p.id] && p.id);
-  if (missing.length) {
-    console.log(`\n📸 ${missing.length} joueur(s) sans photo → URL ESPN CDN générée côté client`);
-    // On ne stocke rien dans photosCache pour ces joueurs — le HTML utilisera
-    // le fallback ESPN CDN dynamiquement via l'ID du joueur.
-  } else {
-    console.log('✅ Toutes les photos sont en cache');
+
+  // ── Test de santé ─────────────────────────────────────────────────────────
+  let apiOk = false;
+  for (const testName of ['Mbappe', 'Ronaldo', 'Messi']) {
+    try {
+      const tc = new AbortController();
+      const tt = setTimeout(() => tc.abort(), 6000);
+      const tr = await fetch(`${TM_API}/players/search/${testName}`,
+        { headers: { 'User-Agent': 'TendanceStats/1.0' }, signal: tc.signal });
+      clearTimeout(tt);
+      if (tr.ok) { apiOk = true; break; }
+    } catch(e) {}
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  if (!apiOk) {
+    console.log('  ❌ API Transfermarkt indisponible — photos ignorées');
+    return photosCache;
+  }
+  console.log('  ✅ API Transfermarkt disponible');
+
+  let consecutiveFails = 0;
+  let dynamicTimeout = 6000;
+
+  for (const p of missing) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), dynamicTimeout);
+
+      let playerId = null;
+      for (const searchName of [p.name, p.name.split(' ').pop()]) {
+        try {
+          const res = await fetch(
+            `${TM_API}/players/search/${encodeURIComponent(searchName)}`,
+            { headers: { 'User-Agent': 'TendanceStats/1.0' }, signal: controller.signal }
+          );
+          if (!res.ok) continue;
+          const data = await res.json();
+          playerId = data.results?.[0]?.id;
+          if (playerId) break;
+          await new Promise(r => setTimeout(r, 300));
+        } catch(e) { break; }
+      }
+
+      clearTimeout(timeout);
+      if (!playerId) {
+        updated[p.id] = '';
+        if (!updated.__retried_at) updated.__retried_at = { ...(photosCache.__retried_at || {}) };
+        updated.__retried_at[String(p.id)] = Date.now();
+        consecutiveFails++;
+        if (consecutiveFails >= 5) dynamicTimeout = 2000;
+        continue;
+      }
+
+      consecutiveFails = 0;
+      dynamicTimeout = 6000;
+      await new Promise(r => setTimeout(r, 300));
+
+      const c2 = new AbortController();
+      const t2 = setTimeout(() => c2.abort(), 6000);
+      try {
+        const profileRes = await fetch(
+          `${TM_API}/players/${playerId}/profile`,
+          { headers: { 'User-Agent': 'TendanceStats/1.0' }, signal: c2.signal }
+        );
+        clearTimeout(t2);
+        if (!profileRes.ok) { updated[p.id] = ''; continue; }
+        const profile = await profileRes.json();
+        const photo = profile.imageUrl;
+        updated[p.id] = photo || '';
+        if (photo) {
+          console.log(`  ✅ ${p.name}`);
+          consecutiveFails = 0;
+          dynamicTimeout = 6000;
+        } else {
+          consecutiveFails++;
+          if (consecutiveFails >= 5) dynamicTimeout = 2000;
+        }
+      } catch(e) {
+        clearTimeout(t2);
+        updated[p.id] = '';
+      }
+    } catch(e) {
+      updated[p.id] = '';
+    }
+    await new Promise(r => setTimeout(r, 200));
   }
 
   return updated;
