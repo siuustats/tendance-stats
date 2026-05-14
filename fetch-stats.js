@@ -519,21 +519,29 @@ async function main() {
     .pop(); // date la plus récente stockée
 
   // Fenêtre = depuis le dernier match stocké - 1 jour, avec un minimum de 7 jours en arrière
-  // Garantit qu'on ne rate jamais des matchs même si le script n'a pas tourné plusieurs jours
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  // Si des matchs LDC/EL/ECL sont mal stockés (<10 joueurs) → étendre à 21 jours pour les récupérer
+  const EUR_IDS = new Set([7, 5, 20296]);
+  const hasBadEurMatches = (stored.matches || []).some(m =>
+    EUR_IDS.has(m.leagueId) && (m.players?.length || 0) < 10
+  );
+
+  const minDays = hasBadEurMatches ? 21 : 7;
+  if (hasBadEurMatches) console.log(`⚠️  Matchs européens incomplets détectés → fenêtre étendue à ${minDays} jours`);
+
+  const minDaysAgo = new Date();
+  minDaysAgo.setDate(minDaysAgo.getDate() - minDays);
 
   const windowStart = new Date();
   if (lastStoredDate) {
     windowStart.setTime(new Date(lastStoredDate).getTime());
     windowStart.setDate(windowStart.getDate() - 1); // 1 jour de marge UTC
   } else {
-    windowStart.setTime(sevenDaysAgo.getTime());
+    windowStart.setTime(minDaysAgo.getTime());
   }
 
-  // Toujours couvrir au minimum 7 jours en arrière
-  if (windowStart > sevenDaysAgo) {
-    windowStart.setTime(sevenDaysAgo.getTime());
+  // Toujours couvrir au minimum minDays jours en arrière
+  if (windowStart > minDaysAgo) {
+    windowStart.setTime(minDaysAgo.getTime());
   }
 
   const recentDates = new Set();
