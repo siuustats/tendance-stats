@@ -237,9 +237,10 @@ function calcPredScore(player, fixtures, players) {
 }
 
 function getPredLabel(score) {
-  if (score >= 75) return { label:'🔥 EN FEU',  color:'#ff9f43', colorDim:'#ff9f4388' };
-  if (score >= 55) return { label:'⚡ CHAUD',    color:'#ffd32a', colorDim:'#ffd32a88' };
-  if (score >= 35) return { label:'📈 EN FORME', color:'#00e5a0', colorDim:'#00e5a088' };
+  if (score >= 75) return { label:'🔥 EN FEU',   color:'#ff9f43', colorDim:'#ff9f4388' };
+  if (score >= 55) return { label:'⚡ CHAUD',     color:'#ffd32a', colorDim:'#ffd32a88' };
+  if (score >= 35) return { label:'📈 EN FORME',  color:'#00e5a0', colorDim:'#00e5a088' };
+  if (score >= 20) return { label:'💤 DISCRET',   color:'#5e81f4', colorDim:'#5e81f488' };
   return null;
 }
 
@@ -317,7 +318,7 @@ function render() {
         <div style="font-size:13px;color:var(--m2)">Classement des joueurs CDM 2026 inscrits</div>
       </div>
       <div class="match-section">
-        <div class="players-list">${playersHtml}</div>
+        <div class="players-list">${match.players.length > 0 ? playersHtml : '<div style="padding:16px 20px;font-size:13px;color:var(--m);font-style:italic">📊 Données insuffisantes pour établir des prédictions sur ce match</div>'}</div>
       </div>`;
 
     // Animer les barres
@@ -334,23 +335,26 @@ function render() {
     players = players.filter(p => TEAM_TO_GROUP[p.teamName] === currentFilter);
   }
 
-  const matchMap = {};
+  // Construire tous les matchs depuis les fixtures
+  const fixtureMap = {};
+  for (const f of allFixtures) {
+    const key = [f.homeTeam, f.awayTeam].sort().join('__') + '__' + f.date;
+    if (!fixtureMap[key]) {
+      fixtureMap[key] = { homeTeam: f.homeTeam, awayTeam: f.awayTeam, date: f.date, players: [] };
+    }
+  }
+
   for (const p of players) {
     const { score, opponent, matchDate } = calcPredScore(p, allFixtures, allPlayers);
     if (!opponent) continue;
     const predLabel = getPredLabel(score);
     if (!predLabel) continue;
-
-    const key = `${p.teamName}__${opponent}__${matchDate}`;
-    if (!matchMap[key]) {
-      matchMap[key] = { homeTeam: p.teamName, awayTeam: opponent, date: matchDate, players: [] };
-    }
-    matchMap[key].players.push({ player: p, score, predLabel });
+    const key = [p.teamName, opponent].sort().join('__') + '__' + matchDate;
+    if (fixtureMap[key]) fixtureMap[key].players.push({ player: p, score, predLabel });
   }
 
-  const matches = Object.values(matchMap)
+  const matches = Object.values(fixtureMap)
     .map(m => ({ ...m, players: m.players.sort((a,b) => b.score - a.score).slice(0,3) }))
-    .filter(m => m.players.length > 0)
     .sort((a,b) => new Date(a.date) - new Date(b.date));
 
   if (!matches.length) {
@@ -398,7 +402,7 @@ function render() {
         <span class="match-teams">${match.homeTeam} <span style="color:var(--m);font-size:14px">vs</span> ${match.awayTeam}</span>
         <span class="match-date">${dateStr}</span>
       </div>
-      <div class="players-list">${playersHtml}</div>
+      <div class="players-list">${match.players.length > 0 ? playersHtml : '<div style="padding:16px 20px;font-size:13px;color:var(--m);font-style:italic">📊 Données insuffisantes pour établir des prédictions sur ce match</div>'}</div>
     </div>`;
   }).join('');
 }
