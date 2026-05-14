@@ -366,7 +366,7 @@ function rebuildPlayers(matches) {
 // ── API-Football : photos des nouveaux joueurs ───────────────────────────────
 
 async function fetchMissingPhotos(players, photosCache) {
-  const TM_API = 'https://transfermarkt-api-grqvbg.fly.dev';
+  const TM_API = 'https://transfermarkt-api-production-1532.up.railway.app';
 
   // Stratégie de recherche :
   // - undefined  → jamais cherché → toujours retenter
