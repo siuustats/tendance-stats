@@ -366,7 +366,7 @@ function rebuildPlayers(matches) {
 // ── API-Football : photos des nouveaux joueurs ───────────────────────────────
 
 async function fetchMissingPhotos(players, photosCache) {
-  const TM_API = 'https://transfermarkt-api-production-1532.up.railway.app';
+  const TM_API = 'https://transfermarkt-api-fiqh.onrender.com';
 
   // Stratégie de recherche :
   // - undefined  → jamais cherché → toujours retenter
@@ -398,7 +398,7 @@ async function fetchMissingPhotos(players, photosCache) {
     setTimeout(() => wakeCtrl.abort(), 3000);
     await fetch(`${TM_API}/`, { headers: { 'User-Agent': 'TendanceStats/1.0' }, signal: wakeCtrl.signal });
   } catch(e) {} // on ignore l'erreur du ping, c'est juste pour réveiller l'instance
-  await new Promise(r => setTimeout(r, 5000)); // attendre 5s que l'instance démarre
+  await new Promise(r => setTimeout(r, 55000)); // attendre 55s pour le cold start Render (peut prendre 50s+)
 
   let apiOk = false;
   for (const testName of ['Mbappe', 'Ronaldo', 'Messi']) {
