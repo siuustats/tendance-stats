@@ -310,11 +310,14 @@ function render() {
     }
   }
 
-  // Pour chaque match : top 5 par score
+  // Pour chaque match : top 5, uniquement joueurs avec au moins 1 but ou 1 passe
   const matches = Object.values(fixtureMap)
     .map(m => {
-      const all = m.players.sort((a,b) => b.score - a.score).slice(0, 5);
-      return { ...m, selected: all };
+      const selected = m.players
+        .filter(e => (e.player.recent_goals||0) + (e.player.recent_assists||0) > 0)
+        .sort((a,b) => b.score - a.score)
+        .slice(0, 5);
+      return { ...m, selected };
     })
     .sort((a,b) => new Date(a.date) - new Date(b.date));
 
