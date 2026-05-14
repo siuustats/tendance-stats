@@ -327,18 +327,6 @@ async function init() {
   document.getElementById('kGames').textContent   = player.totalGames || 0;
   document.getElementById('kAvg').textContent     = player.avg || 0;
 
-  // Forme
-  const formEl = document.getElementById('formSection');
-  (player.last5 || []).forEach(m => {
-    const won   = m.teamWon;
-    const label = won === true ? 'V' : won === false ? 'D' : 'N';
-    const cls   = won === true ? 'w' : won === false ? 'l' : 'd';
-    const div   = document.createElement('div');
-    div.className = `fd ${cls}`;
-    div.textContent = label;
-    formEl.appendChild(div);
-  });
-
   // Historique matchs
   const histEl = document.getElementById('matchHistory');
   const playerMatches = [];
@@ -348,6 +336,18 @@ async function init() {
     if (found) playerMatches.push({ match: m, stats: found });
   }
   playerMatches.sort((a, b) => new Date(b.match.date) - new Date(a.match.date));
+
+  // Forme récente — depuis l'historique complet (pas player.last5 qui peut être incomplet)
+  const formEl = document.getElementById('formSection');
+  playerMatches.slice(0, 5).forEach(({ stats: m }) => {
+    const won   = m.teamWon;
+    const label = won === true ? 'V' : won === false ? 'D' : 'N';
+    const cls   = won === true ? 'w' : won === false ? 'l' : 'd';
+    const div   = document.createElement('div');
+    div.className = `fd ${cls}`;
+    div.textContent = m.played === false ? '🪑' : label;
+    formEl.appendChild(div);
+  });
 
   if (!playerMatches.length) {
     histEl.innerHTML = '<p style="color:var(--m);font-size:13px">Aucun match enregistré</p>';
@@ -364,8 +364,9 @@ async function init() {
         <div class="match-teams">${match.homeTeam} <span style="color:var(--m)">vs</span> ${match.awayTeam}</div>
         <span class="match-score">${match.homeGoals}-${match.awayGoals}</span>
         <div class="match-stats">
-          ${stats.goals > 0 ? `<span class="stat-pill goal">⚽ ${stats.goals}B</span>` : ''}
-          ${stats.assists > 0 ? `<span class="stat-pill assist">🎯 ${stats.assists}P</span>` : ''}
+          ${stats.played === false ? `<span class="stat-pill" style="background:rgba(107,114,128,0.15);color:#6b7280">🪑 Banc</span>` : ''}
+          ${stats.played !== false && stats.goals > 0 ? `<span class="stat-pill goal">⚽ ${stats.goals}B</span>` : ''}
+          ${stats.played !== false && stats.assists > 0 ? `<span class="stat-pill assist">🎯 ${stats.assists}P</span>` : ''}
         </div>
         <div class="result-badge ${cls}">${label}</div>
       `;
@@ -493,7 +494,7 @@ async function init() {
     </div>
     <div class="analysis-row">
       <span class="analysis-label">TendScore</span>
-      <span class="analysis-value green">${player.trendScore || 0} / 10</span>
+      <span class="analysis-value green">${player.trendScore || 0}</span>
     </div>
   `;
 }
