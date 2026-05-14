@@ -344,10 +344,24 @@ function rebuildPlayers(matches) {
   const players = [];
 
   // ── Joueurs club ──────────────────────────────────────────────────
+  const EUR_IDS = new Set([7, 5, 20296]); // LDC, Europa, Conference
   for (const [, data] of Object.entries(pm)) {
     const info = data.info;
     if (!info?.name) continue;
-    const leagueInfo = data.champInfo || info;
+    // Priorité : ligue européenne > ligue domestique > info par défaut
+    const eurMatch = data.matches.find(m => EUR_IDS.has(m.leagueId));
+    let leagueInfo;
+    if (eurMatch) {
+      // Reconstruire leagueInfo depuis le match européen
+      const eurLeague = LEAGUES.find(l => l.id === eurMatch.leagueId);
+      leagueInfo = eurLeague ? {
+        leagueId: eurLeague.id, leagueName: eurLeague.name,
+        leagueFlag: eurLeague.flag, leagueFlagAlt: eurLeague.flagAlt,
+        leagueCls: eurLeague.cls, leagueLabel: eurLeague.label,
+      } : data.champInfo || info;
+    } else {
+      leagueInfo = data.champInfo || info;
+    }
     players.push(buildEntry(info, data.matches, leagueInfo));
   }
 
