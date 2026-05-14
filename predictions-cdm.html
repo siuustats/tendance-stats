@@ -415,7 +415,8 @@ async function init() {
     allPlayers  = (data.players || []).map(p => ({
       ...p, photo: photos[p.id] || photos[String(p.id)] || p.photo || ''
     }));
-    allFixtures = data.fixtures || [];
+    const todayStr = new Date().toISOString().slice(0, 10);
+    allFixtures = (data.fixtures || []).filter(f => f.date && f.date.slice(0, 10) >= todayStr);
 
     // Joueurs CDM inscrits (RANKING_PLAYERS) avec photos injectées
     allCdmPlayers = RANKING_PLAYERS.map(p => ({
