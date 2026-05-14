@@ -162,14 +162,22 @@ async function fetchSummaryData(leagueCode, eventId) {
 
         // Titulaires + remplaçants entrés → played:true
         // Remplaçants non entrés → played:false (banc)
-        const hasPlayed = player.starter === true || player.subbedIn === true;
-        const onBench   = !player.starter && !player.subbedIn && player.active !== false;
-        if (id && (hasPlayed || onBench)) {
+        // Blessés/suspendus → active:false, reason = 'injury' | 'suspension' | etc.
+        const hasPlayed  = player.starter === true || player.subbedIn === true;
+        const onBench    = !player.starter && !player.subbedIn && player.active !== false;
+        const isAbsent   = player.active === false;
+        const absReason  = player.athlete?.status?.type?.name || player.reason || null;
+        // Log pour debug — à garder pour identifier les champs ESPN
+        if (isAbsent && name) {
+          console.log(`    🏥 Absent: ${name} | active=${player.active} reason=${absReason} status=${JSON.stringify(player.athlete?.status?.type)}`);
+        }
+        if (id && (hasPlayed || onBench || isAbsent)) {
           playedByTeam[fixedTeam].push({
             id: String(id),
             name,
             photo: headshot || '',
-            played: hasPlayed,   // false = était sur le banc mais pas entré
+            played: hasPlayed ? true : onBench ? false : null, // null = absent (blessé/suspendu)
+            absenceReason: isAbsent ? (absReason || 'unknown') : null,
           });
         }
       }
