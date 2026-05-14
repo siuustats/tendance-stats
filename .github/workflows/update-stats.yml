@@ -37,6 +37,6 @@ jobs:
           git stash
           git pull --rebase origin main
           git stash pop
-          git add data.json photos.json
+          git add data.json photos.json photos-index.json
           git diff --staged --quiet || git commit -m "Stats du $(date '+%d/%m/%Y a %Hh%M')"
           git push
