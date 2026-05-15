@@ -212,37 +212,43 @@ async function fetchSummaryData(leagueCode, eventId, injuries = {}) {
       console.log(`  👥 ${fixedTeam} : ${playedByTeam[fixedTeam].length} joueurs ayant joué`);
     }
 
-    // Passes décisives — source 1 : keyEvents (participants[1] = passeur)
-    const assists = {}; // { scorerId: { name, id } }
+    // Passes décisives — clé = scorerId_goalIndex pour gérer plusieurs buts du même joueur
+    const assists = {}; // { "scorerId_goalIndex": { name, id } }
+    const goalCount = {}; // compteur de buts par joueur pour l'index
 
     for (const event of (data.keyEvents || [])) {
       if (!event.scoringPlay) continue;
       const typeStr = (event.type?.type || event.type?.text || '').toLowerCase();
       if (!typeStr.includes('goal') && typeStr !== 'goal') continue;
       const participants = event.participants || [];
-      if (participants.length >= 2) {
-        const scorer   = participants[0]?.athlete;
-        const assister = participants[1]?.athlete;
-        if (scorer?.id && assister?.id) {
-          assists[String(scorer.id)] = { id: String(assister.id), name: assister.displayName };
-          console.log(`  🎯 ${scorer.displayName} ← ${assister.displayName}`);
-        }
+      const scorer   = participants[0]?.athlete;
+      const assister = participants[1]?.athlete;
+      if (!scorer?.id) continue;
+      const sid = String(scorer.id);
+      goalCount[sid] = (goalCount[sid] || 0) + 1;
+      if (assister?.id) {
+        const key = sid + '_' + goalCount[sid];
+        assists[key] = { id: String(assister.id), name: assister.displayName };
+        console.log(`  🎯 ${scorer.displayName} ← ${assister.displayName}`);
       }
     }
 
-    // Passes décisives — source 2 : comp.details (athletesInvolved[1] = passeur)
+    // Passes décisives — source 2 : comp.details (si keyEvents incomplets)
     const comp = data.header?.competitions?.[0] || data.competitions?.[0];
+    const goalCount2 = {};
     for (const detail of (comp?.details || data.drives?.previous || [])) {
       if (!detail.scoringPlay) continue;
       if (detail.ownGoal) continue;
       const involved = detail.athletesInvolved || [];
-      if (involved.length >= 2) {
-        const scorer   = involved[0];
-        const assister = involved[1];
-        if (scorer?.id && assister?.id && !assists[String(scorer.id)]) {
-          assists[String(scorer.id)] = { id: String(assister.id), name: assister.displayName || assister.shortName };
-          console.log(`  🎯 [details] ${scorer.displayName} ← ${assister.displayName}`);
-        }
+      const scorer   = involved[0];
+      const assister = involved[1];
+      if (!scorer?.id) continue;
+      const sid = String(scorer.id);
+      goalCount2[sid] = (goalCount2[sid] || 0) + 1;
+      const key = sid + '_' + goalCount2[sid];
+      if (assister?.id && !assists[key]) {
+        assists[key] = { id: String(assister.id), name: assister.displayName || assister.shortName };
+        console.log(`  🎯 [details] ${scorer.displayName} ← ${assister.displayName}`);
       }
     }
 
@@ -299,8 +305,9 @@ function extractContributions(event, league, photos = {}, assists = {}) {
       };
     }
 
-    // Passeur décisif depuis keyEvents
-    const assisterInfo = assists[pid];
+    // Passeur décisif — chercher la passe correspondant à CE but précis
+    const goalIdx = goalsMap[pid] || 1; // goalsMap[pid] vient d'être incrémenté
+    const assisterInfo = assists[pid + '_' + goalIdx];
     if (assisterInfo) {
       const aid = assisterInfo.id;
       assistsMap[aid] = (assistsMap[aid] || 0) + 1;
@@ -565,7 +572,7 @@ async function main() {
     EUR_IDS.has(m.leagueId) && (m.players?.length || 0) < 10
   );
 
-  const minDays = hasBadEurMatches ? 21 : 14;
+  const minDays = hasBadEurMatches ? 45 : 45; // fenêtre étendue pour recalcul complet — remettre à 14 après
   if (hasBadEurMatches) console.log(`⚠️  Matchs européens incomplets détectés → fenêtre étendue à ${minDays} jours`);
 
   const minDaysAgo = new Date();
