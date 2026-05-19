@@ -666,31 +666,25 @@ async function loadData() {
       ...p, photo: photosMap[p.id] || photosMap[String(p.id)] || p.photo || ''
     }));
 
-    // Construire un index nom → photo ET espnId → photo depuis data.json + photos.json
+    // Injecter les photos de photos.json dans TEST_PLAYERS par nom
+    // Construire un index nom → photo depuis data.json
     const nameToPhoto = {};
-    const espnIdToPhoto = {};
     (data.players || []).forEach(p => {
-      const photo = photosMap[p.id] || photosMap[String(p.id)] || p.photo || '';
-      if (photo) {
-        nameToPhoto[p.name] = photo;
-        if (p.id) espnIdToPhoto[String(p.id)] = photo;
+      if (p.photo || photosMap[p.id]) {
+        nameToPhoto[p.name] = photosMap[p.id] || photosMap[String(p.id)] || p.photo;
       }
-    });
-    // Ajouter aussi les photos directes de photos.json
-    Object.entries(photosMap).forEach(([id, url]) => {
-      if (url) espnIdToPhoto[String(id)] = url;
     });
 
     // Appliquer aux joueurs tests si photo trouvée par nom ou espnId
     const testWithPhotos = TEST_PLAYERS.map(p => ({
       ...p,
-      photo: espnIdToPhoto[String(p.espnId)] || photosMap[p.espnId] || photosMap[String(p.espnId)] || nameToPhoto[p.name] || p.photo || ''
+      photo: photosMap[p.espnId] || photosMap[String(p.espnId)] || nameToPhoto[p.name] || p.photo || ''
     }));
 
     // Injecter les photos dans RANKING_PLAYERS via espnId
     const rankingWithPhotos = RANKING_PLAYERS.map(p => ({
       ...p,
-      photo: espnIdToPhoto[String(p.espnId)] || photosMap[p.espnId] || photosMap[String(p.espnId)] || nameToPhoto[p.name] || p.photo || ''
+      photo: photosMap[p.espnId] || photosMap[String(p.espnId)] || nameToPhoto[p.name] || p.photo || ''
     }));
 
     allPlayers = cdmReal.length ? cdmReal : testWithPhotos;
@@ -828,8 +822,9 @@ function renderHotPlayers() {
   const c = document.getElementById('hotPlayers');
   c.innerHTML = '';
   hot.forEach((p, i) => {
-    const recent_g = p.recent_goals ?? p.form?.slice(-5).filter(f=>f==='g').length ?? 0;
-    const recent_a = p.recent_assists ?? p.form?.slice(-5).filter(f=>f==='a').length ?? 0;
+    const last5 = (p.last5 || []).slice(0, 5);
+    const recent_g = last5.reduce((s, m) => s + (m.goals || 0), 0);
+    const recent_a = last5.reduce((s, m) => s + (m.assists || 0), 0);
     const formHtml = (p.last5 || p.form || []).map((f, i) => {
       const match = p.last5?.[i];
       const won = match?.teamWon;
@@ -866,14 +861,14 @@ function renderHotPlayers() {
         </div>
       </div>
       <div class="formrow">
-        <span class="fl">${p.totalGames||p.last5?.length||1} match${(p.totalGames||1)>1?'s':''}</span>
+        <span class="fl">${Math.min(p.last5?.length||0,5)} match${Math.min(p.last5?.length||0,5)>1?'s':''}</span>
         <div class="fdots">${formHtml}</div>
       </div>
       <div class="chips">
-        <div class="chip"><div class="chip-n" style="color:var(--g)">${p.totalGoals||p.goals||0}</div><div class="chip-l">Buts</div></div>
-        <div class="chip"><div class="chip-n" style="color:var(--b)">${p.totalAssists||p.assists||0}</div><div class="chip-l">Passes</div></div>
-        <div class="chip"><div class="chip-n" style="color:var(--o)">${(p.totalGoals||0) + (p.totalAssists||0)}</div><div class="chip-l">G+A</div></div>
-        <div class="chip"><div class="chip-n" style="color:var(--y)">${p.avg||0}</div><div class="chip-l">Moy.</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--g)">${recent_g}</div><div class="chip-l">Buts</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--b)">${recent_a}</div><div class="chip-l">Passes</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--o)">${recent_g + recent_a}</div><div class="chip-l">GA/5J</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--y)">${((recent_g+recent_a)/Math.max(Math.min(last5.length||1,5),1)).toFixed(2)}</div><div class="chip-l">Moy.</div></div>
       </div>
       <div class="sigbar">
         <div class="sigbar-head"><span>TendScore</span><span>${p.signal}%</span></div>
