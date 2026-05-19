@@ -176,7 +176,7 @@ header {
 .fd.r { background:rgba(255,80,80,0.15); color:#ff5050; border:1px solid rgba(255,80,80,0.25); }
 .fd.x { background:rgba(30,34,48,0.5); color:var(--m); border:1px solid var(--border); }
 .fd.b { background:rgba(107,114,128,0.15); color:#6b7280; border:1px solid rgba(107,114,128,0.3); } /* banc */
-.fd.ab { background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); } /* absent */
+.fd.ab { background:rgba(107,114,128,0.15); color:#6b7280; border:1px solid rgba(107,114,128,0.3); } /* absent */
 
 /* stats chips */
 .chips { display:flex; gap:6px; }
@@ -700,8 +700,9 @@ function renderGrid(list) {
   const c = document.getElementById('pgrid');
   c.innerHTML = '';
   hot.forEach((p, i) => {
-    const recent_g = p.recent_goals ?? p.form?.slice(-5).filter(f=>f==='g').length ?? 0;
-    const recent_a = p.recent_assists ?? p.form?.slice(-5).filter(f=>f==='a').length ?? 0;
+    const last5 = (p.last5 || []).slice(0, 5);
+    const recent_g = last5.reduce((s, m) => s + (m.goals || 0), 0);
+    const recent_a = last5.reduce((s, m) => s + (m.assists || 0), 0);
     const formHtml = (p.last5 || p.form || []).map((f, i) => {
       const match = p.last5?.[i];
       if (match?.played === null) return `<div class="fd ab">❌</div>`;
@@ -740,10 +741,10 @@ function renderGrid(list) {
         <div class="fdots">${formHtml}</div>
       </div>
       <div class="chips">
-        <div class="chip"><div class="chip-n" style="color:var(--g)">${p.totalGoals||p.goals||0}</div><div class="chip-l">Buts</div></div>
-        <div class="chip"><div class="chip-n" style="color:var(--b)">${p.totalAssists||p.assists||0}</div><div class="chip-l">Passes</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--g)">${recent_g}</div><div class="chip-l">Buts</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--b)">${recent_a}</div><div class="chip-l">Passes</div></div>
         <div class="chip"><div class="chip-n" style="color:var(--o)">${recent_g + recent_a}</div><div class="chip-l">GA/5J</div></div>
-        <div class="chip"><div class="chip-n" style="color:var(--y)">${p.avg||0}</div><div class="chip-l">Moy.</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--y)">${((recent_g+recent_a)/Math.max(Math.min(last5.length||1,5),1)).toFixed(2)}</div><div class="chip-l">Moy.</div></div>
       </div>
       <div class="sigbar">
         <div class="sigbar-head"><span>TendScore</span><span>${p.signal}%</span></div>
