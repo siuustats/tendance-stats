@@ -485,20 +485,21 @@ async function init() {
 
     window._fixtures = data.fixtures || [];
     window._matches  = data.matches  || [];
-    const euroIdsInit = [7, 5, 20296];
-    window._euroStats = {};
+    // Précalculer stats par joueur ET par ligue (toutes compétitions)
+    window._leagueStats = {};
     for (const match of window._matches) {
-      if (!euroIdsInit.includes(match.leagueId)) continue;
       for (const mp of (match.players || [])) {
         if (!mp.id || mp.played === false || mp.played === null) continue;
         const pid = String(mp.id);
-        if (!window._euroStats[pid]) window._euroStats[pid] = {};
-        if (!window._euroStats[pid][match.leagueId]) window._euroStats[pid][match.leagueId] = {goals:0,assists:0,games:0};
-        window._euroStats[pid][match.leagueId].goals   += mp.goals   || 0;
-        window._euroStats[pid][match.leagueId].assists += mp.assists || 0;
-        window._euroStats[pid][match.leagueId].games   += 1;
+        const lid = match.leagueId;
+        if (!window._leagueStats[pid]) window._leagueStats[pid] = {};
+        if (!window._leagueStats[pid][lid]) window._leagueStats[pid][lid] = {goals:0,assists:0,games:0};
+        window._leagueStats[pid][lid].goals   += mp.goals   || 0;
+        window._leagueStats[pid][lid].assists += mp.assists || 0;
+        window._leagueStats[pid][lid].games   += 1;
       }
     }
+    window._euroStats = window._leagueStats; // compatibilité
     render();
     document.getElementById('loader').style.display = 'none';
     document.getElementById('content').style.display = 'block';
@@ -559,23 +560,24 @@ function getPlayers() {
 // Stats filtrées par ligue — last5Only=true pour cartes, false pour classement (toute saison)
 function getLeagueStats(player, leagueId, last5Only=false) {
   if (!leagueId) return null;
-  const euroIds = [7, 5, 20296];
-  if (!euroIds.includes(leagueId)) return null;
+
+  // Pour les cartes — depuis last5 (max 5 matchs récents de cette ligue)
   const filtered = (player.last5 || []).filter(m => m.leagueId === leagueId);
   const last5 = filtered.slice(0, 5);
   const g5 = last5.reduce((s, m) => s + (m.goals||0), 0);
   const a5 = last5.reduce((s, m) => s + (m.assists||0), 0);
+
   if (last5Only) {
     if (!last5.length) return null;
     return { goals:g5, assists:a5, games:last5.length, avg:((g5+a5)/last5.length).toFixed(2), last5 };
   }
+
+  // Pour le classement — depuis _leagueStats (toute la saison)
   const pid = String(player.id);
-  const season = window._euroStats?.[pid]?.[leagueId];
-  if (!season && !filtered.length) return null;
-  const goals   = season?.goals   ?? g5;
-  const assists = season?.assists ?? a5;
-  const games   = season?.games   ?? last5.length;
-  const avg     = games > 0 ? ((goals+assists)/games).toFixed(2) : '0.00';
+  const season = window._leagueStats?.[pid]?.[leagueId];
+  if (!season) return null; // joueur sans stats dans cette ligue → exclu du classement
+  const { goals, assists, games } = season;
+  const avg = games > 0 ? ((goals+assists)/games).toFixed(2) : '0.00';
   return { goals, assists, games, avg, last5 };
 }
 
@@ -589,14 +591,17 @@ function render() {
   document.getElementById('k-hot').textContent = hotCount;
   document.getElementById('k-goals').textContent = totalGoals;
 
-  // Trier par B+P — sur la compétition filtrée si européen, sinon toute saison
+  // Trier par B+P selon la ligue filtrée
   const lid2 = currentLeague !== 'all' ? parseInt(currentLeague) : null;
-  const euroIds2 = [7, 5, 20296];
-  const isEuro = lid2 && euroIds2.includes(lid2);
 
-  const sortedList = [...list].sort((a, b) => {
-    const statsA = isEuro ? getLeagueStats(a, lid2) : null;
-    const statsB = isEuro ? getLeagueStats(b, lid2) : null;
+  // Filtrer les joueurs ayant des stats dans la ligue sélectionnée
+  const filteredList = lid2
+    ? list.filter(p => getLeagueStats(p, lid2) !== null)
+    : list;
+
+  const sortedList = [...filteredList].sort((a, b) => {
+    const statsA = lid2 ? getLeagueStats(a, lid2) : null;
+    const statsB = lid2 ? getLeagueStats(b, lid2) : null;
     const bpA = statsA ? statsA.goals + statsA.assists : (a.totalGoals||a.goals||0) + (a.totalAssists||a.assists||0);
     const bpB = statsB ? statsB.goals + statsB.assists : (b.totalGoals||b.goals||0) + (b.totalAssists||b.assists||0);
     if (bpB !== bpA) return bpB - bpA;
@@ -605,7 +610,7 @@ function render() {
 
   renderAlerts(list, window._fixtures || []);
   renderGrid(list);
-  renderTable(sortedList, window._photosMap || {}, 1, isEuro ? lid2 : null);
+  renderTable(sortedList, window._photosMap || {}, 1, lid2);
 }
 
 function calcPredScore(player, fixtures, allPlayers) {
@@ -841,7 +846,19 @@ function renderTable(list, photosMap={}, page=1, filterLeagueId=null) {
         <div class="pn">${p.name}</div>
         <div class="pt">${p.teamName||p.team}</div>
       </td>
-      <td><span class="lpill ${p.leagueCls==='lg'?'liga':p.leagueCls}">${p.leagueLabel==='LIGA'?'Liga':p.leagueLabel}</span></td>
+      <td>${(() => {
+        const euroIds = [7, 5, 20296];
+        const EURO_BADGES = {
+          7: { cls:'cl', label:'LDC' },
+          5: { cls:'el', label:'EL' },
+          20296: { cls:'ecl', label:'ECL' }
+        };
+        if (filterLeagueId && euroIds.includes(filterLeagueId)) {
+          const b = EURO_BADGES[filterLeagueId];
+          return `<span class="lpill ${b.cls}">${b.label}</span>`;
+        }
+        return `<span class="lpill ${p.leagueCls==='lg'?'liga':p.leagueCls}">${p.leagueLabel==='LIGA'?'Liga':p.leagueLabel}</span>`;
+      })()}</td>
       ${(() => {
         const ls = filterLeagueId ? getLeagueStats(p, filterLeagueId) : null;
         const g = ls ? ls.goals   : (p.totalGoals||p.goals||0);
