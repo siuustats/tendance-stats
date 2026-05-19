@@ -682,18 +682,25 @@ function renderAlerts(list, fixtures) {
   // Garder uniquement les joueurs avec un prochain match dans cette compétition
   const withMatch = withScores.filter(p => calcPredScore(p, filteredFixtures, list).opponent);
 
-  // Essayer 1 par ligue d'abord (parmi les meilleurs scores)
-  for (const p of withMatch) {
-    if (picked.length >= 4) break;
-    if (!leaguesSeen.has(p.leagueId)) {
-      leaguesSeen.add(p.leagueId);
+  // En filtre européen : top 4 par score sans diversification
+  // En filtre domestique : 1 joueur par ligue d'abord, puis compléter
+  if (lid && [7, 5, 20296].includes(lid)) {
+    for (const p of withMatch) {
+      if (picked.length >= 4) break;
       picked.push(p);
     }
-  }
-  // Compléter si moins de 4 — toujours par score décroissant
-  for (const p of withMatch) {
-    if (picked.length >= 4) break;
-    if (!picked.find(x => x.id === p.id)) picked.push(p);
+  } else {
+    for (const p of withMatch) {
+      if (picked.length >= 4) break;
+      if (!leaguesSeen.has(p.leagueId)) {
+        leaguesSeen.add(p.leagueId);
+        picked.push(p);
+      }
+    }
+    for (const p of withMatch) {
+      if (picked.length >= 4) break;
+      if (!picked.find(x => x.id === p.id)) picked.push(p);
+    }
   }
 
   const c = document.getElementById('alerts');
