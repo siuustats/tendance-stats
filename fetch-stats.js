@@ -485,6 +485,11 @@ async function fetchMissingPhotos(players, photosCache) {
       const timeout = setTimeout(() => controller.abort(), dynamicTimeout);
 
       let playerId = null;
+      // Blacklist : ESPN_ID → TM_ID incorrect à rejeter
+      const TM_BLACKLIST = {
+        '357719': '607223', // Rayan (Bournemouth) ≠ Rayan Cherki
+      };
+
       // Chercher uniquement par nom complet — évite les confusions (ex: "Rayan" → Rayan Cherki)
       for (const searchName of [p.name]) {
         try {
@@ -497,7 +502,14 @@ async function fetchMissingPhotos(players, photosCache) {
           // Prendre le premier résultat dont le nom correspond exactement ou partiellement
           const results = data.results || [];
           const exact = results.find(r => r.name?.toLowerCase() === searchName.toLowerCase());
-          playerId = exact?.id || results[0]?.id;
+          const candidate = exact?.id || results[0]?.id;
+          // Rejeter si l'ID est dans la blacklist pour ce joueur ESPN
+          const espnId = String(p.id);
+          if (candidate && TM_BLACKLIST[espnId] === String(candidate)) {
+            console.log(`  ⛔ Photo blacklistée pour ${p.name} (TM ${candidate})`);
+          } else {
+            playerId = candidate;
+          }
           if (playerId) break;
           await new Promise(r => setTimeout(r, 300));
         } catch(e) { break; }
