@@ -391,21 +391,17 @@ function rebuildPlayers(matches) {
   for (const [, data] of Object.entries(pm)) {
     const info = data.info;
     if (!info?.name) continue;
-    // Priorité : ligue européenne > ligue domestique > info par défaut
+    // Priorité : ligue domestique > info par défaut
+    // La ligue européenne est stockée dans allLeagueIds mais n'est PAS la ligue principale
     const eurMatch = data.matches.find(m => EUR_IDS.has(m.leagueId));
-    let leagueInfo;
+    let leagueInfo = data.champInfo || info;
+
+    // Construire allLeagueIds : ligue principale + ligues européennes jouées
+    const allLeagueIds = new Set([leagueInfo.leagueId]);
     if (eurMatch) {
-      // Reconstruire leagueInfo depuis le match européen
-      const eurLeague = LEAGUES.find(l => l.id === eurMatch.leagueId);
-      leagueInfo = eurLeague ? {
-        leagueId: eurLeague.id, leagueName: eurLeague.name,
-        leagueFlag: eurLeague.flag, leagueFlagAlt: eurLeague.flagAlt,
-        leagueCls: eurLeague.cls, leagueLabel: eurLeague.label,
-      } : data.champInfo || info;
-    } else {
-      leagueInfo = data.champInfo || info;
+      data.matches.forEach(m => { if (EUR_IDS.has(m.leagueId)) allLeagueIds.add(m.leagueId); });
     }
-    players.push(buildEntry(info, data.matches, leagueInfo));
+    players.push({ ...buildEntry(info, data.matches, leagueInfo), allLeagueIds: [...allLeagueIds] });
   }
 
   // ── Joueurs CDM (leagueId: 6) — entrées distinctes ───────────────
