@@ -685,7 +685,7 @@ function openCardModal(player) {
     : '';
 
   function renderBody() {
-    const lid = activeFilter === 'all' ? null : activeFilter;
+    const lid = activeFilter === 'all' ? null : parseInt(activeFilter);
     const pid = String(player.id);
 
     // Toujours reconstruire depuis _matches — garantit scores + équipes + filtre par ligue
