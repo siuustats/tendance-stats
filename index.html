@@ -662,12 +662,12 @@ function openCardModal(player) {
 
   // Construire les filtres — ligue dom + ligues euro jouées
   const filters = [];
-  if (domLeague) filters.push({ id: domLeague, label: LMAP_MODAL[domLeague]?.l || 'Dom' });
-  euroPlayed.forEach(id => filters.push({ id, label: LMAP_MODAL[id]?.l || 'EUR' }));
+  if (domLeague) filters.push({ id: String(domLeague), label: LMAP_MODAL[domLeague]?.l || 'Dom' });
+  euroPlayed.forEach(id => filters.push({ id: String(id), label: LMAP_MODAL[id]?.l || 'EUR' }));
   // Filtre "Tous" si 2+ ligues
   if (filters.length >= 2) filters.unshift({ id: 'all', label: 'Tous' });
 
-  let activeFilter = filters.length ? filters[0].id : 'all';
+  let activeFilter = filters.length ? String(filters[0].id) : 'all';
 
   // Header
   const sc = player.signal > 88 ? 'var(--o)' : player.signal > 78 ? 'var(--g)' : 'var(--b)';
@@ -814,7 +814,7 @@ function openCardModal(player) {
   }
 
   window._cmFilter = (filterId) => {
-    activeFilter = filterId;
+    activeFilter = String(filterId);
     renderBody();
   };
 
