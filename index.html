@@ -688,28 +688,28 @@ function openCardModal(player) {
     const lid = activeFilter === 'all' ? null : activeFilter;
     const pid = String(player.id);
 
-    let last5;
-    if (!lid) {
-      // Filtre "Tous" — utiliser player.last5 directement
-      last5 = (player.last5 || []).slice(0, 5);
-    } else {
-      // Filtre spécifique — reconstruire depuis _matches pour avoir tous les matchs de cette ligue
-      const history = [];
-      for (const match of (window._matches || [])) {
-        if (match.leagueId !== lid) continue;
-        const mp = (match.players || []).find(pl => String(pl.id) === pid);
-        if (!mp) continue;
-        history.push({
-          date: match.date, leagueId: match.leagueId,
-          homeTeam: match.homeTeam, awayTeam: match.awayTeam,
-          homeGoals: match.homeGoals, awayGoals: match.awayGoals,
-          goals: mp.goals||0, assists: mp.assists||0,
-          played: mp.played, absenceReason: mp.absenceReason||null, teamWon: mp.teamWon,
-        });
-      }
-      history.sort((a, b) => new Date(b.date) - new Date(a.date));
-      last5 = history.slice(0, 5);
+    // Toujours reconstruire depuis _matches — garantit scores + équipes + filtre par ligue
+    const history = [];
+    for (const match of (window._matches || [])) {
+      if (lid && match.leagueId !== lid) continue;
+      const mp = (match.players || []).find(pl => String(pl.id) === pid);
+      if (!mp) continue;
+      history.push({
+        date:      match.date,
+        leagueId:  match.leagueId,
+        homeTeam:  match.homeTeam,
+        awayTeam:  match.awayTeam,
+        homeGoals: match.homeGoals,
+        awayGoals: match.awayGoals,
+        goals:     mp.goals   || 0,
+        assists:   mp.assists || 0,
+        played:    mp.played,
+        absenceReason: mp.absenceReason || null,
+        teamWon:   mp.teamWon,
+      });
     }
+    history.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const last5 = history.slice(0, 5);
     const g = last5.reduce((s, m) => s + (m.goals||0), 0);
     const a = last5.reduce((s, m) => s + (m.assists||0), 0);
     const moy = last5.length ? ((g+a)/last5.length).toFixed(2) : '0.00';
@@ -755,25 +755,9 @@ function openCardModal(player) {
         const label = won === true ? 'V' : won === false ? 'D' : 'N';
         const rcls  = won === true ? 'var(--g)' : won === false ? '#ff5050' : 'var(--m)';
         const rbg   = won === true ? 'rgba(0,229,160,.15)' : won === false ? 'rgba(255,80,80,.15)' : 'rgba(30,34,48,.5)';
-        const lb2   = LMAP_MODAL[m.leagueId] || {l:'—',c:'x',color:'#9ca3af'};
-        const pTeam = player.teamName;
-        // Si last5 filtré a déjà homeTeam, l'utiliser directement
-        const home = m.homeTeam || (() => {
-          const mx = (window._matches||[]).find(mx =>
-            mx.date && mx.date.startsWith((m.date||'').slice(0,10)) &&
-            (mx.homeTeam === pTeam || mx.awayTeam === pTeam) &&
-            mx.leagueId === m.leagueId
-          );
-          return mx?.homeTeam || pTeam;
-        })();
-        const away = m.awayTeam || (() => {
-          const mx = (window._matches||[]).find(mx =>
-            mx.date && mx.date.startsWith((m.date||'').slice(0,10)) &&
-            (mx.homeTeam === pTeam || mx.awayTeam === pTeam) &&
-            mx.leagueId === m.leagueId
-          );
-          return mx?.awayTeam || '—';
-        })();
+        const lb2      = LMAP_MODAL[m.leagueId] || {l:'—',c:'x',color:'#9ca3af'};
+        const home     = m.homeTeam  || player.teamName;
+        const away     = m.awayTeam  || '—';
         const scoreStr = m.homeGoals !== undefined ? `${m.homeGoals}-${m.awayGoals}` : '—';
 
         let pills = '';
