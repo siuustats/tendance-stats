@@ -445,7 +445,7 @@ const STAR_PLAYERS = [
   { espnId: '316028', nation: 'France',       slug: 'bradley-barcola'     },
   { espnId: '232847', nation: 'France',       slug: 'ousmane-dembele'     },
   { espnId: '358361', nation: 'France',       slug: 'desire-doue'         },
-  { espnId: '357719', nation: 'France',       slug: 'rayan-cherki'        },
+  { espnId: '298008', nation: 'France',       slug: 'rayan-cherki'        },
   { espnId: '349093', nation: 'France',       slug: 'warren-zaire-emery'  },
   { espnId: '328098', nation: 'France',       slug: 'michael-olise'       },
   { espnId: '274046', nation: 'France',       slug: 'marcus-thuram'       },
@@ -477,6 +477,13 @@ function generatePlayerPages(players, photosCache) {
   const fs = require('fs');
   if (!fs.existsSync('players')) fs.mkdirSync('players');
 
+  // Lire photos.json depuis le disque pour avoir TOUTES les photos à jour
+  let allPhotos = { ...photosCache };
+  try {
+    const diskPhotos = JSON.parse(fs.readFileSync('photos.json', 'utf8'));
+    allPhotos = { ...allPhotos, ...diskPhotos };
+  } catch(e) {}
+
   const playerMap = {};
   for (const p of players) playerMap[String(p.id)] = p;
 
@@ -492,8 +499,10 @@ function generatePlayerPages(players, photosCache) {
     'ecl':  { bg:'rgba(0,150,80,.25)',    color:'#6ee7b7' },
   };
 
-  // 3 joueurs "related" par joueur — on prend les 3 premiers stars différents avec données
-  const relatedPool = STAR_PLAYERS.filter(s => playerMap[String(s.espnId)]?.name).slice(0, 10);
+  // Pool de joueurs related — mélangé aléatoirement pour varier à chaque génération
+  const relatedPool = STAR_PLAYERS
+    .filter(s => playerMap[String(s.espnId)]?.name)
+    .sort(() => Math.random() - 0.5);
 
   let generated = 0;
 
@@ -501,7 +510,7 @@ function generatePlayerPages(players, photosCache) {
     const p = playerMap[String(star.espnId)];
     if (!p?.name) { console.log('  ⏭️  ' + star.slug + ' — non trouvé dans data.json'); continue; }
 
-    const photo       = p.photo || photosCache[star.espnId] || photosCache[String(star.espnId)] || '';
+    const photo       = allPhotos[String(star.espnId)] || allPhotos[star.espnId] || p.photo || '';
     const goals       = p.totalGoals   || 0;
     const assists     = p.totalAssists || 0;
     const games       = p.totalGames   || 0;
@@ -706,11 +715,7 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
         <div style="font-size:13px;font-weight:600">Prédictions clubs</div>
         <div style="font-size:11px;color:#6b7280;margin-top:2px">Prochain match</div>
       </a>
-      <a href="../squad.html" style="background:#161820;border:1px solid #1e2130;border-radius:10px;padding:14px;text-decoration:none;color:#f0f2f8;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,229,160,.3)'" onmouseout="this.style.borderColor='#1e2130'">
-        <div style="font-size:20px;margin-bottom:6px">🌍</div>
-        <div style="font-size:13px;font-weight:600">Effectifs nations</div>
-        <div style="font-size:11px;color:#6b7280;margin-top:2px">48 nations CDM</div>
-      </a>
+
     </div>
   </div>
 
