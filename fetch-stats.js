@@ -499,10 +499,7 @@ function generatePlayerPages(players, photosCache) {
     'ecl':  { bg:'rgba(0,150,80,.25)',    color:'#6ee7b7' },
   };
 
-  // Pool de joueurs related — mélangé aléatoirement pour varier à chaque génération
-  const relatedPool = STAR_PLAYERS
-    .filter(s => playerMap[String(s.espnId)]?.name)
-    .sort(() => Math.random() - 0.5);
+
 
   let generated = 0;
 
@@ -510,7 +507,10 @@ function generatePlayerPages(players, photosCache) {
     const p = playerMap[String(star.espnId)];
     if (!p?.name) { console.log('  ⏭️  ' + star.slug + ' — non trouvé dans data.json'); continue; }
 
-    const photo       = allPhotos[String(star.espnId)] || allPhotos[star.espnId] || p.photo || '';
+    const rawPhoto    = allPhotos[String(star.espnId)] || allPhotos[star.espnId] || p.photo || '';
+    // Les photos locales (scrapées Sofascore) ont un chemin relatif "photos/xxx.png"
+    // Depuis /players/, il faut remonter d'un niveau → "../photos/xxx.png"
+    const photo = rawPhoto.startsWith('photos/') ? '../' + rawPhoto : rawPhoto;
     const goals       = p.totalGoals   || 0;
     const assists     = p.totalAssists || 0;
     const games       = p.totalGames   || 0;
@@ -558,29 +558,23 @@ function generatePlayerPages(players, photosCache) {
       'Allemagne':'481','Suisse':'475','Nigeria':'2548','Maroc':'2869','Italie':'473',
       'Argentine':'202','Portugal':'482','Brésil':'205','Croatie':'477','Pays-Bas':'449',
     };
+    const NATION_ARTICLES = {
+      'France':'la','Brésil':'le','Angleterre':"l'",'Uruguay':"l'",'Espagne':"l'",
+      'Égypte':"l'",'Norvège':'la','Suède':'la','Belgique':'la','Corée du Sud':'la',
+      'Allemagne':"l'",'Suisse':'la','Nigeria':'le','Maroc':'le','Italie':"l'",
+      'Argentine':"l'",'Portugal':'le','Croatie':'la','Pays-Bas':'les',
+    };
+    const nationArticle = NATION_ARTICLES[star.nation] || 'la';
     const nationId  = NATION_IDS[star.nation];
-    const nationLink = nationId
+    const nationDisplay = nationId
       ? `<a href="../squad.html?team=${nationId}" style="color:#9ca3af;text-decoration:underline;text-underline-offset:3px">${star.nation}</a>`
       : `<span style="color:#9ca3af">${star.nation}</span>`;
+    // Pas d'espace après "l'"
+    const nationLink = nationArticle.endsWith("'") ? nationArticle + nationDisplay : nationArticle + ' ' + nationDisplay;
 
     const description = `Stats ${playerName} 2026 — ${goals} buts, ${assists} passes, TendScore ${signal} | ${star.nation} · ${teamName} | Tendance & prédictions CDM 2026`;
 
-    // 3 joueurs related (différents du joueur courant)
-    const related3 = relatedPool.filter(s => s.espnId !== star.espnId).slice(0, 3);
-    const relatedCards = related3.map(s => {
-      const rp    = playerMap[String(s.espnId)];
-      const rphoto = rp?.photo || '';
-      const rsig  = rp?.signal || 0;
-      const rsc   = rsig > 75 ? '#ff9f43' : rsig > 55 ? '#00e5a0' : '#5e81f4';
-      return `<a href="${s.slug}.html" style="background:#161820;border:1px solid #1e2130;border-radius:12px;padding:14px;text-decoration:none;color:#f0f2f8;display:flex;align-items:center;gap:10px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(0,229,160,.3)'" onmouseout="this.style.borderColor='#1e2130'">
-        <div style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:#111318;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px">${rphoto ? `<img src="${rphoto}" style="width:100%;height:100%;object-fit:cover" referrerpolicy="no-referrer" onerror="this.outerHTML='⚽'">` : '⚽'}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${rp?.name || s.slug}</div>
-          <div style="font-size:11px;color:#6b7280">${rp?.teamName || ''}</div>
-        </div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:${rsc}">${rsig}</div>
-      </a>`;
-    }).join('');
+
 
     const html = `<!DOCTYPE html>
 <html lang="fr">
@@ -687,10 +681,10 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
     </p>
   </div>
 
-  ${relatedCards ? `<div class="card">
+  <div class="card" id="related-card">
     <div class="card-title">Autres joueurs à surveiller</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">${relatedCards}</div>
-  </div>` : ''}
+    <div id="related-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px"></div>
+  </div>
 
   <div class="card">
     <div class="card-title">Visitez aussi</div>
@@ -729,6 +723,51 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
   </div>
 </footer>
 <div style="text-align:center;padding:12px 24px;font-size:11px;color:#4b5563;border-top:1px solid #111318;">© 2026 TendanceStats. Tous droits réservés.</div>
+<script>
+(function() {
+  const CURRENT = '${star.espnId}';
+  const ALL_PLAYERS = ${JSON.stringify(
+    STAR_PLAYERS
+      .filter(s => playerMap[String(s.espnId)]?.name)
+      .map(s => {
+        const rp = playerMap[String(s.espnId)];
+        return {
+          slug:   s.slug,
+          espnId: s.espnId,
+          name:   rp?.name    || '',
+          team:   rp?.teamName|| '',
+          photo:  (function() {
+            const raw = allPhotos[String(s.espnId)] || rp?.photo || '';
+            return raw.startsWith('photos/') ? '../' + raw : raw;
+          })(),
+          signal: rp?.signal  || 0,
+        };
+      })
+  )};
+
+  const pool = ALL_PLAYERS.filter(p => p.espnId !== CURRENT && p.name);
+  // Fisher-Yates shuffle
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const pick = pool.slice(0, 3);
+
+  const grid = document.getElementById('related-grid');
+  if (!grid) return;
+  grid.innerHTML = pick.map(p => {
+    const sc = p.signal > 75 ? '#ff9f43' : p.signal > 55 ? '#00e5a0' : '#5e81f4';
+    return '<a href="' + p.slug + '.html" style="background:#161820;border:1px solid #1e2130;border-radius:12px;padding:14px;text-decoration:none;color:#f0f2f8;display:flex;align-items:center;gap:10px;transition:border-color .2s" onmouseover="this.style.borderColor=\'rgba(0,229,160,.3)\'" onmouseout="this.style.borderColor=\'#1e2130\'">'
+      + '<div style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:#111318;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px">'
+      + (p.photo ? '<img src="' + p.photo + '" style="width:100%;height:100%;object-fit:cover" referrerpolicy="no-referrer" onerror="this.outerHTML=\'⚽\'">' : '⚽')
+      + '</div>'
+      + '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.name + '</div>'
+      + '<div style="font-size:11px;color:#6b7280">' + p.team + '</div></div>'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:' + sc + '">' + p.signal + '</div>'
+      + '</a>';
+  }).join('');
+})();
+</script>
 </body>
 </html>`;
 
