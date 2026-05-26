@@ -1040,10 +1040,13 @@ async function main() {
     if (!byLeague[m.leagueId]) byLeague[m.leagueId] = [];
     byLeague[m.leagueId].push(m);
   }
+  const LEAGUE_MAX = { 17: 400, 34: 400, 8: 400, 23: 400, 35: 400 }; // PL, L1, Liga, SA, BL
+  const DEFAULT_MAX = 120; // LDC, EL, ECL, CDM
   const trimmed = [];
-  for (const lm of Object.values(byLeague)) {
+  for (const [leagueId, lm] of Object.entries(byLeague)) {
     lm.sort((a, b) => new Date(b.date) - new Date(a.date));
-    trimmed.push(...lm.slice(0, 100));
+    const max = LEAGUE_MAX[parseInt(leagueId)] || DEFAULT_MAX;
+    trimmed.push(...lm.slice(0, max));
   }
 
   const players = rebuildPlayers(trimmed);
