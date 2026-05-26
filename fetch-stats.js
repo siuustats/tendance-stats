@@ -506,7 +506,7 @@ function generatePlayerPages(players, photosCache) {
     const leagueCls   = p?.leagueCls   || '';
     const leagueFlag  = p?.leagueFlag  || '';
     // Si pas de nom ESPN, on skip (joueur hors championnats couverts)
-    if (!playerName) { console.log(\`  ⏭️  \${star.slug} — non trouvé dans data.json\`); }
+    if (!playerName) { console.log('  ⏭️  ' + star.slug + ' — non trouvé dans data.json'); }
 
     const formDots = last5.slice(0, 5).map(m => {
       if (m.played === null || m.played === undefined) return '<span style="background:rgba(107,114,128,.15);color:#6b7280;border:1px solid rgba(107,114,128,.3);width:22px;height:22px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">❌</span>';
