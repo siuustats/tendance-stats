@@ -414,6 +414,294 @@ function rebuildPlayers(matches) {
   return players.sort((a, b) => b.trendScore - a.trendScore || b.totalGoals - a.totalGoals);
 }
 
+
+// ── Génération pages joueurs statiques (SEO) ─────────────────────────────────
+
+// espnId  = ID ESPN du joueur (pour matcher playerMap depuis data.json)
+// nation  = sélection nationale CDM (seule info non disponible via ESPN clubs)
+// slug    = URL de la page statique
+const STAR_PLAYERS = [
+  { espnId: '189108', nation: 'France',       slug: 'kylian-mbappe'       },
+  { espnId: '279615', nation: 'Brésil',       slug: 'vinicius-jr'         },
+  { espnId: '303859', nation: 'Angleterre',   slug: 'jude-bellingham'     },
+  { espnId: '267831', nation: 'Uruguay',      slug: 'federico-valverde'   },
+  { espnId: '258921', nation: 'Brésil',       slug: 'rodrygo'             },
+  { espnId: '372944', nation: 'Espagne',      slug: 'lamine-yamal'        },
+  { espnId: '302854', nation: 'Espagne',      slug: 'pedri'               },
+  { espnId: '289668', nation: 'Brésil',       slug: 'raphinha'            },
+  { espnId: '318143', nation: 'Espagne',      slug: 'gavi'                },
+  { espnId: '164469', nation: 'Espagne',      slug: 'alvaro-morata'       },
+  { espnId: '93901',  nation: 'Égypte',       slug: 'mohamed-salah'       },
+  { espnId: '253989', nation: 'Norvège',      slug: 'erling-haaland'      },
+  { espnId: '282679', nation: 'Angleterre',   slug: 'bukayo-saka'         },
+  { espnId: '198825', nation: 'Angleterre',   slug: 'ollie-watkins'       },
+  { espnId: '323409', nation: 'Angleterre',   slug: 'cole-palmer'         },
+  { espnId: '265893', nation: 'Suède',        slug: 'alexander-isak'      },
+  { espnId: '279299', nation: 'Angleterre',   slug: 'phil-foden'          },
+  { espnId: '208499', nation: 'Belgique',     slug: 'leandro-trossard'    },
+  { espnId: '318399', nation: 'Belgique',     slug: 'jeremy-doku'         },
+  { espnId: '156145', nation: 'Corée du Sud', slug: 'son-heung-min'       },
+  { espnId: '300447', nation: 'Angleterre',   slug: 'declan-rice'         },
+  { espnId: '316028', nation: 'France',       slug: 'bradley-barcola'     },
+  { espnId: '232847', nation: 'France',       slug: 'ousmane-dembele'     },
+  { espnId: '358361', nation: 'France',       slug: 'desire-doue'         },
+  { espnId: '357719', nation: 'France',       slug: 'rayan-cherki'        },
+  { espnId: '349093', nation: 'France',       slug: 'warren-zaire-emery'  },
+  { espnId: '328098', nation: 'France',       slug: 'michael-olise'       },
+  { espnId: '274046', nation: 'France',       slug: 'marcus-thuram'       },
+  { espnId: '221728', nation: 'Allemagne',    slug: 'florian-wirtz'       },
+  { espnId: '233029', nation: 'Allemagne',    slug: 'jamal-musiala'       },
+  { espnId: '148871', nation: 'Allemagne',    slug: 'joshua-kimmich'      },
+  { espnId: '214616', nation: 'Allemagne',    slug: 'niclas-fullkrug'     },
+  { espnId: '177094', nation: 'Suisse',       slug: 'granit-xhaka'        },
+  { espnId: '185695', nation: 'Allemagne',    slug: 'jonathan-tah'        },
+  { espnId: '193669', nation: 'Nigeria',      slug: 'victor-osimhen'      },
+  { espnId: '241351', nation: 'Maroc',        slug: 'achraf-hakimi'       },
+  { espnId: '209568', nation: 'France',       slug: 'theo-hernandez'      },
+  { espnId: '182450', nation: 'Italie',       slug: 'nicolo-barella'      },
+  { espnId: '139919', nation: 'Belgique',     slug: 'romelu-lukaku'       },
+  { espnId: '141746', nation: 'Belgique',     slug: 'kevin-de-bruyne'     },
+  { espnId: '45843',  nation: 'Argentine',    slug: 'lionel-messi'        },
+  { espnId: '47431',  nation: 'Portugal',     slug: 'cristiano-ronaldo'   },
+  { espnId: '169880', nation: 'Brésil',       slug: 'neymar-jr'           },
+  { espnId: '84274',  nation: 'Croatie',      slug: 'luka-modric'         },
+  { espnId: '54679',  nation: 'France',       slug: 'antoine-griezmann'   },
+  { espnId: '193184', nation: 'Portugal',     slug: 'bruno-fernandes'     },
+  { espnId: '197031', nation: 'Norvège',      slug: 'martin-odegaard'     },
+  { espnId: '325354', nation: 'France',       slug: 'aurelien-tchouameni' },
+  { espnId: '353765', nation: 'Espagne',      slug: 'nico-williams'       },
+  { espnId: '193174', nation: 'Pays-Bas',     slug: 'cody-gakpo'          },
+];
+
+function generatePlayerPages(players, photosCache) {
+  const fs = require('fs');
+  if (!fs.existsSync('players')) fs.mkdirSync('players');
+
+  // Construire une map id → joueur depuis data.json
+  const playerMap = {};
+  for (const p of players) {
+    playerMap[String(p.id)] = p;
+  }
+
+  let generated = 0;
+
+  for (const star of STAR_PLAYERS) {
+    const p = playerMap[String(star.espnId)];
+    // Si le joueur n'est pas dans data.json (hors top 5 championnats), on passe
+    // mais on génère quand même la page avec les données disponibles
+    const photo = (p?.photo) || photosCache[star.espnId] || photosCache[String(star.espnId)] || '';
+
+    const goals      = p?.totalGoals   ?? 0;
+    const assists    = p?.totalAssists ?? 0;
+    const games      = p?.totalGames   ?? 0;
+    const avg        = p?.avg          ?? 0;
+    const signal     = p?.signal       ?? 0;
+    const trend      = p?.trendScore   ?? 0;
+    const last5      = p?.last5        ?? [];
+    // Tout vient d'ESPN via data.json — aucune info club/ligue hardcodée
+    const playerName  = p?.name        || '';
+    const teamName    = p?.teamName    || '';
+    const leagueName  = p?.leagueName  || '';
+    const leagueLabel = p?.leagueLabel || '';
+    const leagueCls   = p?.leagueCls   || '';
+    const leagueFlag  = p?.leagueFlag  || '';
+    // Si pas de nom ESPN, on skip (joueur hors championnats couverts)
+    if (!playerName) { console.log(\`  ⏭️  \${star.slug} — non trouvé dans data.json\`); }
+
+    const formDots = last5.slice(0, 5).map(m => {
+      if (m.played === null || m.played === undefined) return '<span style="background:rgba(107,114,128,.15);color:#6b7280;border:1px solid rgba(107,114,128,.3);width:22px;height:22px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">❌</span>';
+      if (m.played === false) return '<span style="background:rgba(107,114,128,.15);color:#6b7280;border:1px solid rgba(107,114,128,.3);width:22px;height:22px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700">🪑</span>';
+      const won = m.teamWon;
+      const label = won === true ? 'V' : won === false ? 'D' : 'N';
+      const bg    = won === true ? 'rgba(0,229,160,.15)' : won === false ? 'rgba(255,80,80,.15)' : 'rgba(30,34,48,.5)';
+      const color = won === true ? '#00e5a0' : won === false ? '#ff5050' : '#9ca3af';
+      const bord  = won === true ? 'rgba(0,229,160,.25)' : won === false ? 'rgba(255,80,80,.25)' : '#1e2130';
+      return `<span style="background:${bg};color:${color};border:1px solid ${bord};width:22px;height:22px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:monospace">${label}</span>`;
+    }).join(' ');
+
+    const signalColor = signal > 75 ? '#ff9f43' : signal > 55 ? '#00e5a0' : '#5e81f4';
+    const description = `Stats de ${playerName || star.slug} — ${goals} buts, ${assists} passes, TendScore ${signal} | ${star.nation} · ${teamName} | Tendance & prédictions CDM 2026`;
+
+    const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${playerName || star.slug} — Stats & Tendance 2026 | TendanceStats</title>
+<meta name="description" content="${description}">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="${playerName || star.slug} — Stats & Tendance 2026 | TendanceStats">
+<meta property="og:description" content="${description}">
+<meta property="og:image" content="https://tendancestats.com/logo.png">
+<meta property="og:url" content="https://tendancestats.com/players/${star.slug}.html">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://tendancestats.com/players/${star.slug}.html">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#080a0f;color:#f0f2f8;min-height:100vh}
+.topnav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:rgba(8,10,15,.9);backdrop-filter:blur(12px);border-bottom:1px solid #1e2130}
+.nav-back{font-size:12px;letter-spacing:2px;color:#9ca3af;text-decoration:none}
+.nav-back:hover{color:#00e5a0}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:18px;color:#00e5a0;letter-spacing:3px;text-decoration:none;position:absolute;left:50%;transform:translateX(-50%)}
+.wrap{max-width:900px;margin:0 auto;padding:0 24px}
+.hero{padding:90px 0 40px;text-align:center}
+.avatar{width:100px;height:100px;border-radius:50%;overflow:hidden;background:#111318;border:3px solid #1e2130;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:40px}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.pname{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:3px;margin-bottom:6px}
+.pteam{font-size:14px;color:#9ca3af;margin-bottom:16px}
+.badges{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.badge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:4px;letter-spacing:0.5px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:32px 0}
+.kpi{background:#111318;border:1px solid #1e2130;border-radius:12px;padding:18px;text-align:center}
+.kpi-n{font-family:'Bebas Neue',sans-serif;font-size:36px;line-height:1;margin-bottom:4px}
+.kpi-l{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px}
+.card{background:#111318;border:1px solid #1e2130;border-radius:14px;padding:20px;margin-bottom:16px}
+.card-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:#9ca3af;margin-bottom:14px}
+.signal-track{height:8px;background:#1e2130;border-radius:4px;overflow:hidden;margin-top:8px}
+.signal-fill{height:8px;border-radius:4px;background:linear-gradient(90deg,#5e81f4,#00e5a0)}
+.cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:28px 0}
+.cta{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;transition:transform .2s}
+.cta:hover{transform:translateY(-2px)}
+.cta-primary{background:#00e5a0;color:#080a0f}
+.cta-secondary{background:#111318;border:1px solid #1e2130;color:#9ca3af}
+.cta-cdm{background:linear-gradient(135deg,#d4a843,#b8902a);color:#080a0f}
+.related{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:16px}
+.rel-card{background:#111318;border:1px solid #1e2130;border-radius:10px;padding:12px;text-decoration:none;color:#f0f2f8;transition:border-color .2s}
+.rel-card:hover{border-color:rgba(0,229,160,.3)}
+footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:12px;color:#6b7280;margin-top:40px}
+@media(max-width:600px){.kpis{grid-template-columns:repeat(2,1fr)}.pname{font-size:30px}}
+</style>
+</head>
+<body>
+<nav class="topnav">
+  <a href="../index.html" class="nav-back">← TendanceStats</a>
+  <a href="../index.html" class="nav-logo">TendanceStats</a>
+  <span style="font-size:10px;font-weight:700;letter-spacing:2px;background:rgba(0,229,160,.1);color:#00e5a0;border:1px solid rgba(0,229,160,.2);border-radius:4px;padding:3px 8px">STATS</span>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="avatar">${photo ? `<img src="${photo}" referrerpolicy="no-referrer" onerror="this.outerHTML='⚽'" alt="${playerName}">` : '⚽'}</div>
+    <h1 class="pname">${playerName}</h1>
+    <div class="pteam">${teamName} · <span style="color:#9ca3af">${star.nation}</span></div>
+    <div class="badges">
+      ${leagueLabel ? `<span class="badge ${leagueCls}" style="background:rgba(0,229,160,.1);color:#00e5a0">${leagueLabel}</span>` : ''}
+      <span class="badge" style="background:rgba(212,168,67,.15);color:#d4a843">🏆 CDM 2026</span>
+      <span class="badge" style="background:rgba(94,129,244,.1);color:#5e81f4">${star.nation}</span>
+    </div>
+    <div style="font-size:13px;color:#9ca3af">TendScore <strong style="color:${signalColor};font-size:22px;font-family:'Bebas Neue',sans-serif"> ${signal}</strong></div>
+    <div class="signal-track" style="max-width:300px;margin:8px auto 0"><div class="signal-fill" style="width:${signal}%"></div></div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="kpi-n" style="color:#00e5a0">${goals}</div><div class="kpi-l">Buts</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:#5e81f4">${assists}</div><div class="kpi-l">Passes</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:#9ca3af">${games}</div><div class="kpi-l">Matchs</div></div>
+    <div class="kpi"><div class="kpi-n" style="color:#ffd32a">${avg}</div><div class="kpi-l">Moy./match</div></div>
+  </div>
+
+  ${last5.length ? `
+  <div class="card">
+    <div class="card-title">Forme récente — 5 derniers matchs</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${formDots}</div>
+  </div>` : ''}
+
+  <div class="cta-row">
+    <a href="../player.html?id=${star.espnId}&name=${encodeURIComponent(playerName)}&teamName=${encodeURIComponent(teamName)}&photo=${encodeURIComponent(photo)}" class="cta cta-primary">📊 Fiche complète →</a>
+    <a href="../predictions.html" class="cta cta-secondary">🔮 Prédictions clubs</a>
+    <a href="../worldcup.html" class="cta cta-cdm">🏆 CDM 2026</a>
+  </div>
+
+  <div class="card">
+    <div class="card-title">À propos de ${star.name}</div>
+    <p style="font-size:13px;color:#6b7280;line-height:1.8">
+      ${playerName} représente <strong style="color:#9ca3af">${star.nation}</strong> à la <strong style="color:#d4a843">Coupe du Monde 2026</strong> aux États-Unis, Canada et Mexique. 
+      Actuellement à <strong style="color:#9ca3af">${teamName}</strong> (${star.league}), il totalise <strong style="color:#00e5a0">${goals} but${goals > 1 ? 's' : ''}</strong> 
+      et <strong style="color:#5e81f4">${assists} passe${assists > 1 ? 's' : ''} décisive${assists > 1 ? 's' : ''}</strong> cette saison, 
+      pour un TendScore de <strong style="color:${signalColor}">${signal}</strong> sur 100. 
+      Suivez ses statistiques, sa tendance de forme et nos prédictions pour la CDM 2026 sur TendanceStats.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Autres joueurs à surveiller — CDM 2026</div>
+    <div class="related">
+      <a href="../worldcup.html" class="rel-card">🏆 <strong style="display:block;margin-top:4px">Tous les joueurs CDM</strong><span style="font-size:11px;color:#6b7280">Classement & tendances</span></a>
+      <a href="../predictions-cdm.html" class="rel-card">🔮 <strong style="display:block;margin-top:4px">Prédictions CDM 2026</strong><span style="font-size:11px;color:#6b7280">Qui va briller ?</span></a>
+      <a href="../index.html" class="rel-card">⚽ <strong style="display:block;margin-top:4px">Joueurs en forme</strong><span style="font-size:11px;color:#6b7280">5 grands championnats</span></a>
+      <a href="../predictions.html" class="rel-card">📈 <strong style="display:block;margin-top:4px">Prédictions clubs</strong><span style="font-size:11px;color:#6b7280">Prochain match</span></a>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <strong style="color:#f0f2f8">TendanceStats</strong> &nbsp;·&nbsp; Stats ${playerName} 2026 &nbsp;·&nbsp;
+    <span style="color:#9ca3af">Données : sources publiques</span> &nbsp;·&nbsp;
+    <a href="../index.html" style="color:#6b7280;font-size:11px;text-decoration:none">← Retour à l'accueil</a>
+  </div>
+</footer>
+<div style="text-align:center;padding:12px 24px;font-size:11px;color:#4b5563;border-top:1px solid #111318;">© 2026 TendanceStats. Tous droits réservés.</div>
+</body>
+</html>`;
+
+    fs.writeFileSync(`players/${star.slug}.html`, html);
+    generated++;
+  }
+  console.log(`\n📄 ${generated} pages joueurs générées dans /players/`);
+}
+
+
+// ── Génération sitemap.xml automatique ───────────────────────────────────────
+
+function generateSitemap(starPlayers, playerMap) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const staticPages = [
+    { url: 'https://tendancestats.com/',                    priority: '1.0', freq: 'daily'  },
+    { url: 'https://tendancestats.com/index.html',          priority: '1.0', freq: 'daily'  },
+    { url: 'https://tendancestats.com/worldcup.html',       priority: '0.9', freq: 'daily'  },
+    { url: 'https://tendancestats.com/predictions.html',    priority: '0.9', freq: 'daily'  },
+    { url: 'https://tendancestats.com/predictions-cdm.html',priority: '0.9', freq: 'daily'  },
+    { url: 'https://tendancestats.com/stats-saison-2026.html', priority: '0.8', freq: 'daily' },
+    { url: 'https://tendancestats.com/stats-cdm-2026.html', priority: '0.8', freq: 'daily'  },
+    { url: 'https://tendancestats.com/squad.html',          priority: '0.7', freq: 'weekly' },
+    { url: 'https://tendancestats.com/player.html',         priority: '0.6', freq: 'daily'  },
+    { url: 'https://tendancestats.com/player-cdm.html',     priority: '0.6', freq: 'daily'  },
+  ];
+
+  // Pages joueurs statiques — uniquement ceux présents dans data.json
+  const playerPages = [];
+  for (const star of starPlayers) {
+    const p = playerMap[String(star.espnId)];
+    if (!p?.name) continue; // skip si pas dans data.json
+    playerPages.push({
+      url: `https://tendancestats.com/players/${star.slug}.html`,
+      priority: '0.8',
+      freq: 'daily',
+    });
+  }
+
+  const allPages = [...staticPages, ...playerPages];
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${allPages.map(p => `  <url>
+    <loc>${p.url}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${p.freq}</changefreq>
+    <priority>${p.priority}</priority>
+  </url>`).join('\n')}
+</urlset>`;
+
+  require('fs').writeFileSync('sitemap.xml', xml);
+  console.log(`\n🗺️  sitemap.xml généré — ${allPages.length} URLs (${playerPages.length} pages joueurs)`);
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 // ── API-Football : photos des nouveaux joueurs ───────────────────────────────
@@ -580,7 +868,7 @@ async function main() {
     EUR_IDS.has(m.leagueId) && (m.players?.length || 0) < 10
   );
 
-  const minDays = hasBadEurMatches ? 45 : 45; // fenêtre étendue pour recalcul complet — remettre à 14 après
+  const minDays = hasBadEurMatches ? 21 : 14; // fenêtre normale
   if (hasBadEurMatches) console.log(`⚠️  Matchs européens incomplets détectés → fenêtre étendue à ${minDays} jours`);
 
   const minDaysAgo = new Date();
@@ -795,6 +1083,14 @@ async function main() {
     players,
     fixtures,
   }));
+
+  // Générer les pages joueurs statiques pour le SEO
+  generatePlayerPages(players, updatedPhotos);
+
+  // Générer le sitemap.xml avec toutes les pages
+  const starPlayerMap = {};
+  for (const p of players) starPlayerMap[String(p.id)] = p;
+  generateSitemap(STAR_PLAYERS, starPlayerMap);
 
   console.log(`\n✅ ${newMatches.length} match(s) | ${players.length} joueurs | ${LEAGUES.length} requêtes ESPN`);
   if (players.length > 0) console.log(`🏆 Top : ${players[0].name} (trend: ${players[0].trendScore})`);
