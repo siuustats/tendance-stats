@@ -421,56 +421,54 @@ function rebuildPlayers(matches) {
 // nation  = sélection nationale CDM (seule info non disponible via ESPN clubs)
 // slug    = URL de la page statique
 const STAR_PLAYERS = [
-  { espnId: '189108', nation: 'France',       slug: 'kylian-mbappe'       },
-  { espnId: '279615', nation: 'Brésil',       slug: 'vinicius-jr'         },
-  { espnId: '303859', nation: 'Angleterre',   slug: 'jude-bellingham'     },
-  { espnId: '267831', nation: 'Uruguay',      slug: 'federico-valverde'   },
-  { espnId: '258921', nation: 'Brésil',       slug: 'rodrygo'             },
-  { espnId: '372944', nation: 'Espagne',      slug: 'lamine-yamal'        },
-  { espnId: '302854', nation: 'Espagne',      slug: 'pedri'               },
-  { espnId: '289668', nation: 'Brésil',       slug: 'raphinha'            },
-  { espnId: '318143', nation: 'Espagne',      slug: 'gavi'                },
-  { espnId: '164469', nation: 'Espagne',      slug: 'alvaro-morata'       },
-  { espnId: '93901',  nation: 'Égypte',       slug: 'mohamed-salah'       },
-  { espnId: '253989', nation: 'Norvège',      slug: 'erling-haaland'      },
-  { espnId: '282679', nation: 'Angleterre',   slug: 'bukayo-saka'         },
-  { espnId: '198825', nation: 'Angleterre',   slug: 'ollie-watkins'       },
-  { espnId: '323409', nation: 'Angleterre',   slug: 'cole-palmer'         },
-  { espnId: '265893', nation: 'Suède',        slug: 'alexander-isak'      },
-  { espnId: '279299', nation: 'Angleterre',   slug: 'phil-foden'          },
-  { espnId: '208499', nation: 'Belgique',     slug: 'leandro-trossard'    },
-  { espnId: '318399', nation: 'Belgique',     slug: 'jeremy-doku'         },
-  { espnId: '156145', nation: 'Corée du Sud', slug: 'son-heung-min'       },
-  { espnId: '300447', nation: 'Angleterre',   slug: 'declan-rice'         },
-  { espnId: '316028', nation: 'France',       slug: 'bradley-barcola'     },
-  { espnId: '232847', nation: 'France',       slug: 'ousmane-dembele'     },
-  { espnId: '358361', nation: 'France',       slug: 'desire-doue'         },
-  { espnId: '298008', nation: 'France',       slug: 'rayan-cherki'        },
-  { espnId: '349093', nation: 'France',       slug: 'warren-zaire-emery'  },
-  { espnId: '328098', nation: 'France',       slug: 'michael-olise'       },
-  { espnId: '274046', nation: 'France',       slug: 'marcus-thuram'       },
-  { espnId: '221728', nation: 'Allemagne',    slug: 'florian-wirtz'       },
-  { espnId: '233029', nation: 'Allemagne',    slug: 'jamal-musiala'       },
-  { espnId: '148871', nation: 'Allemagne',    slug: 'joshua-kimmich'      },
-  { espnId: '214616', nation: 'Allemagne',    slug: 'niclas-fullkrug'     },
-  { espnId: '177094', nation: 'Suisse',       slug: 'granit-xhaka'        },
-  { espnId: '185695', nation: 'Allemagne',    slug: 'jonathan-tah'        },
-  { espnId: '193669', nation: 'Nigeria',      slug: 'victor-osimhen'      },
-  { espnId: '241351', nation: 'Maroc',        slug: 'achraf-hakimi'       },
-  { espnId: '209568', nation: 'France',       slug: 'theo-hernandez'      },
-  { espnId: '182450', nation: 'Italie',       slug: 'nicolo-barella'      },
-  { espnId: '139919', nation: 'Belgique',     slug: 'romelu-lukaku'       },
-  { espnId: '141746', nation: 'Belgique',     slug: 'kevin-de-bruyne'     },
-  { espnId: '45843',  nation: 'Argentine',    slug: 'lionel-messi'        },
-  { espnId: '47431',  nation: 'Portugal',     slug: 'cristiano-ronaldo'   },
-  { espnId: '169880', nation: 'Brésil',       slug: 'neymar-jr'           },
-  { espnId: '84274',  nation: 'Croatie',      slug: 'luka-modric'         },
-  { espnId: '54679',  nation: 'France',       slug: 'antoine-griezmann'   },
-  { espnId: '193184', nation: 'Portugal',     slug: 'bruno-fernandes'     },
-  { espnId: '197031', nation: 'Norvège',      slug: 'martin-odegaard'     },
-  { espnId: '325354', nation: 'France',       slug: 'aurelien-tchouameni' },
-  { espnId: '353765', nation: 'Espagne',      slug: 'nico-williams'       },
-  { espnId: '193174', nation: 'Pays-Bas',     slug: 'cody-gakpo'          },
+  // La Liga
+  { espnId: '231388', nation: 'France',       slug: 'kylian-mbappe'        },
+  { espnId: '291281', nation: 'Angleterre',   slug: 'jude-bellingham'      },
+  { espnId: '235818', nation: 'Uruguay',      slug: 'federico-valverde'    },
+  { espnId: '362150', nation: 'Espagne',      slug: 'lamine-yamal'         },
+  { espnId: '250465', nation: 'Espagne',      slug: 'pedri'                },
+  { espnId: '231050', nation: 'Brésil',       slug: 'raphinha'             },
+  { espnId: '323702', nation: 'Espagne',      slug: 'gavi'                 },
+  { espnId: '140416', nation: 'France',       slug: 'antoine-griezmann'    },
+  { espnId: '312146', nation: 'Espagne',      slug: 'nico-williams'        },
+  // Premier League
+  { espnId: '173896', nation: 'Égypte',       slug: 'mohamed-salah'        },
+  { espnId: '253989', nation: 'Norvège',      slug: 'erling-haaland'       },
+  { espnId: '280555', nation: 'Angleterre',   slug: 'bukayo-saka'          },
+  { espnId: '198825', nation: 'Angleterre',   slug: 'ollie-watkins'        },
+  { espnId: '296395', nation: 'Angleterre',   slug: 'cole-palmer'          },
+  { espnId: '235662', nation: 'Suède',        slug: 'alexander-isak'       },
+  { espnId: '250787', nation: 'Angleterre',   slug: 'phil-foden'           },
+  { espnId: '174980', nation: 'Belgique',     slug: 'leandro-trossard'     },
+  { espnId: '283672', nation: 'Belgique',     slug: 'jeremy-doku'          },
+  { espnId: '238262', nation: 'Angleterre',   slug: 'declan-rice'          },
+  { espnId: '124091', nation: 'Portugal',     slug: 'bruno-fernandes'      },
+  { espnId: '231182', nation: 'Allemagne',    slug: 'kai-havertz'          },
+  { espnId: '298008', nation: 'France',       slug: 'rayan-cherki'         },
+  { espnId: '303748', nation: 'Allemagne',    slug: 'florian-wirtz'        },
+  { espnId: '149981', nation: 'Suisse',       slug: 'granit-xhaka'         },
+  { espnId: '249524', nation: 'Pays-Bas',     slug: 'cody-gakpo'           },
+  // Ligue 1
+  { espnId: '328238', nation: 'France',       slug: 'bradley-barcola'      },
+  { espnId: '229744', nation: 'France',       slug: 'ousmane-dembele'      },
+  { espnId: '345581', nation: 'France',       slug: 'warren-zaire-emery'   },
+  { espnId: '286831', nation: 'France',       slug: 'michael-olise'        },
+  { espnId: '240233', nation: 'Maroc',        slug: 'achraf-hakimi'        },
+  // Bundesliga
+  { espnId: '303821', nation: 'Allemagne',    slug: 'jamal-musiala'        },
+  { espnId: '190161', nation: 'Allemagne',    slug: 'joshua-kimmich'       },
+  { espnId: '170257', nation: 'Allemagne',    slug: 'niclas-fullkrug'      },
+  { espnId: '188052', nation: 'Allemagne',    slug: 'jonathan-tah'         },
+  { espnId: '220703', nation: 'Algérie',      slug: 'ramy-bensebaini'      },
+  // Serie A
+  { espnId: '217331', nation: 'France',       slug: 'marcus-thuram'        },
+  { espnId: '204441', nation: 'Italie',       slug: 'nicolo-barella'       },
+  { espnId: '134947', nation: 'Belgique',     slug: 'kevin-de-bruyne'      },
+  { espnId: '235677', nation: 'Serbie',       slug: 'dusan-vlahovic'       },
+  { espnId: '309273', nation: 'Danemark',     slug: 'rasmus-hojlund'       },
+  { espnId: '76762',  nation: 'Croatie',      slug: 'luka-modric'          },
+  // Hors top 5 / non trouvés dans data.json mais connus
+  { espnId: '154446', nation: 'Espagne',      slug: 'alvaro-morata'        },
 ];
 
 function generatePlayerPages(players, photosCache) {
@@ -645,10 +643,7 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
       ${eurBadges}
       <span class="badge" style="background:rgba(212,168,67,.15);color:#d4a843">🏆 CDM 2026</span>
     </div>
-    <div class="signal-wrap">
-      <div class="signal-row"><span>TendScore</span><span style="font-family:'DM Mono',monospace;color:${signalColor};font-weight:700">${signal} / 100</span></div>
-      <div class="signal-track"><div class="signal-fill" style="width:${signal}%;background:linear-gradient(90deg,#5e81f4,${signalColor})"></div></div>
-    </div>
+
   </div>
 
   <div class="kpis">
@@ -676,8 +671,7 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
       ${playerName} représente ${nationLink} à la <strong style="color:#d4a843">Coupe du Monde 2026</strong> aux États-Unis, Canada et Mexique.
       Actuellement à <strong style="color:#9ca3af">${teamName}</strong> (${leagueName}), il totalise <strong style="color:#00e5a0">${goals} but${goals > 1 ? 's' : ''}</strong>
       et <strong style="color:#5e81f4">${assists} passe${assists > 1 ? 's' : ''} décisive${assists > 1 ? 's' : ''}</strong> cette saison,
-      pour un TendScore de <strong style="color:${signalColor}">${signal}</strong> sur 100.
-      Suivez ses statistiques, sa tendance de forme et nos prédictions pour la CDM 2026 sur TendanceStats.
+      Suivez ses statistiques et nos prédictions pour la CDM 2026 sur TendanceStats.
     </p>
   </div>
 
@@ -763,7 +757,6 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
       + '</div>'
       + '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.name + '</div>'
       + '<div style="font-size:11px;color:#6b7280">' + p.team + '</div></div>'
-      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:' + sc + '">' + p.signal + '</div>'
       + '</a>';
   }).join('');
 })();
