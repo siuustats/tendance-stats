@@ -570,6 +570,17 @@ function generatePlayerPages(players, photosCache) {
     // Pas d'espace après "l'"
     const nationLink = nationArticle.endsWith("'") ? nationArticle + nationDisplay : nationArticle + ' ' + nationDisplay;
 
+    // Précalculer le tableau JS des joueurs pour le script related côté client
+    const allPlayersData = STAR_PLAYERS
+      .filter(s => playerMap[String(s.espnId)]?.name)
+      .map(s => {
+        const rp  = playerMap[String(s.espnId)];
+        const raw = allPhotos[String(s.espnId)] || rp?.photo || '';
+        const ph  = raw.startsWith('photos/') ? '../' + raw : raw;
+        return { slug: s.slug, espnId: s.espnId, name: rp.name, team: rp.teamName || '', photo: ph, signal: rp.signal || 0 };
+      });
+    const allPlayersJson = JSON.stringify(allPlayersData);
+
     const description = `Stats ${playerName} 2026 — ${goals} buts, ${assists} passes, TendScore ${signal} | ${star.nation} · ${teamName} | Tendance & prédictions CDM 2026`;
 
 
@@ -720,24 +731,7 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
 <script>
 (function() {
   const CURRENT = '${star.espnId}';
-  const ALL_PLAYERS = ${JSON.stringify(
-    STAR_PLAYERS
-      .filter(s => playerMap[String(s.espnId)]?.name)
-      .map(s => {
-        const rp = playerMap[String(s.espnId)];
-        return {
-          slug:   s.slug,
-          espnId: s.espnId,
-          name:   rp?.name    || '',
-          team:   rp?.teamName|| '',
-          photo:  (function() {
-            const raw = allPhotos[String(s.espnId)] || rp?.photo || '';
-            return raw.startsWith('photos/') ? '../' + raw : raw;
-          })(),
-          signal: rp?.signal  || 0,
-        };
-      })
-  )};
+  const ALL_PLAYERS = ${allPlayersJson};
 
   const pool = ALL_PLAYERS.filter(p => p.espnId !== CURRENT && p.name);
   // Fisher-Yates shuffle
