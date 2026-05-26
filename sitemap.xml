@@ -60,4 +60,28 @@
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
+  <url>
+    <loc>https://tendancestats.com/players/alvaro-morata.html</loc>
+    <lastmod>2026-05-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tendancestats.com/players/erling-haaland.html</loc>
+    <lastmod>2026-05-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tendancestats.com/players/ollie-watkins.html</loc>
+    <lastmod>2026-05-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://tendancestats.com/players/rayan-cherki.html</loc>
+    <lastmod>2026-05-26</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
 </urlset>
