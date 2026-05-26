@@ -579,7 +579,11 @@ function generatePlayerPages(players, photosCache) {
         const ph  = raw.startsWith('photos/') ? '../' + raw : raw;
         return { slug: s.slug, espnId: s.espnId, name: rp.name, team: rp.teamName || '', photo: ph, signal: rp.signal || 0 };
       });
-    const allPlayersJson = JSON.stringify(allPlayersData);
+    // Échapper les caractères qui pourraient casser le template HTML
+    const allPlayersJson = JSON.stringify(allPlayersData)
+      .replace(/\\/g, '\\\\')
+      .replace(/`/g, '\\`')
+      .replace(/\$/g, '\\$');
 
     const description = `Stats ${playerName} 2026 — ${goals} buts, ${assists} passes, TendScore ${signal} | ${star.nation} · ${teamName} | Tendance & prédictions CDM 2026`;
 
@@ -743,14 +747,23 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
 
   const grid = document.getElementById('related-grid');
   if (!grid) return;
-  grid.innerHTML = pick.map(p => {
-    const sc = p.signal > 75 ? '#ff9f43' : p.signal > 55 ? '#00e5a0' : '#5e81f4';
-    return '<a href="' + p.slug + '.html" style="background:#161820;border:1px solid #1e2130;border-radius:12px;padding:14px;text-decoration:none;color:#f0f2f8;display:flex;align-items:center;gap:10px;transition:border-color .2s" onmouseover="this.style.borderColor=\'rgba(0,229,160,.3)\'" onmouseout="this.style.borderColor=\'#1e2130\'">'
-      + '<div style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:#111318;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px">'
-      + (p.photo ? '<img src="' + p.photo + '" style="width:100%;height:100%;object-fit:cover" referrerpolicy="no-referrer" onerror="this.outerHTML=\'⚽\'">' : '⚽')
+  grid.innerHTML = pick.map(function(p) {
+    var avatar = p.photo
+      ? '<img src="' + p.photo + '" style="width:100%;height:100%;object-fit:cover" referrerpolicy="no-referrer" onerror="this.style.display='none'">'
+      : '⚽';
+    return '<a href="' + p.slug + '.html"'
+      + ' style="background:#161820;border:1px solid #1e2130;border-radius:12px;padding:14px;'
+      + 'text-decoration:none;color:#f0f2f8;display:flex;align-items:center;gap:10px;transition:border-color .2s"'
+      + ' onmouseover="this.style.borderColor='rgba(0,229,160,.3)'"'
+      + ' onmouseout="this.style.borderColor='#1e2130'">'
+      + '<div style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:#111318;'
+      + 'flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px">'
+      + avatar
       + '</div>'
-      + '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.name + '</div>'
-      + '<div style="font-size:11px;color:#6b7280">' + p.team + '</div></div>'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.name + '</div>'
+      + '<div style="font-size:11px;color:#6b7280">' + p.team + '</div>'
+      + '</div>'
       + '</a>';
   }).join('');
 })();
