@@ -539,25 +539,25 @@ let currentPageIndex = 1;
 const PAGE_SIZE = 20;
 
 const TEST_PLAYERS = [
-  {id:"t1", espnId:189108,  name:"Kylian Mbappe",    teamName:"France",     signal:85, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, recent_assists:0, last5:[], hot:true, trendScore:85, leagueId:6, leagueName:"Coupe du Monde", leagueFlag:"fr",     leagueFlagAlt:"FR",  leagueCls:"cdm", leagueLabel:"CDM", photo:""},
+  {id:"t1", espnId:231388,  name:"Kylian Mbappe",    teamName:"France",     signal:85, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, recent_assists:0, last5:[], hot:true, trendScore:85, leagueId:6, leagueName:"Coupe du Monde", leagueFlag:"fr",     leagueFlagAlt:"FR",  leagueCls:"cdm", leagueLabel:"CDM", photo:""},
   {id:"t2", espnId:279615,  name:"Vinicius Jr",       teamName:"Bresil",     signal:83, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, recent_assists:0, last5:[], hot:true, trendScore:83, leagueId:6, leagueName:"Coupe du Monde", leagueFlag:"br",     leagueFlagAlt:"BR",  leagueCls:"cdm", leagueLabel:"CDM", photo:""},
-  {id:"t3", espnId:302854,  name:"Pedri",             teamName:"Espagne",    signal:80, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, recent_assists:0, last5:[], hot:true, trendScore:80, leagueId:6, leagueName:"Coupe du Monde", leagueFlag:"es",     leagueFlagAlt:"ES",  leagueCls:"cdm", leagueLabel:"CDM", photo:""},
+  {id:"t3", espnId:250465,  name:"Pedri",             teamName:"Espagne",    signal:80, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, recent_assists:0, last5:[], hot:true, trendScore:80, leagueId:6, leagueName:"Coupe du Monde", leagueFlag:"es",     leagueFlagAlt:"ES",  leagueCls:"cdm", leagueLabel:"CDM", photo:""},
   {id:"t4", espnId:47431,   name:"Cristiano Ronaldo", teamName:"Portugal",   signal:82, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, recent_assists:0, last5:[], hot:true, trendScore:82, leagueId:6, leagueName:"Coupe du Monde", leagueFlag:"pt",     leagueFlagAlt:"PT",  leagueCls:"cdm", leagueLabel:"CDM", photo:""},
   {id:"t5", espnId:253989,  name:"Erling Haaland",    teamName:"Norvege",    signal:84, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, recent_assists:0, last5:[], hot:true, trendScore:84, leagueId:6, leagueName:"Coupe du Monde", leagueFlag:"no",     leagueFlagAlt:"NO",  leagueCls:"cdm", leagueLabel:"CDM", photo:""},
-  {id:"t6", espnId:303859,  name:"Jude Bellingham",   teamName:"Angleterre", signal:81, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, recent_assists:0, last5:[], hot:true, trendScore:81, leagueId:6, leagueName:"Coupe du Monde", leagueFlag:"gb-eng", leagueFlagAlt:"EN",  leagueCls:"cdm", leagueLabel:"CDM", photo:""},
-  {id:"t7", espnId:372944,  name:"Lamine Yamal",      teamName:"Espagne",    signal:79, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, recent_assists:0, last5:[], hot:true, trendScore:79, leagueId:6, leagueName:"Coupe du Monde", leagueFlag:"es",     leagueFlagAlt:"ES",  leagueCls:"cdm", leagueLabel:"CDM", photo:""},
+  {id:"t6", espnId:291281,  name:"Jude Bellingham",   teamName:"Angleterre", signal:81, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, recent_assists:0, last5:[], hot:true, trendScore:81, leagueId:6, leagueName:"Coupe du Monde", leagueFlag:"gb-eng", leagueFlagAlt:"EN",  leagueCls:"cdm", leagueLabel:"CDM", photo:""},
+  {id:"t7", espnId:362150,  name:"Lamine Yamal",      teamName:"Espagne",    signal:79, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, recent_assists:0, last5:[], hot:true, trendScore:79, leagueId:6, leagueName:"Coupe du Monde", leagueFlag:"es",     leagueFlagAlt:"ES",  leagueCls:"cdm", leagueLabel:"CDM", photo:""},
   {id:"t8", espnId:45843,   name:"Lionel Messi",      teamName:"Argentine",  signal:88, totalGoals:0, totalAssists:0, avg:0, totalGames:0, recent_goals:0, recent_assists:0, last5:[], hot:true, trendScore:88, leagueId:6, leagueName:"Coupe du Monde", leagueFlag:"ar",     leagueFlagAlt:"AR",  leagueCls:"cdm", leagueLabel:"CDM", photo:""},
 ];
 
 const RANKING_PLAYERS = [
-  {id:"r1",  espnId:189108,  name:"Kylian Mbappe",      teamName:"France",      totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:95, photo:"", leagueFlag:"fr"},
+  {id:"r1",  espnId:231388,  name:"Kylian Mbappe",      teamName:"France",      totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:95, photo:"", leagueFlag:"fr"},
   {id:"r2",  espnId:45843,   name:"Lionel Messi",        teamName:"Argentine",   totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:92, photo:"", leagueFlag:"ar"},
   {id:"r3",  espnId:253989,  name:"Erling Haaland",      teamName:"Norvège",     totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:90, photo:"", leagueFlag:"no"},
   {id:"r4",  espnId:279615,  name:"Vinicius Jr",         teamName:"Brésil",      totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:88, photo:"", leagueFlag:"br"},
   {id:"r5",  espnId:47431,   name:"Cristiano Ronaldo",   teamName:"Portugal",    totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:85, photo:"", leagueFlag:"pt"},
-  {id:"r6",  espnId:303859,  name:"Jude Bellingham",     teamName:"Angleterre",  totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:83, photo:"", leagueFlag:"gb-eng"},
-  {id:"r7",  espnId:372944,  name:"Lamine Yamal",        teamName:"Espagne",     totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:82, photo:"", leagueFlag:"es"},
-  {id:"r8",  espnId:302854,  name:"Pedri",               teamName:"Espagne",     totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:80, photo:"", leagueFlag:"es"},
+  {id:"r6",  espnId:291281,  name:"Jude Bellingham",     teamName:"Angleterre",  totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:83, photo:"", leagueFlag:"gb-eng"},
+  {id:"r7",  espnId:362150,  name:"Lamine Yamal",        teamName:"Espagne",     totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:82, photo:"", leagueFlag:"es"},
+  {id:"r8",  espnId:250465,  name:"Pedri",               teamName:"Espagne",     totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:80, photo:"", leagueFlag:"es"},
   {id:"r9",  espnId:282679,  name:"Bukayo Saka",         teamName:"Angleterre",  totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:78, photo:"", leagueFlag:"gb-eng"},
   {id:"r10", espnId:318143,  name:"Gavi",                teamName:"Espagne",     totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:76, photo:"", leagueFlag:"es"},
   {id:"r11", espnId:279299,  name:"Phil Foden",          teamName:"Angleterre",  totalGoals:0, totalAssists:0, totalGames:0, avg:0, signal:74, photo:"", leagueFlag:"gb-eng"},
