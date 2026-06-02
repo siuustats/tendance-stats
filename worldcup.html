@@ -776,7 +776,8 @@ function renderAlerts(list, fixtures) {
     ...p, _predScore: calcPredScore(p, fixtures, list).score
   })).sort((a,b) => b._predScore - a._predScore);
 
-  const withMatch = withScores.filter(p => calcPredScore(p, fixtures, list).opponent);
+  // Exclure les joueurs absents (blessés/retirés de l'effectif)
+  const withMatch = withScores.filter(p => p.cdmStatus !== 'absent' && calcPredScore(p, fixtures, list).opponent);
 
   // 1 joueur par nation d'abord
   for (const p of withMatch) {
@@ -847,10 +848,12 @@ function renderAlerts(list, fixtures) {
 function renderGrid(list) {
   // Avant CDM : afficher les 8 joueurs avec le plus de stats (ou signal)
   // Pendant CDM : joueurs avec buts/passes en premier
-  const withStats = list.filter(p => (p.totalGoals||0) + (p.totalAssists||0) > 0);
+  // Exclure les joueurs absents des cadres
+  const activeList = list.filter(p => p.cdmStatus !== 'absent');
+  const withStats = activeList.filter(p => (p.totalGoals||0) + (p.totalAssists||0) > 0);
   const hot = withStats.length >= 8
     ? withStats.sort((a,b) => ((b.totalGoals||0)+(b.totalAssists||0)) - ((a.totalGoals||0)+(a.totalAssists||0))).slice(0,8)
-    : list.filter(p => p.hot || (p.signal||0) > 0).slice(0,8);
+    : activeList.filter(p => p.hot || (p.signal||0) > 0).slice(0,8);
   const c = document.getElementById('pgrid');
   c.innerHTML = '';
   hot.forEach((p, i) => {
@@ -916,6 +919,7 @@ function renderTable(list, photosMap, page) {
     const flag  = p.leagueFlag ? '<img src="https://flagcdn.com/w20/' + p.leagueFlag + '.png" style="width:16px;height:11px;object-fit:cover;border-radius:2px;vertical-align:middle;margin-right:4px">' : '';
     const tr = document.createElement('tr');
     tr.style.cursor = 'pointer';
+    if (p.cdmStatus === 'absent') tr.style.opacity = '0.55';
     tr.onclick = () => {
       const pid = (p.id && String(p.id).startsWith('r')) ? (p.espnId || p.id) : p.id;
       window.location.href = 'player-cdm.html?id=' + pid + '&name=' + encodeURIComponent(p.name) + '&teamName=' + encodeURIComponent(p.teamName||'') + '&photo=' + encodeURIComponent(photo);
@@ -929,7 +933,13 @@ function renderTable(list, photosMap, page) {
       + '<td style="width:36px;padding:6px 4px"><div style="width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:14px">'
       + (photo ? '<img src="' + photo + '" style="width:100%;height:100%;object-fit:cover" referrerpolicy="no-referrer" onerror="this.outerHTML=\'⚽\'">' : '⚽')
       + '</div></td>'
-      + '<td><div class="pn">' + p.name + '</div><div class="pt">' + (p.teamName||'') + '</div></td>'
+      + '<td>'
+      + '<div class="pn" style="' + (p.cdmStatus === 'absent' ? 'color:#6b6478' : '') + '">'
+      + p.name
+      + (p.cdmStatus === 'absent' ? ' <span style="font-size:9px;font-weight:700;background:rgba(255,77,109,.15);color:#ff4d6d;border:1px solid rgba(255,77,109,.3);padding:1px 6px;border-radius:4px;vertical-align:middle;margin-left:4px">ABSENT</span>' : '')
+      + '</div>'
+      + '<div class="pt">' + (p.teamName||'') + '</div>'
+      + '</td>'
       + '<td>' + flag + '<span style="font-size:11px;color:var(--m2)">' + (p.teamName||'') + '</span></td>'
       + '<td><span class="num g">' + g + '</span></td>'
       + '<td><span class="num a">' + a + '</span></td>'
