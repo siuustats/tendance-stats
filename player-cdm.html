@@ -373,32 +373,50 @@ function openHistModalCdm() {
 async function init() {
   const params   = new URLSearchParams(window.location.search);
   const playerId = params.get('id');
-  const name     = params.get('name') ? decodeURIComponent(params.get('name')) : null;
-  const photo    = params.get('photo') ? decodeURIComponent(params.get('photo')) : null;
-  const teamName = params.get('teamName') ? decodeURIComponent(params.get('teamName')) : null;
+  let name     = params.get('name') ? decodeURIComponent(params.get('name')) : null;
+  let photo    = params.get('photo') ? decodeURIComponent(params.get('photo')) : null;
+  let teamName = params.get('teamName') ? decodeURIComponent(params.get('teamName')) : null;
 
-  if (!name && !playerId) {
+  if (!playerId) {
     document.body.innerHTML = '<p style="padding:40px;color:#fff">Joueur introuvable</p>';
     return;
   }
 
-  // Photo — uniquement depuis photos.json (par espnId/id) ou paramètre URL
-  // On ne touche PAS à data.json pour éviter de récupérer des stats de club
-  let playerPhoto = photo || '';
+  // Charger data.json et photos.json en parallèle
+  let photosMap = {}, dataFull = { players: [], matches: [], fixtures: [] };
   try {
-    const photosRes = await fetch('photos.json?v=' + Date.now());
-    if (photosRes.ok) {
-      const photosMap = await photosRes.json();
-      playerPhoto = photosMap[playerId] || photosMap[String(playerId)] || photo || '';
-    }
+    const [photosRes, dataRes] = await Promise.all([
+      fetch('photos.json?v=' + Date.now()).catch(() => null),
+      fetch('data.json?v=' + Date.now()),
+    ]);
+    if (photosRes?.ok) photosMap = await photosRes.json();
+    dataFull = await dataRes.json();
   } catch(e) {}
+
+  // Chercher le joueur dans data.json players (leagueId=6) pour compléter les infos manquantes
+  const cdmPlayerData = (dataFull.players || []).find(p =>
+    p.leagueId === 6 && (String(p.id) === String(playerId) || String(p.espnId) === String(playerId))
+  );
+  if (cdmPlayerData) {
+    name     = name     || cdmPlayerData.name;
+    teamName = teamName || cdmPlayerData.teamName;
+    photo    = photo    || cdmPlayerData.photo || '';
+  }
+
+  if (!name) {
+    document.body.innerHTML = '<p style="padding:40px;color:#fff">Joueur introuvable</p>';
+    return;
+  }
+
+  // Photo depuis photos.json, puis data.json, puis URL
+  let playerPhoto = photosMap[playerId] || photosMap[String(playerId)] || photo || '';
 
   const avatarEl = document.getElementById('avatar');
   if (playerPhoto) {
     avatarEl.innerHTML = `<img src="${playerPhoto}" referrerpolicy="no-referrer" onerror="this.outerHTML='⚽'" alt="${name || ''}">`;
   }
 
-  // Hero — données 100% depuis l'URL, pas depuis data.json
+  // Hero
   const displayName = name || '—';
   document.title = `${displayName} — CDM 2026 — Tendance Stats`;
   document.getElementById('playerName').textContent = displayName;
@@ -426,13 +444,18 @@ async function init() {
     teamEl.textContent = teamName || '—';
   }
   document.getElementById('playerLeague').textContent = 'CDM 2026';
+  // Badge ABSENT si joueur retiré de l'effectif
+  if (cdmPlayerData?.cdmStatus === 'absent') {
+    const absentBadge = document.createElement('span');
+    absentBadge.style.cssText = 'font-size:10px;font-weight:700;background:rgba(255,77,109,.15);color:#ff4d6d;border:1px solid rgba(255,77,109,.3);padding:2px 8px;border-radius:4px;margin-left:8px;vertical-align:middle';
+    absentBadge.textContent = 'ABSENT';
+    document.getElementById('playerLeague').appendChild(absentBadge);
+  }
   document.getElementById('trendScore').textContent = '—';
   document.getElementById('trendFill').style.width = '0%';
 
   // ── KPIs + Forme + Historique CDM ────────────────────────────────────────
   try {
-    const dataRes2 = await fetch('data.json?v=' + Date.now());
-    const dataFull = await dataRes2.json();
 
     // Chercher les matchs CDM du joueur
     const cdmMatches = [];
@@ -507,15 +530,12 @@ async function init() {
   // ── PRÉDICTION PROCHAIN MATCH CDM ──────────────────────────────────────
   const predEl = document.getElementById('predNext');
   try {
-    const dataRes = await fetch('data.json?v=' + Date.now());
-    const data = await dataRes.json();
-    const cdmPlayers = data.players?.filter(p => p.leagueId === 6) || [];
-    const fixtures   = data.fixtures || [];
+    const cdmPlayers = (dataFull.players || []).filter(p => p.leagueId === 6);
+    const fixtures   = dataFull.fixtures || [];
 
     const cdmPlayer = cdmPlayers.find(p =>
-      (playerId && (String(p.id) === String(playerId) || String(p.espnId) === String(playerId))) ||
-      (name && p.name === name && p.teamName === teamName)
-    );
+      String(p.id) === String(playerId) || String(p.espnId) === String(playerId)
+    ) || cdmPlayerData;
 
     if (!cdmPlayer) {
       predEl.innerHTML = '<div class="pred-next-no-match">Prédictions disponibles dès le début de la CDM (11 juin 2026)</div>';
