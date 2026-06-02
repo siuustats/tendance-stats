@@ -885,7 +885,18 @@ async function syncCDMRosters(stored, photosCache) {
       const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
       if (!res.ok) continue;
       const data = await res.json();
-      for (const a of (data.athletes || [])) {
+      const athletes = data.athletes || [];
+      // Log pour débug : afficher les champs disponibles sur le premier joueur
+      if (fetched === 0 && athletes.length > 0) {
+        const sample = athletes[0];
+        console.log(`  🔍 Structure ESPN (équipe ${teamId}): ${JSON.stringify(Object.keys(sample))}`);
+        if (sample.athlete) console.log(`  🔍 athlete keys: ${JSON.stringify(Object.keys(sample.athlete))}`);
+        console.log(`  📊 ${athletes.length} joueurs retournés`);
+      }
+      if (athletes.length > 30) {
+        console.log(`  ⚠️  Équipe ${CDM_TEAM_NAMES[teamId] || teamId}: ${athletes.length} joueurs (> 26 attendus)`);
+      }
+      for (const a of athletes) {
         const id   = String(a.athlete?.id || a.id || '');
         const name = a.athlete?.displayName || a.displayName || a.fullName || '';
         if (!id || !name) continue;
