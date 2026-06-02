@@ -837,9 +837,45 @@ const CDM_TEAM_IDS = [
   '448','477','4469','2659',  // Groupe L
 ];
 
-async function fetchCDMRosterPhotos(photosCache) {
-  console.log('\n\uD83C\uDF0D Récupération des rosters CDM pour les photos...');
-  const cdmPlayers = [];
+// CDM_TEAM_NAMES : ID ESPN → nom de l'équipe nationale
+const CDM_TEAM_NAMES = {
+  '203':'Mexique','467':'Afrique du Sud','451':'Corée du Sud','450':'Tchéquie',
+  '206':'Canada','452':'Bosnie-Herzégovine','4398':'Qatar','475':'Suisse',
+  '205':'Brésil','2869':'Maroc','2654':'Haïti','580':'Écosse',
+  '660':'États-Unis','210':'Paraguay','628':'Australie','465':'Turquie',
+  '481':'Allemagne','11678':'Curaçao','4789':"Côte d'Ivoire",'209':'Équateur',
+  '449':'Pays-Bas','627':'Japon','466':'Suède','659':'Tunisie',
+  '459':'Belgique','2620':'Égypte','469':'Iran','2666':'Nouvelle-Zélande',
+  '164':'Espagne','2597':'Cap-Vert','655':'Arabie Saoudite','212':'Uruguay',
+  '478':'France','654':'Sénégal','4375':'Irak','464':'Norvège',
+  '202':'Argentine','624':'Algérie','474':'Autriche','2917':'Jordanie',
+  '482':'Portugal','2850':'RD Congo','2570':'Ouzbékistan','208':'Colombie',
+  '448':'Angleterre','477':'Croatie','4469':'Ghana','2659':'Panama',
+};
+const CDM_TEAM_FLAGS = {
+  '203':'mx','467':'za','451':'kr','450':'cz','206':'ca','452':'ba',
+  '4398':'qa','475':'ch','205':'br','2869':'ma','2654':'ht','580':'gb-sct',
+  '660':'us','210':'py','628':'au','465':'tr','481':'de','11678':'cw',
+  '4789':'ci','209':'ec','449':'nl','627':'jp','466':'se','659':'tn',
+  '459':'be','2620':'eg','469':'ir','2666':'nz','164':'es','2597':'cv',
+  '655':'sa','212':'uy','478':'fr','654':'sn','4375':'iq','464':'no',
+  '202':'ar','624':'dz','474':'at','2917':'jo','482':'pt','2850':'cd',
+  '2570':'uz','208':'co','448':'gb-eng','477':'hr','4469':'gh','2659':'pa',
+};
+
+async function syncCDMRosters(stored, photosCache) {
+  // Vérifier si on doit recharger les rosters (toutes les 48h)
+  const lastSync   = stored.cdmRosterSyncAt ? new Date(stored.cdmRosterSyncAt) : null;
+  const hoursSince = lastSync ? (Date.now() - lastSync.getTime()) / 3600000 : 999;
+  const needSync   = hoursSince >= 48;
+
+  if (!needSync) {
+    console.log(`\n⏭️  Rosters CDM OK (dernière sync: ${Math.round(hoursSince)}h)`);
+    return { photosCache, cdmPlayers: (stored.players || []).filter(p => p.leagueId === 6) };
+  }
+
+  console.log('\n🌍 Sync rosters CDM (toutes les 48h)...');
+  const rosterMap = {}; // id → { id, name, teamId }
   let fetched = 0;
 
   for (const teamId of CDM_TEAM_IDS) {
@@ -849,28 +885,74 @@ async function fetchCDMRosterPhotos(photosCache) {
       const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
       if (!res.ok) continue;
       const data = await res.json();
-      const athletes = data.athletes || [];
-      for (const a of athletes) {
+      for (const a of (data.athletes || [])) {
         const id   = String(a.athlete?.id || a.id || '');
         const name = a.athlete?.displayName || a.displayName || a.fullName || '';
         if (!id || !name) continue;
-        // Photos ESPN inutilisables (page blanche) — on passe directement par Transfermarkt
-        if (!photosCache[id] || photosCache[id] === '') {
-          cdmPlayers.push({ id, name });
-        }
+        rosterMap[id] = { id, name, teamId };
       }
       fetched++;
     } catch(e) {
-      console.warn(`  Warning: Roster CDM ${teamId} indisponible`);
+      console.warn(`  ⚠️  Roster CDM ${teamId} indisponible`);
+    }
+  }
+  console.log(`  ✅ ${fetched}/48 rosters — ${Object.keys(rosterMap).length} joueurs`);
+
+  // Joueurs CDM actuels dans data.json
+  const existingCdm = (stored.players || []).filter(p => p.leagueId === 6);
+  const existingIds = new Set(existingCdm.map(p => String(p.id)));
+  const rosterIds   = new Set(Object.keys(rosterMap));
+
+  // 1. Joueurs absents du nouveau roster → cdmStatus: "absent"
+  let marked = 0, restored = 0, added = 0;
+  for (const p of existingCdm) {
+    if (!rosterIds.has(String(p.id))) {
+      if (p.cdmStatus !== 'absent') { p.cdmStatus = 'absent'; marked++; }
+    } else {
+      if (p.cdmStatus === 'absent') { delete p.cdmStatus; restored++; }
     }
   }
 
-  console.log(`  OK ${fetched}/48 rosters - ${cdmPlayers.length} joueur(s) sans photo`);
-
-  if (cdmPlayers.length > 0) {
-    return await fetchMissingPhotos(cdmPlayers, photosCache);
+  // 2. Nouveaux joueurs dans le roster → ajouter avec 0 stats
+  const newCdmPlayers = [];
+  for (const [id, info] of Object.entries(rosterMap)) {
+    if (existingIds.has(id)) continue;
+    const teamName = CDM_TEAM_NAMES[info.teamId] || info.teamId;
+    const flag     = CDM_TEAM_FLAGS[info.teamId]  || '';
+    newCdmPlayers.push({
+      id, name: info.name, teamName,
+      leagueId: 6, leagueName: 'Coupe du Monde',
+      leagueFlag: flag, leagueFlagAlt: flag.toUpperCase().slice(0,2),
+      leagueCls: 'cdm', leagueLabel: 'CDM',
+      photo: photosCache[id] || '',
+      totalGoals: 0, totalAssists: 0, totalGames: 0, avg: 0,
+      signal: 0, trendScore: 0, recent_goals: 0, recent_assists: 0,
+      hot: false, last5: [],
+    });
+    added++;
   }
-  return photosCache;
+
+  console.log(`  ➕ ${added} nouveau(x) | ❌ ${marked} absent(s) | ✅ ${restored} réintégré(s)`);
+
+  // 3. Chercher photos manquantes via Transfermarkt
+  const allCdm = [...existingCdm, ...newCdmPlayers];
+  const photosMissing = allCdm.filter(p => !photosCache[p.id] && p.cdmStatus !== 'absent');
+  let updatedPhotos = photosCache;
+  if (photosMissing.length > 0) {
+    updatedPhotos = await fetchMissingPhotos(photosMissing, photosCache);
+  }
+
+  // Injecter photos dans les nouveaux joueurs
+  for (const p of newCdmPlayers) {
+    if (!p.photo && updatedPhotos[p.id]) p.photo = updatedPhotos[p.id];
+  }
+
+  return {
+    photosCache: updatedPhotos,
+    cdmPlayers:  allCdm,
+    newCdmPlayers,
+    syncAt:      new Date().toISOString(),
+  };
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
@@ -1222,11 +1304,16 @@ async function main() {
 
   const players = rebuildPlayers(trimmed);
 
-  // Récupérer les photos CDM via rosters ESPN + Transfermarkt
-  const cdmPhotosCache = await fetchCDMRosterPhotos(photosCache);
-  // Récupérer les photos manquantes via API-Football (joueurs clubs)
-  const updatedPhotos = await fetchMissingPhotos(players, cdmPhotosCache);
-  if (Object.keys(updatedPhotos).length !== Object.keys(photosCache).length) {
+  // Sync rosters CDM (toutes les 48h) : ajout/retrait joueurs + photos
+  const cdmSync = await syncCDMRosters(stored, photosCache);
+  let updatedPhotos = await fetchMissingPhotos(players, cdmSync.photosCache);
+
+  // Fusionner joueurs CDM dans la liste (les joueurs clubs ont déjà leurs stats via rebuildPlayers)
+  const clubIds = new Set(players.map(p => String(p.id)));
+  const cdmOnly = (cdmSync.cdmPlayers || []).filter(p => !clubIds.has(String(p.id)));
+  players.push(...cdmOnly);
+
+  if (JSON.stringify(updatedPhotos) !== JSON.stringify(photosCache)) {
     fs.writeFileSync('photos.json', JSON.stringify(updatedPhotos, null, 2));
     console.log(`📸 photos.json mis à jour (${Object.keys(updatedPhotos).length} photos)`);
   }
@@ -1250,12 +1337,13 @@ async function main() {
   const fixtures = allFixtures.filter(f => !playedIds.has(f.id) && f.date > nowISO);
 
   fs.writeFileSync(DATA_FILE, JSON.stringify({
-    updatedAt:       new Date().toISOString(),
-    totalMatches:    trimmed.length,
-    totalPlayers:    players.length,
-    totalRequests:   LEAGUES.length,
-    newMatchesToday: newMatches.length,
-    matches:         trimmed,
+    updatedAt:          new Date().toISOString(),
+    cdmRosterSyncAt:    cdmSync.syncAt || stored.cdmRosterSyncAt || null,
+    totalMatches:       trimmed.length,
+    totalPlayers:       players.length,
+    totalRequests:      LEAGUES.length,
+    newMatchesToday:    newMatches.length,
+    matches:            trimmed,
     players,
     fixtures,
   }));
