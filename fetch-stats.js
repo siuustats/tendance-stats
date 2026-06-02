@@ -820,6 +820,59 @@ ${allPages.map(p => `  <url>
   console.log(`\n🗺️  sitemap.xml généré — ${allPages.length} URLs (${playerPages.length} pages joueurs)`);
 }
 
+// ── Récupération photos joueurs CDM via rosters ESPN ─────────────────────────
+
+const CDM_TEAM_IDS = [
+  '203','467','451','450',    // Groupe A
+  '206','452','4398','475',   // Groupe B
+  '205','2869','2654','580',  // Groupe C
+  '660','210','628','465',    // Groupe D
+  '481','11678','4789','209', // Groupe E
+  '449','627','466','659',    // Groupe F
+  '459','2620','469','2666',  // Groupe G
+  '164','2597','655','212',   // Groupe H
+  '478','654','4375','464',   // Groupe I
+  '202','624','474','2917',   // Groupe J
+  '482','2850','2570','208',  // Groupe K
+  '448','477','4469','2659',  // Groupe L
+];
+
+async function fetchCDMRosterPhotos(photosCache) {
+  console.log('\n\uD83C\uDF0D Récupération des rosters CDM pour les photos...');
+  const cdmPlayers = [];
+  let fetched = 0;
+
+  for (const teamId of CDM_TEAM_IDS) {
+    try {
+      await new Promise(r => setTimeout(r, 400));
+      const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams/${teamId}/roster`;
+      const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const athletes = data.athletes || [];
+      for (const a of athletes) {
+        const id   = String(a.athlete?.id || a.id || '');
+        const name = a.athlete?.displayName || a.displayName || a.fullName || '';
+        if (!id || !name) continue;
+        // Photos ESPN inutilisables (page blanche) — on passe directement par Transfermarkt
+        if (!photosCache[id] || photosCache[id] === '') {
+          cdmPlayers.push({ id, name });
+        }
+      }
+      fetched++;
+    } catch(e) {
+      console.warn(`  Warning: Roster CDM ${teamId} indisponible`);
+    }
+  }
+
+  console.log(`  OK ${fetched}/48 rosters - ${cdmPlayers.length} joueur(s) sans photo`);
+
+  if (cdmPlayers.length > 0) {
+    return await fetchMissingPhotos(cdmPlayers, photosCache);
+  }
+  return photosCache;
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 // ── API-Football : photos des nouveaux joueurs ───────────────────────────────
@@ -1169,8 +1222,10 @@ async function main() {
 
   const players = rebuildPlayers(trimmed);
 
-  // Récupérer les photos manquantes via API-Football
-  const updatedPhotos = await fetchMissingPhotos(players, photosCache);
+  // Récupérer les photos CDM via rosters ESPN + Transfermarkt
+  const cdmPhotosCache = await fetchCDMRosterPhotos(photosCache);
+  // Récupérer les photos manquantes via API-Football (joueurs clubs)
+  const updatedPhotos = await fetchMissingPhotos(players, cdmPhotosCache);
   if (Object.keys(updatedPhotos).length !== Object.keys(photosCache).length) {
     fs.writeFileSync('photos.json', JSON.stringify(updatedPhotos, null, 2));
     console.log(`📸 photos.json mis à jour (${Object.keys(updatedPhotos).length} photos)`);
