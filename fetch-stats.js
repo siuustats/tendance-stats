@@ -874,7 +874,11 @@ async function syncCDMRosters(stored, photosCache) {
     return { photosCache, cdmPlayers: (stored.players || []).filter(p => p.leagueId === 6) };
   }
 
-  console.log('\n🌍 Sync rosters CDM (toutes les 48h)...');
+  // Ne pas marquer de joueurs "absent" avant le début de la CDM (11 juin 2026)
+  const cdmStartDate = new Date('2026-06-11');
+  const cdmStarted   = new Date() >= cdmStartDate;
+
+  console.log(`\n🌍 Sync rosters CDM (toutes les 48h) — CDM démarrée: ${cdmStarted}...`);
   const rosterMap = {}; // id → { id, name, teamId }
   let fetched = 0;
 
@@ -914,15 +918,29 @@ async function syncCDMRosters(stored, photosCache) {
   const existingIds = new Set(existingCdm.map(p => String(p.id)));
   const rosterIds   = new Set(Object.keys(rosterMap));
 
-  // 1. Joueurs absents du nouveau roster → cdmStatus: "absent"
-  let marked = 0, restored = 0, added = 0;
+  // 1. Joueurs absents du nouveau roster
+  //    - Avant CDM (< 11 juin) : supprimés de data.json (juste un nettoyage ESPN)
+  //    - Pendant CDM (>= 11 juin) : marqués cdmStatus:"absent" et conservés avec leurs stats
+  let marked = 0, restored = 0, added = 0, removed = 0;
+  const toKeep = [];
   for (const p of existingCdm) {
     if (!rosterIds.has(String(p.id))) {
-      if (p.cdmStatus !== 'absent') { p.cdmStatus = 'absent'; marked++; }
+      if (cdmStarted) {
+        // CDM commencée → garder avec badge absent
+        if (p.cdmStatus !== 'absent') { p.cdmStatus = 'absent'; marked++; }
+        toKeep.push(p);
+      } else {
+        // Avant CDM → supprimer (ESPN nettoie ses listes)
+        removed++;
+      }
     } else {
       if (p.cdmStatus === 'absent') { delete p.cdmStatus; restored++; }
+      toKeep.push(p);
     }
   }
+  // Remplacer existingCdm par la liste nettoyée
+  existingCdm.length = 0;
+  existingCdm.push(...toKeep);
 
   // 2. Nouveaux joueurs dans le roster → ajouter avec 0 stats
   const newCdmPlayers = [];
@@ -943,7 +961,7 @@ async function syncCDMRosters(stored, photosCache) {
     added++;
   }
 
-  console.log(`  ➕ ${added} nouveau(x) | ❌ ${marked} absent(s) | ✅ ${restored} réintégré(s)`);
+  console.log(`  ➕ ${added} nouveau(x) | ❌ ${marked} absent(s) | ✅ ${restored} réintégré(s) | 🗑️  ${removed} supprimé(s)`);
 
   // 3. Chercher photos manquantes via Transfermarkt
   const allCdm = [...existingCdm, ...newCdmPlayers];
