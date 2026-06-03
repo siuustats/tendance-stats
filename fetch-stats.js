@@ -845,6 +845,8 @@ function generateSitemap(starPlayers, playerMap) {
     { url: 'https://tendancestats.com/predictions-cdm.html',priority: '0.9', freq: 'daily'  },
     { url: 'https://tendancestats.com/stats-saison-2026.html', priority: '0.8', freq: 'daily' },
     { url: 'https://tendancestats.com/stats-cdm-2026.html', priority: '0.8', freq: 'daily'  },
+    { url: 'https://tendancestats.com/classement.html',     priority: '0.8', freq: 'daily'  },
+    { url: 'https://tendancestats.com/classement-cdm.html', priority: '0.8', freq: 'daily'  },
     { url: 'https://tendancestats.com/squad.html',          priority: '0.7', freq: 'weekly' },
     { url: 'https://tendancestats.com/player.html',         priority: '0.6', freq: 'daily'  },
     { url: 'https://tendancestats.com/player-cdm.html',     priority: '0.6', freq: 'daily'  },
