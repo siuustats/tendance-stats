@@ -550,23 +550,64 @@ function generatePlayerPages(players, photosCache) {
     }).join(' ');
 
     // Nation → lien vers squad.html
+    // Normaliser les noms de pays ESPN (anglais) vers le français
+    const NATION_EN_TO_FR = {
+      'France':'France','Brazil':'Brésil','England':'Angleterre','Uruguay':'Uruguay',
+      'Spain':'Espagne','Egypt':'Égypte','Norway':'Norvège','Sweden':'Suède',
+      'Belgium':'Belgique','South Korea':'Corée du Sud','Germany':'Allemagne',
+      'Switzerland':'Suisse','Nigeria':'Nigeria','Morocco':'Maroc','Italy':'Italie',
+      'Argentina':'Argentine','Portugal':'Portugal','Croatia':'Croatie',
+      'Netherlands':'Pays-Bas','Denmark':'Danemark','Serbia':'Serbie',
+      'Algeria':'Algérie','Austria':'Autriche','Colombia':'Colombie',
+      'Mexico':'Mexique','Japan':'Japon','Senegal':'Sénégal','Ghana':'Ghana',
+      'Australia':'Australie','Ecuador':'Équateur','Iran':'Iran',
+      'Canada':'Canada','Wales':'Pays de Galles','Scotland':'Écosse',
+      'Tunisia':'Tunisie','Cameroon':'Cameroun','Costa Rica':'Costa Rica',
+      'Saudi Arabia':'Arabie Saoudite','Poland':'Pologne','United States':'États-Unis',
+      'Republic of Ireland':'Irlande','Czech Republic':'Tchéquie',
+      'South Africa':'Afrique du Sud','Panama':'Panama','Iraq':'Irak',
+      'Jordan':'Jordanie','Uzbekistan':'Ouzbékistan','DR Congo':'RD Congo',
+      'Cape Verde':'Cap-Vert','New Zealand':'Nouvelle-Zélande','Curacao':'Curaçao',
+      "Ivory Coast":"Côte d'Ivoire",'Haiti':'Haïti','Paraguay':'Paraguay',
+      'Turkey':'Turquie',
+    };
+    const nationFr = NATION_EN_TO_FR[star.nation] || star.nation;
+
     const NATION_IDS = {
       'France':'478','Brésil':'205','Angleterre':'448','Uruguay':'212','Espagne':'164',
       'Égypte':'2620','Norvège':'464','Suède':'466','Belgique':'459','Corée du Sud':'451',
       'Allemagne':'481','Suisse':'475','Nigeria':'2548','Maroc':'2869','Italie':'473',
-      'Argentine':'202','Portugal':'482','Brésil':'205','Croatie':'477','Pays-Bas':'449',
+      'Argentine':'202','Portugal':'482','Croatie':'477','Pays-Bas':'449',
+      'Danemark':'451','Serbie':'475','Algérie':'624','Autriche':'474',
+      'Colombie':'208','Mexique':'203','Japon':'627','Sénégal':'654',
+      'Ghana':'4469','Australie':'628','Équateur':'209','Iran':'469',
+      'Canada':'206','Écosse':'580','Tunisie':'659','États-Unis':'660',
+      'Arabie Saoudite':'655','Panama':'2659','Irak':'4375','Jordanie':'2917',
+      'Ouzbékistan':'2570','RD Congo':'2850','Cap-Vert':'2597',
+      "Nouvelle-Zélande":'2666',"Côte d'Ivoire":'4789','Haïti':'2654',
+      'Paraguay':'210','Turquie':'465','Bosnie-Herzégovine':'452',
+      'Afrique du Sud':'467','Curaçao':'11678','Qatar':'4398','Tchéquie':'450',
     };
     const NATION_ARTICLES = {
       'France':'la','Brésil':'le','Angleterre':"l'",'Uruguay':"l'",'Espagne':"l'",
       'Égypte':"l'",'Norvège':'la','Suède':'la','Belgique':'la','Corée du Sud':'la',
       'Allemagne':"l'",'Suisse':'la','Nigeria':'le','Maroc':'le','Italie':"l'",
       'Argentine':"l'",'Portugal':'le','Croatie':'la','Pays-Bas':'les',
+      'Danemark':'le','Serbie':'la','Algérie':"l'",'Autriche':"l'",
+      'Colombie':'la','Mexique':'le','Japon':'le','Sénégal':'le',
+      'Ghana':'le','Australie':"l'",'Équateur':"l'",'Iran':"l'",
+      'Canada':'le','Écosse':"l'",'Tunisie':'la','États-Unis':'les',
+      'Arabie Saoudite':"l'",'Panama':'le','Irak':"l'",'Jordanie':'la',
+      'Ouzbékistan':"l'",'RD Congo':'la','Cap-Vert':'le',
+      'Nouvelle-Zélande':'la',"Côte d'Ivoire":"la",'Haïti':'Haïti',
+      'Paraguay':'le','Turquie':'la','Qatar':'le','Tchéquie':'la',
+      'Bosnie-Herzégovine':'la','Afrique du Sud':"l'",'Curaçao':'le',
     };
-    const nationArticle = NATION_ARTICLES[star.nation] || 'la';
-    const nationId  = NATION_IDS[star.nation];
+    const nationArticle = NATION_ARTICLES[nationFr] || 'la';
+    const nationId  = NATION_IDS[nationFr];
     const nationDisplay = nationId
-      ? `<a href="../squad.html?team=${nationId}" style="color:#9ca3af;text-decoration:underline;text-underline-offset:3px">${star.nation}</a>`
-      : `<span style="color:#9ca3af">${star.nation}</span>`;
+      ? `<a href="../squad.html?team=${nationId}" style="color:#9ca3af;text-decoration:underline;text-underline-offset:3px">${nationFr}</a>`
+      : `<span style="color:#9ca3af">${nationFr}</span>`;
     // Pas d'espace après "l'"
     const nationLink = nationArticle.endsWith("'") ? nationArticle + nationDisplay : nationArticle + ' ' + nationDisplay;
 
