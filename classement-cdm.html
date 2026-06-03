@@ -10,10 +10,15 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#080a0f;--s1:#0f1118;--s2:#161923;--s3:#1c2030;--border:#222636;--border2:#2a2f45;--g:#00e5a0;--r:#ff4d6d;--y:#ffd60a;--b:#5e81f4;--o:#ff6b35;--text:#e2e6f0;--m:#4a5068;--m2:#6b7394;--gold:#d4a843;}
+:root {
+  --bg:#080a0f; --s1:#111318; --s2:#161820; --s3:#1e2130;
+  --g:#00e5a0; --b:#5e81f4; --o:#ff9f43; --r:#ff5050;
+  --y:#ffd32a; --m:#6b7280; --m2:#9ca3af; --text:#f0f2f8;
+  --border:#1e2130; --gold:#d4a843;
+}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-body::before{content:'';position:fixed;inset:0;z-index:0;background-image:radial-gradient(ellipse 80% 60% at 60% -10%,rgba(212,168,67,0.08) 0%,transparent 60%),radial-gradient(circle at 10% 80%,rgba(212,168,67,0.04) 0%,transparent 40%),linear-gradient(rgba(255,255,255,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.012) 1px,transparent 1px);background-size:100% 100%,100% 100%,48px 48px,48px 48px;}
+
 .wrap{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:0 24px;}
 /* NAVBAR CDM */
 .navbar{position:sticky;top:0;z-index:200;background:rgba(8,10,15,0.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(212,168,67,0.1);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;}
@@ -76,6 +81,13 @@ footer{border-top:1px solid rgba(212,168,67,0.1);padding:20px 0;text-align:cente
   .navbar-link{font-size:11px;padding:5px 9px;}
 }
 @media(max-width:520px){.navbar-links{display:none;}}
+
+.hero{background:linear-gradient(180deg,rgba(0,229,160,0.05) 0%,transparent 100%);border-bottom:1px solid var(--border);padding:48px 24px 36px;text-align:center;}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,64px);letter-spacing:2px;margin-bottom:16px;color:var(--text);}
+.hero p{font-size:15px;color:var(--m2);max-width:600px;margin:0 auto;}
+.hero.hero-cdm{background:linear-gradient(180deg,rgba(212,168,67,0.07) 0%,transparent 100%);}
+.hero.hero-cdm h1{color:#d4a843;}
+
 </style>
 </head>
 <body>
@@ -83,9 +95,9 @@ footer{border-top:1px solid rgba(212,168,67,0.1);padding:20px 0;text-align:cente
 <nav class="navbar">
   <a href="worldcup.html" class="navbar-logo">TendanceStats</a>
   <div class="navbar-links">
-    <a href="worldcup.html" class="navbar-link">Accueil</a>
-    <a href="predictions-cdm.html" class="navbar-link">Prédictions</a>
-    <a href="classement-cdm.html" class="navbar-link active">Classement</a>
+    <a href="worldcup.html" class="navbar-link ".strip()>Accueil</a>
+    <a href="predictions-cdm.html" class="navbar-link ".strip()>Prédictions</a>
+    <a href="classement-cdm.html" class="navbar-link active".strip()>Classement</a>
     <div class="navbar-sep"></div>
     <a href="index.html" class="navbar-link green">⚽ Saison</a>
   </div>
@@ -93,6 +105,10 @@ footer{border-top:1px solid rgba(212,168,67,0.1);padding:20px 0;text-align:cente
     <div class="navbar-live"><div class="dot"></div>LIVE</div>
   </div>
 </nav>
+<div class="hero hero-cdm">
+  <h1>📊 Classement CDM 2026</h1>
+  <p>Top buteurs, passeurs et contributeurs de la Coupe du Monde 2026. Données mises à jour après chaque match.</p>
+</div>
 
 <div class="wrap">
   <div class="filters" id="group-filters">
