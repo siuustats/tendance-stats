@@ -675,6 +675,17 @@ body{font-family:'DM Sans',sans-serif;background:#080a0f;color:#f0f2f8;min-heigh
 .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:24px 0}
 .cta{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;transition:transform .2s,opacity .2s}
 .cta:hover{transform:translateY(-2px);opacity:.9}
+.navbar{position:sticky;top:0;z-index:200;background:rgba(8,10,15,0.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.06);padding:0 24px;height:54px;display:flex;align-items:center;justify-content:space-between;}
+.navbar-logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:#00e5a0;text-decoration:none;text-shadow:0 0 20px rgba(0,229,160,0.3);flex-shrink:0;}
+.navbar-links{display:flex;align-items:center;gap:3px;background:rgba(255,255,255,0.05);border-radius:10px;padding:4px;}
+.navbar-link{font-size:12px;font-weight:600;padding:6px 14px;border-radius:7px;color:rgba(255,255,255,0.45);letter-spacing:0.3px;text-decoration:none;transition:all .2s;white-space:nowrap;}
+.navbar-link:hover{color:rgba(255,255,255,0.8);background:rgba(255,255,255,0.06);}
+.navbar-link.gold{color:#d4a843;}
+.navbar-link.gold:hover{background:rgba(212,168,67,0.12);color:#d4a843;}
+.navbar-sep{width:1px;height:18px;background:rgba(255,255,255,0.1);margin:0 2px;flex-shrink:0;}
+.navbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+@media(max-width:520px){.navbar-links{display:none;}}
+
 .cta-primary{background:#00e5a0;color:#080a0f}
 .cta-secondary{background:#111318;border:1px solid #1e2130;color:#9ca3af}
 .cta-cdm{background:linear-gradient(135deg,#d4a843,#b8902a);color:#080a0f}
@@ -683,10 +694,16 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
 </style>
 </head>
 <body>
-<nav class="topnav">
-  <a href="../index.html" class="nav-back">← TendanceStats</a>
-  <a href="../index.html" class="nav-logo">TendanceStats</a>
-  <span style="font-size:10px;font-weight:700;letter-spacing:2px;background:rgba(0,229,160,.1);color:#00e5a0;border:1px solid rgba(0,229,160,.2);border-radius:4px;padding:3px 8px">STATS</span>
+<nav class="navbar">
+  <a href="../index.html" class="navbar-logo">TendanceStats</a>
+  <div class="navbar-links">
+    <a href="../index.html" class="navbar-link">Accueil</a>
+    <a href="../predictions.html" class="navbar-link">Prédictions</a>
+    <a href="../index.html#classement" class="navbar-link">Classement</a>
+    <div class="navbar-sep"></div>
+    <a href="../worldcup.html" class="navbar-link gold">🏆 CDM</a>
+  </div>
+  <div class="navbar-right"></div>
 </nav>
 
 <div class="wrap">
