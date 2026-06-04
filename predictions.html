@@ -157,13 +157,6 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
   font-size:11px; font-weight:700; color:#ff4d6d;
   font-family:'DM Mono',monospace; letter-spacing:1px;
 }
-.navbar-refresh {
-  background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
-  color:rgba(255,255,255,0.4); font-size:12px; padding:5px 12px;
-  border-radius:8px; cursor:pointer; font-family:'DM Sans',sans-serif;
-  transition:all .2s;
-}
-.navbar-refresh:hover { border-color:#00e5a0; color:#00e5a0; }
 @media(max-width:768px){
   .navbar-links { gap:2px; }
   .navbar-link { font-size:11px; padding:5px 9px; }
@@ -186,10 +179,7 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
     <div class="navbar-sep"></div>
     <a href="worldcup.html" class="navbar-link gold">🏆 CDM</a>
   </div>
-  <div class="navbar-right">
-    <div class="navbar-live"><div class="dot"></div>LIVE</div>
-    <button class="navbar-refresh" onclick="init()">↻ Actualiser</button>
-  </div>
+  <div class="navbar-right"><div class="navbar-live"><div class="dot"></div>LIVE</div></div>
 </nav>
 <div class="hero">
   <h1><span style="-webkit-text-fill-color:initial;font-size:0.8em;vertical-align:middle;line-height:1">🔮</span> Prédictions</h1>
