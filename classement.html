@@ -229,25 +229,23 @@ function renderRow(p, rank, col) {
 }
 
 function renderTable(tbodyId, sorted, col, limit) {
+  _sorted[tbodyId] = sorted;
   const rows = sorted.slice(0, limit||10);
   const hasMore = sorted.length > 10 && (!limit || limit === 10);
   let html = rows.map((p,i)=>renderRow(p,i+1,col)).join('');
   if (hasMore) {
-    html += `<tr><td colspan="7" style="text-align:center;padding:12px">
-      <button onclick="expandTable('${tbodyId}',${JSON.stringify(sorted.map(p=>p.id))}, '${col}')" 
-        style="background:var(--s2);border:1px solid var(--border);color:var(--m2);font-size:12px;padding:7px 20px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s"
-        onmouseover="this.style.borderColor='var(--g)';this.style.color='var(--g)'"
-        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--m2)'">
-        Voir les 20 premiers →
-      </button></td></tr>`;
+    html += '<tr><td colspan="8" style="text-align:center;padding:14px">' +
+      '<button onclick="expandTable(&quot;' + tbodyId + '&quot;,&quot;' + col + '&quot;)"' +
+      ' style="background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);color:#00e5a0;font-size:12px;font-weight:600;padding:7px 20px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s">' +
+      'Voir les 20 premiers ↓</button></td></tr>';
   }
   document.getElementById(tbodyId).innerHTML = html;
 }
 
 // Cache des listes triées pour l'expansion
 const _sorted = {};
-function expandTable(tbodyId, ids, col) {
-  const list = ids.map(id => allPlayers.find(p => p.id == id)).filter(Boolean);
+function expandTable(tbodyId, col) {
+  const list = _sorted[tbodyId] || [];
   renderTable(tbodyId, list, col, 20);
 }
 
