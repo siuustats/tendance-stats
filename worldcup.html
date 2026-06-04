@@ -750,8 +750,6 @@ async function init() {
       }
     }
 
-    const rankSource = cdmReal.length ? cdmReal : rankWithPhotos;
-
     const d = new Date(data.updatedAt);
     if (data.updatedAt) {
       document.getElementById('last-update').textContent =
@@ -1258,7 +1256,7 @@ function renderGroups(matches) {
       const flag = FLAG_MAP[t.name]||'';
       const flagImg = flag ? '<img src="https://flagcdn.com/w20/'+flag+'.png" class="group-flag" alt="">' : '';
       const id = NATION_IDS[t.name];
-      const click = id ? ' onclick="window.location.href='squad.html?team='+id+''" style="cursor:pointer"' : '';
+      const click = id ? ' onclick="window.location.href=&quot;squad.html?team='+id+'&quot;" style="cursor:pointer"' : '';
       const qcls = i<2 ? ' qualified' : '';
       const diff = t.bp-t.bc;
       const diffCls = diff>0?'group-diff-pos':diff<0?'group-diff-neg':'group-diff-zero';
