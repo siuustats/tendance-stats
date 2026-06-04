@@ -51,7 +51,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text)
 
 /* grid bg */
 body::before {
-  content:''; position:fixed; inset:0; z-index:0;
+  content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
   background-image: radial-gradient(circle at 20% 50%, rgba(0,229,160,0.04) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(94,129,244,0.04) 0%, transparent 50%),
     linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
@@ -1258,7 +1258,7 @@ init().then(() => {
   </div>
 
 
-<div style="text-align:center;padding:12px 24px;font-size:11px;color:#4b5563;border-top:1px solid #111318;">© 2026 TendanceStats. Tous droits réservés.</div>
+<div style="text-align:center;padding:12px 24px;font-size:11px;color:#4b5563;border-top:1px solid #111318;"><div style="margin-bottom:6px"><a href="mentions-legales.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Mentions légales</a> · <a href="confidentialite.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Confidentialité</a> · <a href="contact.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Contact</a></div>© 2026 TendanceStats. Tous droits réservés.</div>
 <script src="cookies.js"></script>
 </body>
 </html>
