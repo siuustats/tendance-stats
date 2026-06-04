@@ -366,6 +366,34 @@ footer span { color:var(--g); }
 
 .navbar-link.green{color:rgba(0,229,160,0.7);}
 .navbar-link.green:hover{color:#00e5a0;background:rgba(0,229,160,0.08);}
+
+/* ── CLASSEMENT GROUPES ── */
+.groups-wrapper { display:grid; grid-template-columns:repeat(2,1fr); gap:20px; }
+.group-block { background:var(--s1); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
+.group-header { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.group-header-name { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:2px; color:#d4a843; }
+.group-header-tag { font-size:10px; font-family:'DM Mono',monospace; color:var(--m); }
+.group-table { width:100%; border-collapse:collapse; }
+.group-table th { padding:7px 10px; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:var(--m); font-weight:500; text-align:center; border-bottom:1px solid var(--border); }
+.group-table th:first-child { text-align:left; }
+.group-table td { padding:9px 10px; font-size:12px; text-align:center; border-bottom:1px solid rgba(30,33,48,0.5); }
+.group-table td:first-child { text-align:left; }
+.group-table tr:last-child td { border-bottom:none; }
+.group-table tr.qualified td { background:rgba(212,168,67,0.04); }
+.group-table tr.qualified td:first-child { border-left:2px solid #d4a843; }
+.group-nation { display:flex; align-items:center; gap:8px; }
+.group-flag { width:20px; height:14px; object-fit:cover; border-radius:2px; flex-shrink:0; }
+.group-nation-name { font-weight:500; font-size:12px; white-space:nowrap; }
+.group-pts { font-family:'DM Mono',monospace; font-weight:700; color:#d4a843; }
+.group-diff-pos { color:#00e5a0; font-family:'DM Mono',monospace; }
+.group-diff-neg { color:#ff5050; font-family:'DM Mono',monospace; }
+.group-diff-zero { color:var(--m); font-family:'DM Mono',monospace; }
+.group-num { font-family:'DM Mono',monospace; color:var(--m2); }
+.group-rank { font-size:11px; font-weight:700; color:var(--m); width:18px; text-align:center; }
+.group-pending { padding:20px; text-align:center; font-size:12px; color:var(--m); font-style:italic; }
+@media(max-width:900px){ .groups-wrapper { grid-template-columns:1fr; } }
+@media(max-width:600px){ .group-table th.hide-mobile, .group-table td.hide-mobile { display:none; } }
+
 </style>
 <script type="application/ld+json">
 {
@@ -482,7 +510,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   <!-- NATIONS / GROUPES -->
   <div style="padding-top:40px;position:relative;z-index:1">
-    <div class="sh"><div class="st">🌍 Les 48 nations</div><div class="sb">CDM 2026</div></div>
+    <div class="sh"><div class="st">🏆 Classement des groupes</div><div class="sb">CDM 2026</div></div>
     <div id="groupsGrid"></div>
   </div>
 
@@ -701,6 +729,7 @@ async function init() {
 
     window._fixtures = data.fixtures || [];
     window._matches  = (data.matches || []).filter(m => m.leagueId === 6);
+    renderGroups(data.matches || []);
 
     // Précalculer _leagueStats CDM
     window._leagueStats = {};
@@ -1180,38 +1209,125 @@ function getLogoUrl(name) {
   return 'https://a.espncdn.com/i/teamlogos/countries/500/' + slug + '.png';
 }
 
-function renderGroups() {
-  const grid = document.getElementById('groupsGrid');
-  if (!grid) return;
-  grid.innerHTML = '';
+// ── FLAG MAP ─────────────────────────────────────────────────────────────────
+const FLAG_MAP = {};
+CDM_NATIONS.forEach(function(n){ FLAG_MAP[n.name] = n.flag; });
+
+// ── CALCUL CLASSEMENT DEPUIS data.matches ─────────────────────────────────────
+function buildGroupStandings(matches) {
+  // Init toutes les équipes à 0
+  const standings = {};
   GROUPS.forEach(function(g) {
-    const groupDiv = document.createElement('div');
-    groupDiv.style.cssText = 'margin-bottom:32px;';
-    const title = document.createElement('div');
-    title.style.cssText = 'font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:3px;color:var(--g);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(212,168,67,0.2);';
-    title.textContent = g.name;
-    groupDiv.appendChild(title);
-    const teamsRow = document.createElement('div');
-    teamsRow.style.cssText = 'display:grid;grid-template-columns:repeat(4,1fr);gap:10px;';
-    g.nations.forEach(function(n) {
-      const logo = getLogoUrl(n);
-      const id   = NATION_IDS[n];
-      const card = document.createElement('div');
-      card.style.cssText = 'background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;cursor:pointer;transition:border-color .2s,transform .15s;';
-      card.onmouseover = function(){ this.style.borderColor='rgba(212,168,67,0.35)'; this.style.transform='translateY(-2px)'; };
-      card.onmouseout  = function(){ this.style.borderColor='var(--border)'; this.style.transform=''; };
-      if (id) card.onclick = function(){ window.location.href = 'squad.html?team=' + id; };
-      card.innerHTML = logo
-        ? '<img src="' + logo + '" style="width:48px;height:48px;object-fit:contain;margin:0 auto 8px;display:block;" onerror="this.style.opacity=0.2"><div style="font-size:12px;font-weight:500;">' + n + '</div>'
-        : '<div style="font-size:28px;margin-bottom:6px;">🏳️</div><div style="font-size:12px;font-weight:500;">' + n + '</div>';
-      teamsRow.appendChild(card);
+    g.nations.forEach(function(nation) {
+      standings[nation] = { mj:0, v:0, n:0, d:0, bp:0, bc:0, pts:0 };
     });
-    groupDiv.appendChild(teamsRow);
-    grid.appendChild(groupDiv);
   });
+
+  // Calculer depuis les matchs CDM joués
+  const cdmMatches = (matches || []).filter(function(m){ return m.leagueId === 6 && m.homeGoals !== undefined && m.awayGoals !== undefined; });
+  cdmMatches.forEach(function(m) {
+    const home = m.homeTeam, away = m.awayTeam;
+    const hg = m.homeGoals, ag = m.awayGoals;
+    if (!standings[home] || !standings[away]) return;
+    standings[home].mj++; standings[away].mj++;
+    standings[home].bp += hg; standings[home].bc += ag;
+    standings[away].bp += ag; standings[away].bc += hg;
+    if (hg > ag) {
+      standings[home].v++; standings[home].pts += 3;
+      standings[away].d++;
+    } else if (hg < ag) {
+      standings[away].v++; standings[away].pts += 3;
+      standings[home].d++;
+    } else {
+      standings[home].n++; standings[home].pts++;
+      standings[away].n++; standings[away].pts++;
+    }
+  });
+  return standings;
 }
 
-renderGroups();
+function renderGroups(matches) {
+  const grid = document.getElementById('groupsGrid');
+  if (!grid) return;
+  const standings = buildGroupStandings(matches);
+  const cdmStarted = (matches || []).some(function(m){ return m.leagueId === 6 && m.homeGoals !== undefined; });
+
+  grid.innerHTML = '';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'groups-wrapper';
+
+  GROUPS.forEach(function(g) {
+    // Trier : Pts desc → Diff desc → BP desc → Nom asc
+    const ranked = g.nations.map(function(n){ return Object.assign({ name:n }, standings[n]); })
+      .sort(function(a,b){
+        if (b.pts !== a.pts) return b.pts - a.pts;
+        const diffA = a.bp - a.bc, diffB = b.bp - b.bc;
+        if (diffB !== diffA) return diffB - diffA;
+        if (b.bp !== a.bp) return b.bp - a.bp;
+        return a.name.localeCompare(b.name);
+      });
+
+    const block = document.createElement('div');
+    block.className = 'group-block';
+
+    // Header
+    block.innerHTML = '<div class="group-header">' +
+      '<span class="group-header-name">' + g.name + '</span>' +
+      '<span class="group-header-tag">CDM 2026</span>' +
+      '</div>';
+
+    if (!cdmStarted) {
+      block.innerHTML += '<div class="group-pending">Disponible dès le 11 juin 2026</div>';
+      // Afficher quand même les nations sans stats
+      const tableHtml = '<table class="group-table"><thead><tr>' +
+        '<th style="width:20px"></th><th>Nation</th>' +
+        '</tr></thead><tbody>' +
+        ranked.map(function(t, i) {
+          const flag = FLAG_MAP[t.name] || '';
+          const flagImg = flag ? '<img src="https://flagcdn.com/w20/' + flag + '.png" class="group-flag" alt="">' : '';
+          return '<tr><td class="group-rank">' + (i+1) + '</td>' +
+            '<td><div class="group-nation">' + flagImg + '<span class="group-nation-name">' + t.name + '</span></div></td>' +
+            '</tr>';
+        }).join('') +
+        '</tbody></table>';
+      block.innerHTML = '<div class="group-header"><span class="group-header-name">' + g.name + '</span><span class="group-header-tag">CDM 2026</span></div>' + tableHtml;
+    } else {
+      const tableHtml = '<table class="group-table"><thead><tr>' +
+        '<th style="width:20px"></th><th>Nation</th>' +
+        '<th class="hide-mobile">MJ</th><th class="hide-mobile">V</th><th class="hide-mobile">N</th><th class="hide-mobile">D</th>' +
+        '<th>BP</th><th>BC</th><th>Diff</th><th>Pts</th>' +
+        '</tr></thead><tbody>' +
+        ranked.map(function(t, i) {
+          const flag = FLAG_MAP[t.name] || '';
+          const flagImg = flag ? '<img src="https://flagcdn.com/w20/' + flag + '.png" class="group-flag" alt="">' : '';
+          const diff = t.bp - t.bc;
+          const diffCls = diff > 0 ? 'group-diff-pos' : diff < 0 ? 'group-diff-neg' : 'group-diff-zero';
+          const diffStr = diff > 0 ? '+'+diff : String(diff);
+          const qualCls = i < 2 ? ' qualified' : '';
+          const id = NATION_IDS[t.name];
+          const onclick = id ? ' style="cursor:pointer" onclick="window.location.href='squad.html?team=' + id + ''"' : '';
+          return '<tr class="' + qualCls + '"' + onclick + '>' +
+            '<td class="group-rank">' + (i+1) + '</td>' +
+            '<td><div class="group-nation">' + flagImg + '<span class="group-nation-name">' + t.name + '</span></div></td>' +
+            '<td class="group-num hide-mobile">' + t.mj + '</td>' +
+            '<td class="group-num hide-mobile">' + t.v + '</td>' +
+            '<td class="group-num hide-mobile">' + t.n + '</td>' +
+            '<td class="group-num hide-mobile">' + t.d + '</td>' +
+            '<td class="group-num">' + t.bp + '</td>' +
+            '<td class="group-num">' + t.bc + '</td>' +
+            '<td class="' + diffCls + '">' + diffStr + '</td>' +
+            '<td class="group-pts">' + t.pts + '</td>' +
+            '</tr>';
+        }).join('') +
+        '</tbody></table>';
+      block.innerHTML = '<div class="group-header"><span class="group-header-name">' + g.name + '</span><span class="group-header-tag">CDM 2026</span></div>' + tableHtml;
+    }
+
+    wrapper.appendChild(block);
+  });
+
+  grid.appendChild(wrapper);
+}
 init();
 </script>
 
