@@ -89,11 +89,10 @@ footer{border-top:1px solid var(--border);padding:20px 0;text-align:center;font-
 }
 @media(max-width:520px){.navbar-links{display:none;}}
 
-.hero{background:linear-gradient(180deg,rgba(0,229,160,0.05) 0%,transparent 100%);border-bottom:1px solid var(--border);padding:48px 24px 36px;text-align:center;}
-.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,64px);letter-spacing:2px;margin-bottom:16px;color:var(--text);}
-.hero p{font-size:15px;color:var(--m2);max-width:600px;margin:0 auto;}
-.hero.hero-cdm{background:linear-gradient(180deg,rgba(212,168,67,0.07) 0%,transparent 100%);}
-.hero.hero-cdm h1{color:#d4a843;}
+.hero { background:linear-gradient(180deg,rgba(0,229,160,0.05) 0%,transparent 100%); border-bottom:1px solid var(--border); padding:48px 24px 36px; text-align:center; }
+.hero h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(36px,7vw,64px); letter-spacing:2px; background:linear-gradient(135deg,#00ffb3,#00e5a0); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:12px; }
+.hero p { font-size:14px; color:var(--m2); max-width:560px; margin:0 auto; line-height:1.7; }
+.hero-badge { display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--g); background:rgba(0,229,160,0.08); border:1px solid rgba(0,229,160,0.2); border-radius:20px; padding:4px 12px; margin-top:16px; }
 
 
 /* ── PAGINATION ── */
@@ -118,8 +117,9 @@ footer{border-top:1px solid var(--border);padding:20px 0;text-align:center;font-
   <div class="navbar-right"><div class="navbar-live"><div class="dot"></div>LIVE</div></div>
 </nav>
 <div class="hero">
-  <h1>📊 Classement</h1>
+  <h1><span style="-webkit-text-fill-color:initial;font-size:0.8em;vertical-align:middle;line-height:1">📊</span> Classement</h1>
   <p>Top buteurs, passeurs et contributeurs de la saison 2025/2026 sur les 5 grands championnats et coupes européennes.</p>
+  <div class="hero-badge">⚽ Saison 2025/2026 · Top 5 championnats européens</div>
 </div>
 
 <div class="wrap">
@@ -154,7 +154,7 @@ footer{border-top:1px solid var(--border);padding:20px 0;text-align:center;font-
 
     <div class="sh"><div class="st">📊 Top Buts + Passes</div><div class="sb">SAISON</div></div>
     <div class="tw"><table>
-      <thead><tr><th style="width:40px">#</th><th style="width:44px"></th><th>Joueur</th><th style="width:80px">Ligue</th><th style="width:70px;text-align:right">GA</th><th style="width:80px;text-align:right">Matchs</th><th style="width:80px;text-align:right">Moy.</th></tr></thead>
+      <thead><tr><th style="width:40px">#</th><th style="width:44px"></th><th>Joueur</th><th style="width:80px">Ligue</th><th style="width:70px;text-align:right">Buts</th><th style="width:70px;text-align:right">Passes</th><th style="width:70px;text-align:right">GA</th><th style="width:80px;text-align:right">Matchs</th><th style="width:80px;text-align:right">Moy.</th></tr></thead>
       <tbody id="tb-ga"></tbody>
     </table></div>
     <div class="pagination" id="pag-tb-ga"></div>
