@@ -903,6 +903,9 @@ function generateSitemap(starPlayers, playerMap) {
     { url: 'https://tendancestats.com/classement.html',     priority: '0.8', freq: 'daily'  },
     { url: 'https://tendancestats.com/classement-cdm.html', priority: '0.8', freq: 'daily'  },
     { url: 'https://tendancestats.com/squad.html',          priority: '0.7', freq: 'weekly' },
+    { url: 'https://tendancestats.com/mentions-legales.html', priority: '0.3', freq: 'monthly' },
+    { url: 'https://tendancestats.com/confidentialite.html',  priority: '0.3', freq: 'monthly' },
+    { url: 'https://tendancestats.com/contact.html',          priority: '0.4', freq: 'monthly' },
     { url: 'https://tendancestats.com/player.html',         priority: '0.6', freq: 'daily'  },
     { url: 'https://tendancestats.com/player-cdm.html',     priority: '0.6', freq: 'daily'  },
   ];
