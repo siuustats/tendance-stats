@@ -62,8 +62,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .sb{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:1px;background:rgba(212,168,67,0.08);color:#d4a843;border:1px solid rgba(212,168,67,0.18);padding:2px 7px;border-radius:4px;}
 
 /* ── TABLE ── */
-.tw{background:var(--s1);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:32px;}
-table{width:100%;border-collapse:collapse;}
+.tw{background:var(--s1);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:0;}
+table{width:100%;border-collapse:collapse;table-layout:fixed;}
 thead tr{border-bottom:1px solid var(--border);}
 th{padding:11px 16px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--m);font-weight:500;}
 td{padding:12px 16px;font-size:13px;border-bottom:1px solid rgba(30,36,54,0.7);}
@@ -102,6 +102,22 @@ footer{border-top:1px solid var(--border);padding:20px 0;text-align:center;font-
   .navbar-links{gap:2px;}
   .navbar-link{font-size:11px;padding:5px 9px;}
 }
+
+/* ── PAGINATION ── */
+.pagination { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; margin-bottom:32px; }
+.pag-btn { background:var(--s2); border:1px solid var(--border); color:var(--m2); font-size:12px; font-family:'DM Sans',sans-serif; padding:6px 14px; border-radius:8px; cursor:pointer; transition:all .2s; }
+.pag-btn:hover { border-color:#d4a843; color:#d4a843; background:rgba(212,168,67,0.06); }
+.pag-btn.disabled { opacity:0.4; cursor:default; }
+.pag-info { font-size:12px; color:var(--m); font-family:'DM Mono',monospace; }
+
+/* ── COLONNES FIXES ── */
+.tw table { table-layout:fixed; }
+.tw table th:nth-child(1) { width:36px; }
+.tw table th:nth-child(2) { width:40px; }
+.tw table th:nth-child(3) { width:auto; }
+.tw table th:nth-child(4) { width:140px; }
+.tw table th:nth-child(5), .tw table th:nth-child(6), .tw table th:nth-child(7), .tw table th:nth-child(8), .tw table th:nth-child(9) { width:64px; text-align:right; }
+.tw table td:nth-child(5), .tw table td:nth-child(6), .tw table td:nth-child(7), .tw table td:nth-child(8), .tw table td:nth-child(9) { text-align:right; }
 </style>
 </head>
 <body>
@@ -150,18 +166,21 @@ footer{border-top:1px solid var(--border);padding:20px 0;text-align:center;font-
       <thead><tr><th>#</th><th></th><th>Joueur</th><th>Nation</th><th>Buts</th><th>Matchs</th><th>Moy.</th></tr></thead>
       <tbody id="tb-goals"></tbody>
     </table></div>
+    <div class="pagination" id="pag-tb-goals"></div>
 
     <div class="sh"><div class="st">🎯 Top Passeurs</div><div class="sb">CDM 2026</div></div>
     <div class="tw"><table>
       <thead><tr><th>#</th><th></th><th>Joueur</th><th>Nation</th><th>Passes</th><th>Matchs</th><th>Moy.</th></tr></thead>
       <tbody id="tb-assists"></tbody>
     </table></div>
+    <div class="pagination" id="pag-tb-assists"></div>
 
     <div class="sh"><div class="st">📊 Top Buts + Passes</div><div class="sb">CDM 2026</div></div>
     <div class="tw"><table>
-      <thead><tr><th>#</th><th></th><th>Joueur</th><th>Nation</th><th>Buts</th><th>Passes</th><th>GA</th><th>Matchs</th><th>Moy.</th></tr></thead>
+      <thead><tr><th>#</th><th></th><th>Joueur</th><th>Nation</th><th>GA</th><th>Matchs</th><th>Moy.</th></tr></thead>
       <tbody id="tb-ga"></tbody>
     </table></div>
+    <div class="pagination" id="pag-tb-ga"></div>
 
   </div>
 </div>
@@ -200,6 +219,8 @@ const CDM_FLAGS = {
   'Danemark':'dk','Suède':'se','Norvège':'no','Colombie':'co',
 };
 
+const _sorted = {};
+const PAGE_SIZE = 10;
 let allPlayers = [], photosMap = {}, currentGroup = 'all';
 
 async function init() {
@@ -242,40 +263,57 @@ function renderRow(p, rank, col) {
   const absent = p.cdmStatus === 'absent' ? '<span class="absent-badge">ABSENT</span>' : '';
 
   const extra = col==='ga'
-    ? `<td style="text-align:right"><span class="num g">${g}</span></td><td style="text-align:right"><span class="num a">${a}</span></td><td style="text-align:right"><span class="num ga">${g+a}</span></td><td style="text-align:right"><span class="num" style="color:var(--m2)">${n}</span></td><td style="text-align:right"><span class="num" style="color:var(--y)">${avg}</span></td>`
+    ? `<td style="text-align:right"><span class="num ga">${g+a}</span></td><td style="text-align:right"><span class="num" style="color:var(--m2)">${n}</span></td><td style="text-align:right"><span class="num" style="color:var(--y)">${avg}</span></td>`
     : col==='goals'
       ? `<td style="text-align:right"><span class="num g">${g}</span></td><td style="text-align:right"><span class="num" style="color:var(--m2)">${n}</span></td><td style="text-align:right"><span class="num" style="color:var(--y)">${n?(g/n).toFixed(2):'0.00'}</span></td>`
       : `<td style="text-align:right"><span class="num a">${a}</span></td><td style="text-align:right"><span class="num" style="color:var(--m2)">${n}</span></td><td style="text-align:right"><span class="num" style="color:var(--y)">${n?(a/n).toFixed(2):'0.00'}</span></td>`;
 
   const opacity = p.cdmStatus === 'absent' ? 'opacity:0.55;' : '';
-  return `<tr onclick="window.location.href='player-cdm.html?id=${p.id}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName)}'" style="${opacity}">
-    <td class="rk ${rkcls}">${rank}</td>
-    <td style="width:36px;padding:6px 4px"><div style="width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:14px">${photo?`<img src="${photo}" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='⚽'">` : '⚽'}</div></td>
-    <td><div class="pn">${p.name}${absent}</div></td>
-    <td><div style="display:flex;align-items:center;gap:6px">${flag?`<img src="https://flagcdn.com/w20/${flag}.png" class="flag" alt="">`:''}<span style="font-size:12px;color:var(--m2)">${p.teamName||''}</span></div></td>
-    ${extra}
-  </tr>`;
+  const photoHtml = photo ? '<img src="' + photo + '" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML=&quot;⚽&quot;">' : '⚽';
+  const flagHtml = flag ? '<img src="https://flagcdn.com/w20/' + flag + '.png" class="flag" alt="">' : '';
+  return '<tr onclick="window.location.href=&quot;player-cdm.html?id=' + p.id + '&name=' + encodeURIComponent(p.name) + '&teamName=' + encodeURIComponent(p.teamName) + '&quot;" style="' + opacity + '">' +
+    '<td class="rk ' + rkcls + '">' + rank + '</td>' +
+    '<td style="width:36px;padding:6px 4px"><div style="width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:14px">' + photoHtml + '</div></td>' +
+    '<td><div class="pn">' + p.name + absent + '</div></td>' +
+    '<td><div style="display:flex;align-items:center;gap:6px">' + flagHtml + '<span style="font-size:12px;color:var(--m2)">' + (p.teamName||'') + '</span></div></td>' +
+    extra +
+    '</tr>';
 }
 
-function renderTable(tbodyId, sorted, col, expanded) {
-  const limit = expanded ? 20 : 10;
-  const rows = sorted.slice(0, limit);
-  const empty = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--m)">Aucun joueur avec des stats pour l\'instant — disponible dès le 11 juin 2026</td></tr>';
-  let html = rows.length ? rows.map((p,i) => renderRow(p,i+1,col)).join('') : empty;
-  if (rows.length >= 10 && sorted.length > 10 && !expanded) {
-    html += `<tr><td colspan="8" style="text-align:center;padding:14px"><button onclick="expandCdm('${tbodyId}','${col}')" style="background:rgba(212,168,67,0.08);border:1px solid rgba(212,168,67,0.2);color:#d4a843;padding:7px 20px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Voir les 20 premiers ↓</button></td></tr>`;
-  }
-  document.getElementById(tbodyId).innerHTML = html;
-}
+function renderTable(tbodyId, sorted, col, page) {
+  page = page || 1;
+  _sorted[tbodyId] = sorted;
+  const total = sorted.length;
+  const start = (page - 1) * PAGE_SIZE;
+  const rows = sorted.slice(start, start + PAGE_SIZE);
+  const empty = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--m)">Aucun joueur avec des stats pour l&#39;instant — disponible dès le 11 juin 2026</td></tr>';
+  const rankOffset = start;
+  document.getElementById(tbodyId).innerHTML = rows.length
+    ? rows.map((p,i) => renderRow(p, rankOffset + i + 1, col)).join('')
+    : empty;
 
-function expandCdm(tbodyId, col) {
-  const list = getList();
-  const sorted = col==='goals'
-    ? [...list].filter(p=>(p.totalGoals||0)>0).sort((a,b)=>(b.totalGoals||0)-(a.totalGoals||0))
-    : col==='assists'
-      ? [...list].filter(p=>(p.totalAssists||0)>0).sort((a,b)=>(b.totalAssists||0)-(a.totalAssists||0))
-      : [...list].filter(p=>(p.totalGoals||0)+(p.totalAssists||0)>0).sort((a,b)=>((b.totalGoals||0)+(b.totalAssists||0))-((a.totalGoals||0)+(a.totalAssists||0)));
-  renderTable(tbodyId, sorted, col, true);
+  const pagEl = document.getElementById('pag-' + tbodyId);
+  if (!pagEl) return;
+  pagEl.innerHTML = '';
+  const pages = Math.ceil(total / PAGE_SIZE);
+  if (pages <= 1) return;
+
+  const prev = document.createElement('button');
+  prev.className = 'pag-btn' + (page === 1 ? ' disabled' : '');
+  prev.textContent = '← Précédent';
+  prev.onclick = function() { if (page > 1) renderTable(tbodyId, sorted, col, page - 1); };
+  pagEl.appendChild(prev);
+
+  const info = document.createElement('span');
+  info.className = 'pag-info';
+  info.textContent = (start + 1) + '–' + Math.min(start + PAGE_SIZE, total) + ' / ' + total;
+  pagEl.appendChild(info);
+
+  const next = document.createElement('button');
+  next.className = 'pag-btn' + (page === pages ? ' disabled' : '');
+  next.textContent = 'Suivant →';
+  next.onclick = function() { if (page < pages) renderTable(tbodyId, sorted, col, page + 1); };
+  pagEl.appendChild(next);
 }
 
 function render() {
@@ -284,12 +322,12 @@ function render() {
   const withA = [...list].filter(p=>(p.totalAssists||0)>0).sort((a,b)=>(b.totalAssists||0)-(a.totalAssists||0));
   const withGA = [...list].filter(p=>(p.totalGoals||0)+(p.totalAssists||0)>0)
     .sort((a,b)=>((b.totalGoals||0)+(b.totalAssists||0))-((a.totalGoals||0)+(a.totalAssists||0)));
-  _cdmSorted['tb-goals']   = withG;
-  _cdmSorted['tb-assists'] = withA;
-  _cdmSorted['tb-ga']      = withGA;
-  renderTable('tb-goals',   withG,  'goals',   10);
-  renderTable('tb-assists', withA,  'assists', 10);
-  renderTable('tb-ga',      withGA, 'ga',      10);
+  _sorted['tb-goals']   = withG;
+  _sorted['tb-assists'] = withA;
+  _sorted['tb-ga']      = withGA;
+  renderTable('tb-goals',   withG,  'goals');
+  renderTable('tb-assists', withA,  'assists');
+  renderTable('tb-ga',      withGA, 'ga');
 }
 
 init();
