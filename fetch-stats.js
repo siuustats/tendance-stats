@@ -640,13 +640,13 @@ function generatePlayerPages(players, photosCache) {
     const description = `Stats ${playerName} 2026 — ${goals} buts, ${assists} passes, TendScore ${signal} | ${star.nation} · ${teamName} | Tendance & prédictions CDM 2026`;
 
     // ── Texte unique SEO ──────────────────────────────────────────────────────
-    const ga5 = rp.recent_goals + rp.recent_assists;
-    const avgStr = rp.totalGames > 0 ? ((goals + assists) / rp.totalGames).toFixed(2) : '0.00';
+    const ga5 = (p.recent_goals || 0) + (p.recent_assists || 0);
+    const avgStr = (p.totalGames || 0) > 0 ? ((goals + assists) / p.totalGames).toFixed(2) : '0.00';
     const formLabel = signal >= 75 ? 'en feu' : signal >= 55 ? 'en grande forme' : signal >= 35 ? 'en forme' : 'discret';
-    const seoLeagueName = rp.leagueId === 17 ? 'Premier League' : rp.leagueId === 34 ? 'Ligue 1' : rp.leagueId === 8 ? 'La Liga' : rp.leagueId === 23 ? 'Serie A' : rp.leagueId === 35 ? 'Bundesliga' : 'championnat européen';
+    const seoLeagueName = p.leagueId === 17 ? 'Premier League' : p.leagueId === 34 ? 'Ligue 1' : p.leagueId === 8 ? 'La Liga' : p.leagueId === 23 ? 'Serie A' : p.leagueId === 35 ? 'Bundesliga' : 'championnat européen';
     const cdmMention = star.nation ? ` Il représente ${star.nation} à la Coupe du Monde 2026 aux États-Unis, Canada et Mexique.` : '';
 
-    const seoText = `${playerName} évolue actuellement à ${teamName}${rp.leagueId !== 6 ? ' en ' + seoLeagueName : ''}.${cdmMention} Sur la saison en cours, il totalise ${goals} but${goals !== 1 ? 's' : ''} et ${assists} passe${assists !== 1 ? 's' : ''} décisive${assists !== 1 ? 's' : ''} en ${rp.totalGames} match${rp.totalGames !== 1 ? 's' : ''}, soit une moyenne de ${avgStr} contribution${parseFloat(avgStr) !== 1 ? 's' : ''} par match. Lors de ses 5 derniers matchs, il a inscrit ${rp.recent_goals} but${rp.recent_goals !== 1 ? 's' : ''} et délivré ${rp.recent_assists} passe${rp.recent_assists !== 1 ? 's' : ''} décisive${rp.recent_assists !== 1 ? 's' : ''}${ga5 > 0 ? ', ce qui le place parmi les joueurs les plus actifs du moment' : ''}. Son TendScore de ${signal}/100 indique qu'il est actuellement ${formLabel}. TendanceStats suit ses performances en temps réel et calcule ses prédictions pour les prochains matchs.`;
+    const seoText = `${playerName} évolue actuellement à ${teamName}${p.leagueId !== 6 ? ' en ' + seoLeagueName : ''}.${cdmMention} Sur la saison en cours, il totalise ${goals} but${goals !== 1 ? 's' : ''} et ${assists} passe${assists !== 1 ? 's' : ''} décisive${assists !== 1 ? 's' : ''} en ${p.totalGames || 0} match${(p.totalGames || 0) !== 1 ? 's' : ''}, soit une moyenne de ${avgStr} contribution${parseFloat(avgStr) !== 1 ? 's' : ''} par match. Lors de ses 5 derniers matchs, il a inscrit ${p.recent_goals || 0} but${(p.recent_goals || 0) !== 1 ? 's' : ''} et délivré ${p.recent_assists || 0} passe${(p.recent_assists || 0) !== 1 ? 's' : ''} décisive${(p.recent_assists || 0) !== 1 ? 's' : ''}${ga5 > 0 ? ', ce qui le place parmi les joueurs les plus actifs du moment' : ''}. Son TendScore de ${signal}/100 indique qu'il est actuellement ${formLabel}. TendanceStats suit ses performances en temps réel et calcule ses prédictions pour les prochains matchs.`;
 
 
 
