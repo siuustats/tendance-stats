@@ -55,7 +55,7 @@ body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text)
 
 /* grid bg — identique index */
 body::before {
-  content:''; position:fixed; inset:0; z-index:0;
+  content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
   background-image:
     radial-gradient(circle at 20% 50%, rgba(212,168,67,0.03) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(94,129,244,0.03) 0%, transparent 50%),
