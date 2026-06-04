@@ -10,7 +10,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- End Google Tag Manager -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Prédictions CDM 2026 — Joueurs à Surveiller | Tendance Stats</title>
+<title>Prédictions CDM — Joueurs à Surveiller | Tendance Stats</title>
 <meta name="description" content="Prédictions Coupe du Monde 2026 basées sur la forme des joueurs et des équipes. Découvrez les joueurs les plus susceptibles de marquer sur les prochains matchs CDM.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://tendancestats.com/predictions-cdm.html">
@@ -137,6 +137,8 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
 .dot { width:6px; height:6px; border-radius:50%; background:#ff4d6d; animation:blink 1.4s infinite; display:inline-block; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
 .navbar-live { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:#ff4d6d; letter-spacing:1px; font-family:'DM Mono',monospace; }
+.navbar-refresh { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.4); font-size:11px; font-family:'DM Sans',sans-serif; padding:5px 12px; border-radius:7px; cursor:pointer; transition:all .2s; }
+.navbar-refresh:hover { border-color:#d4a843; color:#d4a843; }
 @media(max-width:768px){ .navbar-links { gap:2px; } }
 @media(max-width:520px){ .navbar-links { display:none; } }
 
@@ -158,10 +160,13 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
     <div class="navbar-sep"></div>
     <a href="index.html" class="navbar-link green">⚽ Saison</a>
   </div>
-  <div class="navbar-right"><div class="navbar-live"><div class="dot"></div>LIVE</div></div>
+  <div class="navbar-right">
+    <div class="navbar-live"><div class="dot"></div>LIVE</div>
+    <button class="navbar-refresh" onclick="renderPredictions()">↻ Actualiser</button>
+  </div>
 </nav>
 <div class="hero">
-  <h1><span style="-webkit-text-fill-color:initial;font-size:0.8em;vertical-align:middle;line-height:1">🔮</span> Prédictions CDM 2026</h1>
+  <h1><span style="-webkit-text-fill-color:initial;font-size:0.8em;vertical-align:middle;line-height:1">🔮</span> Prédictions CDM</h1>
   <p>Joueurs susceptibles de marquer ou passer lors des prochains matchs de la Coupe du Monde 2026, calculés à partir de leur forme et de celle de leurs équipes.</p>
   <div class="hero-badge">🏆 Coupe du Monde · USA / Canada / Mexique · 11 juin 2026</div>
 </div>
@@ -196,7 +201,7 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
 <div class="legal">
   Les jeux d'argent et de hasard sont interdits aux mineurs. Jouer comporte des risques.<br>
   Appelez le <strong>09 74 75 13 13</strong> | <a href="https://www.joueurs-info-service.fr" target="_blank">joueurs-info-service.fr</a> | 18+ | Winamax agréé ANJ<br><br>
-  <strong>Tendance Stats</strong> · Prédictions CDM 2026 · <a href="worldcup.html">Retour CDM</a>
+  <strong>Tendance Stats</strong> · Prédictions CDM · <a href="worldcup.html">Retour CDM</a>
 </div>
 
 <script>
