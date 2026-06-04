@@ -651,10 +651,32 @@ function generatePlayerPages(players, photosCache) {
 <meta name="robots" content="index, follow">
 <meta property="og:title" content="${playerName} — Stats & Tendance 2026 | TendanceStats">
 <meta property="og:description" content="${description}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TendanceStats">
 <meta property="og:image" content="https://tendancestats.com/logo.png">
 <meta property="og:url" content="https://tendancestats.com/players/${star.slug}.html">
+<meta name="author" content="TendanceStats">
 <meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://tendancestats.com/logo.png">
 <link rel="canonical" href="https://tendancestats.com/players/${star.slug}.html">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "${playerName} — Stats & Tendance 2026 | TendanceStats",
+  "description": "${description}",
+  "url": "https://tendancestats.com/players/${star.slug}.html",
+  "publisher": {
+    "@type": "Organization",
+    "name": "TendanceStats",
+    "url": "https://tendancestats.com",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://tendancestats.com/logo.png"
+    }
+  }
+}
+</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
