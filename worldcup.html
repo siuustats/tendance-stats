@@ -1211,7 +1211,7 @@ function getLogoUrl(name) {
 
 // ── FLAG MAP ─────────────────────────────────────────────────────────────────
 const FLAG_MAP = {};
-CDM_NATIONS.forEach(function(n){ FLAG_MAP[n.name] = n.flag; });
+CDM_TEAMS.forEach(function(n){ FLAG_MAP[n.name] = n.flag; });
 
 // ── CALCUL CLASSEMENT DEPUIS data.matches ─────────────────────────────────────
 function buildGroupStandings(matches) {
