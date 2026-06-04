@@ -19,30 +19,41 @@ const LEAGUES = [
 
 // ── Calculs ───────────────────────────────────────────────────────────────────
 
-function calcTrendScore(last5) {
+function calcTrendScore(last5, totalGames, totalGoals, totalAssists) {
   if (!last5?.length) return 0;
 
-  // Poids décroissants : match récent (i=0) pèse 5x plus que le 5ème (i=4)
   const WEIGHTS = [1.0, 0.8, 0.6, 0.4, 0.2];
+  const n = totalGames || last5.length;
 
-  let score = 0;
+  let baseScore;
+  if (n < 5) {
+    // Début de saison/tournoi : moyenne sur TOUS les matchs joués
+    // 1 GA/match = 40 pts de base → bon rythme dès le départ
+    const allGA = (totalGoals || 0) + (totalAssists || 0);
+    const avgGA = n > 0 ? allGA / n : 0;
+    baseScore = Math.min(80, avgGA * 55);
+  } else {
+    // ≥ 5 matchs : moyenne sur les 5 derniers uniquement (forme récente)
+    const last5GA = last5.reduce((s, m) => s + (m.goals || 0) + (m.assists || 0), 0);
+    const avgGA = last5GA / 5;
+    baseScore = Math.min(80, avgGA * 55);
+  }
+
+  // Bonus récence (max +20 pts) — toujours sur les 5 derniers
+  let recencyBonus = 0;
   last5.forEach((m, i) => {
     const w = WEIGHTS[i] ?? 0.2;
+    const ga = (m.goals || 0) + (m.assists || 0);
     if (!m.played) {
-      // Non joué (blessure/suspension) → pénalité légère
-      score -= 0.3 * w;
-    } else if (m.goals === 0 && m.assists === 0) {
-      // Joué sans contribution → pénalité
-      score -= 0.4 * w;
-    } else {
-      // Contribution pondérée par récence (but > passe)
-      score += (m.goals * 1.0 + m.assists * 1.0) * w;
+      recencyBonus -= 0.5 * w;
+    } else if (ga > 0) {
+      recencyBonus += ga * w * 5;
     }
-    // Bonus victoire pondéré par récence
-    if (m.teamWon) score += 0.3 * w;
+    if (m.teamWon) recencyBonus += 0.3 * w * 5;
   });
 
-  return parseFloat(Math.max(0, score).toFixed(2));
+  const finalScore = Math.min(100, Math.max(0, baseScore + Math.min(20, recencyBonus)));
+  return parseFloat(finalScore.toFixed(2));
 }
 
 function buildFormDots(last5) {
@@ -364,11 +375,11 @@ function rebuildPlayers(matches) {
   function buildEntry(info, matches, leagueInfo) {
     matches.sort((a, b) => new Date(b.date) - new Date(a.date));
     const last5          = matches.slice(0, 5);
-    const trendScore     = calcTrendScore(last5);
-    const recent_goals   = last5.reduce((s, m) => s + m.goals,   0);
-    const recent_assists = last5.reduce((s, m) => s + m.assists, 0);
     const totalGoals     = matches.reduce((s, m) => s + m.goals,   0);
     const totalAssists   = matches.reduce((s, m) => s + m.assists, 0);
+    const trendScore     = calcTrendScore(last5, matches.length, totalGoals, totalAssists);
+    const recent_goals   = last5.reduce((s, m) => s + m.goals,   0);
+    const recent_assists = last5.reduce((s, m) => s + m.assists, 0);
     return {
       id: info.id, name: info.name, photo: info.photo || '',
       teamName: info.teamName,
@@ -379,8 +390,8 @@ function rebuildPlayers(matches) {
       avg: matches.length > 0 ? parseFloat(((totalGoals + totalAssists) / matches.length).toFixed(2)) : 0,
       recent_goals, recent_assists, trendScore,
       form: buildFormDots(last5), last5,
-      signal: Math.min(98, Math.max(0, Math.round(trendScore * 13))),
-      hot: trendScore > 2 && recent_goals >= 2,
+      signal: Math.min(98, Math.max(0, Math.round(trendScore))),
+      hot: trendScore > 70,
     };
   }
 
