@@ -291,8 +291,6 @@ tbody td:not(:first-child) { text-align:center; }
 .dot { width:6px; height:6px; border-radius:50%; background:#ff4d6d; animation:blink 1.4s infinite; display:inline-block; }
 @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
 .navbar-live { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:#ff4d6d; letter-spacing:1px; font-family:'DM Mono',monospace; }
-.navbar-refresh { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:rgba(255,255,255,0.4); font-size:11px; font-family:'DM Sans',sans-serif; padding:5px 12px; border-radius:7px; cursor:pointer; transition:all .2s; }
-.navbar-refresh:hover { border-color:#d4a843; color:#d4a843; }
 @media(max-width:768px){ .navbar-links { gap:2px; } }
 @media(max-width:520px){ .navbar-links { display:none; } }
 
@@ -391,7 +389,7 @@ tbody td:not(:first-child) { text-align:center; }
       </div>
       <div style="display:flex;align-items:center;gap:12px;">
         <span class="badge-live">Temps réel</span>
-        <button class="refresh-btn" onclick="loadData()">↻ Actualiser</button>
+        
       </div>
     </div>
 
