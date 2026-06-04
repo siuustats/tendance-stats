@@ -639,6 +639,15 @@ function generatePlayerPages(players, photosCache) {
 
     const description = `Stats ${playerName} 2026 — ${goals} buts, ${assists} passes, TendScore ${signal} | ${star.nation} · ${teamName} | Tendance & prédictions CDM 2026`;
 
+    // ── Texte unique SEO ──────────────────────────────────────────────────────
+    const ga5 = rp.recent_goals + rp.recent_assists;
+    const avgStr = rp.totalGames > 0 ? ((goals + assists) / rp.totalGames).toFixed(2) : '0.00';
+    const formLabel = signal >= 75 ? 'en feu' : signal >= 55 ? 'en grande forme' : signal >= 35 ? 'en forme' : 'discret';
+    const leagueName = rp.leagueId === 17 ? 'Premier League' : rp.leagueId === 34 ? 'Ligue 1' : rp.leagueId === 8 ? 'La Liga' : rp.leagueId === 23 ? 'Serie A' : rp.leagueId === 35 ? 'Bundesliga' : 'championnat européen';
+    const cdmMention = star.nation ? ` Il représente ${star.nation} à la Coupe du Monde 2026 aux États-Unis, Canada et Mexique.` : '';
+
+    const seoText = `${playerName} évolue actuellement à ${teamName}${rp.leagueId !== 6 ? ' en ' + leagueName : ''}.${cdmMention} Sur la saison en cours, il totalise ${goals} but${goals !== 1 ? 's' : ''} et ${assists} passe${assists !== 1 ? 's' : ''} décisive${assists !== 1 ? 's' : ''} en ${rp.totalGames} match${rp.totalGames !== 1 ? 's' : ''}, soit une moyenne de ${avgStr} contribution${parseFloat(avgStr) !== 1 ? 's' : ''} par match. Lors de ses 5 derniers matchs, il a inscrit ${rp.recent_goals} but${rp.recent_goals !== 1 ? 's' : ''} et délivré ${rp.recent_assists} passe${rp.recent_assists !== 1 ? 's' : ''} décisive${rp.recent_assists !== 1 ? 's' : ''}${ga5 > 0 ? ', ce qui le place parmi les joueurs les plus actifs du moment' : ''}. Son TendScore de ${signal}/100 indique qu'il est actuellement ${formLabel}. TendanceStats suit ses performances en temps réel et calcule ses prédictions pour les prochains matchs.`;
+
 
 
     const html = `<!DOCTYPE html>
@@ -822,13 +831,20 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
 </div>
 
 <footer>
+  <div style="max-width:860px;margin:0 auto 20px;padding:0 24px;font-size:13px;color:#6b7280;line-height:1.8;text-align:left;background:#111318;border-radius:12px;border:1px solid #1e2130;padding:20px 24px;">
+    ${seoText}
+  </div>
   <div class="wrap">
     <strong style="color:#f0f2f8">TendanceStats</strong> &nbsp;·&nbsp; Stats ${playerName} 2026 &nbsp;·&nbsp;
     <span style="color:#9ca3af">Données : sources publiques</span> &nbsp;·&nbsp;
     <a href="../index.html" style="color:#6b7280;font-size:11px;text-decoration:none">← Retour à l'accueil</a>
   </div>
 </footer>
-<div style="text-align:center;padding:12px 24px;font-size:11px;color:#4b5563;border-top:1px solid #111318;">© 2026 TendanceStats. Tous droits réservés.</div>
+<div style="text-align:center;padding:12px 24px;font-size:11px;color:#4b5563;border-top:1px solid #111318;">
+  <div style="margin-bottom:6px"><a href="../mentions-legales.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Mentions légales</a> · <a href="../confidentialite.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Confidentialité</a> · <a href="../contact.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Contact</a></div>
+  © 2026 TendanceStats. Tous droits réservés.
+</div>
+<script src="../cookies.js"></script>
 <script>
 (function() {
   const CURRENT = '${star.espnId}';
