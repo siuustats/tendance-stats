@@ -31,12 +31,12 @@ function calcTrendScore(last5, totalGames, totalGoals, totalAssists) {
     // 1 GA/match = 40 pts de base → bon rythme dès le départ
     const allGA = (totalGoals || 0) + (totalAssists || 0);
     const avgGA = n > 0 ? allGA / n : 0;
-    baseScore = Math.min(80, avgGA * 55);
+    baseScore = avgGA * 55;
   } else {
     // ≥ 5 matchs : moyenne sur les 5 derniers uniquement (forme récente)
     const last5GA = last5.reduce((s, m) => s + (m.goals || 0) + (m.assists || 0), 0);
     const avgGA = last5GA / 5;
-    baseScore = Math.min(80, avgGA * 55);
+    baseScore = avgGA * 55;
   }
 
   // Bonus récence (max +20 pts) — toujours sur les 5 derniers
