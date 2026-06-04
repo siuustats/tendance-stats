@@ -680,10 +680,16 @@ body{font-family:'DM Sans',sans-serif;background:#080a0f;color:#f0f2f8;min-heigh
 .navbar-links{display:flex;align-items:center;gap:3px;background:rgba(255,255,255,0.05);border-radius:10px;padding:4px;}
 .navbar-link{font-size:12px;font-weight:600;padding:6px 14px;border-radius:7px;color:rgba(255,255,255,0.45);letter-spacing:0.3px;text-decoration:none;transition:all .2s;white-space:nowrap;}
 .navbar-link:hover{color:rgba(255,255,255,0.8);background:rgba(255,255,255,0.06);}
+.navbar-link.active{background:#00e5a0;color:#080a0f;}
 .navbar-link.gold{color:#d4a843;}
 .navbar-link.gold:hover{background:rgba(212,168,67,0.12);color:#d4a843;}
+.navbar-link.green{color:rgba(0,229,160,0.7);}
+.navbar-link.green:hover{color:#00e5a0;background:rgba(0,229,160,0.08);}
 .navbar-sep{width:1px;height:18px;background:rgba(255,255,255,0.1);margin:0 2px;flex-shrink:0;}
 .navbar-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.dot{width:6px;height:6px;border-radius:50%;background:#ff4d6d;animation:blink 1.4s infinite;display:inline-block;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.navbar-live{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#ff4d6d;letter-spacing:1px;font-family:'DM Mono',monospace;}
 @media(max-width:520px){.navbar-links{display:none;}}
 
 .cta-primary{background:#00e5a0;color:#080a0f}
@@ -699,11 +705,11 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
   <div class="navbar-links">
     <a href="../index.html" class="navbar-link">Accueil</a>
     <a href="../predictions.html" class="navbar-link">Prédictions</a>
-    <a href="../index.html#classement" class="navbar-link">Classement</a>
+    <a href="../classement.html" class="navbar-link">Classement</a>
     <div class="navbar-sep"></div>
     <a href="../worldcup.html" class="navbar-link gold">🏆 CDM</a>
   </div>
-  <div class="navbar-right"></div>
+  <div class="navbar-right"><div class="navbar-live"><div class="dot"></div>LIVE</div></div>
 </nav>
 
 <div class="wrap">
