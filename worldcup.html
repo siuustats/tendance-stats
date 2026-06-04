@@ -380,7 +380,7 @@ footer span { color:var(--g); }
 .group-table td:first-child { text-align:left; }
 .group-table tr:last-child td { border-bottom:none; }
 .group-table tr.qualified td { background:rgba(212,168,67,0.04); }
-.group-table tr.qualified td:first-child { border-left:2px solid #d4a843; }
+.group-table tr.qualified td:nth-child(2) { border-left:2px solid #d4a843; }
 .group-nation { display:flex; align-items:center; gap:8px; }
 .group-flag { width:20px; height:14px; object-fit:cover; border-radius:2px; flex-shrink:0; }
 .group-nation-name { font-weight:500; font-size:12px; white-space:nowrap; }
@@ -390,10 +390,8 @@ footer span { color:var(--g); }
 .group-diff-zero { color:var(--m); font-family:'DM Mono',monospace; }
 .group-num { font-family:'DM Mono',monospace; color:var(--m2); }
 .group-rank { font-size:11px; font-weight:700; color:var(--m); width:18px; text-align:center; }
-.group-pending { padding:20px; text-align:center; font-size:12px; color:var(--m); font-style:italic; }
 @media(max-width:900px){ .groups-wrapper { grid-template-columns:1fr; } }
-@media(max-width:600px){ .group-table th.hide-mobile, .group-table td.hide-mobile { display:none; } }
-
+@media(max-width:600px){ .group-table th.hide-mob, .group-table td.hide-mob { display:none; } }
 </style>
 <script type="application/ld+json">
 {
@@ -701,6 +699,12 @@ async function loadCDMRosters(photosMap) {
   const seen = new Set();
   return players.filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; });
 }
+
+// ── FLAG MAP (depuis CDM_TEAMS déjà défini) ──────────────────────────────────
+const FLAG_MAP = {};
+CDM_TEAMS.forEach(function(n){ FLAG_MAP[n.name] = n.flag; });
+
+// ── CLASSEMENT GROUPES ────────────────────────────────────────────────────────
 
 // ── INIT ────────────────────────────────────────────────────────────────────
 async function init() {
@@ -1209,125 +1213,80 @@ function getLogoUrl(name) {
   return 'https://a.espncdn.com/i/teamlogos/countries/500/' + slug + '.png';
 }
 
-// ── FLAG MAP ─────────────────────────────────────────────────────────────────
-const FLAG_MAP = {};
-CDM_TEAMS.forEach(function(n){ FLAG_MAP[n.name] = n.flag; });
-
-// ── CALCUL CLASSEMENT DEPUIS data.matches ─────────────────────────────────────
-function buildGroupStandings(matches) {
-  // Init toutes les équipes à 0
-  const standings = {};
-  GROUPS.forEach(function(g) {
-    g.nations.forEach(function(nation) {
-      standings[nation] = { mj:0, v:0, n:0, d:0, bp:0, bc:0, pts:0 };
-    });
+// ── CLASSEMENT GROUPES ────────────────────────────────────────────────────────
+function buildStandings(matches) {
+  const s = {};
+  GROUPS.forEach(function(g){ g.nations.forEach(function(n){ s[n]={mj:0,v:0,n:0,d:0,bp:0,bc:0,pts:0}; }); });
+  (matches||[]).filter(function(m){ return m.leagueId===6 && m.homeGoals!==undefined; }).forEach(function(m) {
+    const h=m.homeTeam, a=m.awayTeam, hg=m.homeGoals, ag=m.awayGoals;
+    if (!s[h]||!s[a]) return;
+    s[h].mj++; s[a].mj++;
+    s[h].bp+=hg; s[h].bc+=ag; s[a].bp+=ag; s[a].bc+=hg;
+    if (hg>ag){ s[h].v++; s[h].pts+=3; s[a].d++; }
+    else if (hg<ag){ s[a].v++; s[a].pts+=3; s[h].d++; }
+    else { s[h].n++; s[h].pts++; s[a].n++; s[a].pts++; }
   });
-
-  // Calculer depuis les matchs CDM joués
-  const cdmMatches = (matches || []).filter(function(m){ return m.leagueId === 6 && m.homeGoals !== undefined && m.awayGoals !== undefined; });
-  cdmMatches.forEach(function(m) {
-    const home = m.homeTeam, away = m.awayTeam;
-    const hg = m.homeGoals, ag = m.awayGoals;
-    if (!standings[home] || !standings[away]) return;
-    standings[home].mj++; standings[away].mj++;
-    standings[home].bp += hg; standings[home].bc += ag;
-    standings[away].bp += ag; standings[away].bc += hg;
-    if (hg > ag) {
-      standings[home].v++; standings[home].pts += 3;
-      standings[away].d++;
-    } else if (hg < ag) {
-      standings[away].v++; standings[away].pts += 3;
-      standings[home].d++;
-    } else {
-      standings[home].n++; standings[home].pts++;
-      standings[away].n++; standings[away].pts++;
-    }
-  });
-  return standings;
+  return s;
 }
 
 function renderGroups(matches) {
   const grid = document.getElementById('groupsGrid');
   if (!grid) return;
-  const standings = buildGroupStandings(matches);
-  const cdmStarted = (matches || []).some(function(m){ return m.leagueId === 6 && m.homeGoals !== undefined; });
-
+  const st = buildStandings(matches);
+  const started = (matches||[]).some(function(m){ return m.leagueId===6 && m.homeGoals!==undefined; });
   grid.innerHTML = '';
   const wrapper = document.createElement('div');
   wrapper.className = 'groups-wrapper';
 
   GROUPS.forEach(function(g) {
-    // Trier : Pts desc → Diff desc → BP desc → Nom asc
-    const ranked = g.nations.map(function(n){ return Object.assign({ name:n }, standings[n]); })
+    const ranked = g.nations.map(function(n){ return Object.assign({name:n}, st[n]); })
       .sort(function(a,b){
-        if (b.pts !== a.pts) return b.pts - a.pts;
-        const diffA = a.bp - a.bc, diffB = b.bp - b.bc;
-        if (diffB !== diffA) return diffB - diffA;
-        if (b.bp !== a.bp) return b.bp - a.bp;
+        if (b.pts!==a.pts) return b.pts-a.pts;
+        if ((b.bp-b.bc)!==(a.bp-a.bc)) return (b.bp-b.bc)-(a.bp-a.bc);
+        if (b.bp!==a.bp) return b.bp-a.bp;
         return a.name.localeCompare(b.name);
       });
 
     const block = document.createElement('div');
     block.className = 'group-block';
+    let html = '<div class="group-header"><span class="group-header-name">'+g.name+'</span><span class="group-header-tag">CDM 2026</span></div>';
+    html += '<table class="group-table"><thead><tr><th></th><th>Nation</th>';
+    if (started) html += '<th class="hide-mob">MJ</th><th class="hide-mob">V</th><th class="hide-mob">N</th><th class="hide-mob">D</th><th>BP</th><th>BC</th><th>Diff</th>';
+    html += '<th>Pts</th></tr></thead><tbody>';
 
-    // Header
-    block.innerHTML = '<div class="group-header">' +
-      '<span class="group-header-name">' + g.name + '</span>' +
-      '<span class="group-header-tag">CDM 2026</span>' +
-      '</div>';
+    ranked.forEach(function(t, i) {
+      const flag = FLAG_MAP[t.name]||'';
+      const flagImg = flag ? '<img src="https://flagcdn.com/w20/'+flag+'.png" class="group-flag" alt="">' : '';
+      const id = NATION_IDS[t.name];
+      const click = id ? ' onclick="window.location.href='squad.html?team='+id+''" style="cursor:pointer"' : '';
+      const qcls = i<2 ? ' qualified' : '';
+      const diff = t.bp-t.bc;
+      const diffCls = diff>0?'group-diff-pos':diff<0?'group-diff-neg':'group-diff-zero';
+      const diffStr = diff>0?'+'+diff:String(diff);
+      html += '<tr class="'+qcls+'"'+click+'>';
+      html += '<td class="group-rank">'+(i+1)+'</td>';
+      html += '<td><div class="group-nation">'+flagImg+'<span class="group-nation-name">'+t.name+'</span></div></td>';
+      if (started) {
+        html += '<td class="group-num hide-mob">'+t.mj+'</td>';
+        html += '<td class="group-num hide-mob">'+t.v+'</td>';
+        html += '<td class="group-num hide-mob">'+t.n+'</td>';
+        html += '<td class="group-num hide-mob">'+t.d+'</td>';
+        html += '<td class="group-num">'+t.bp+'</td>';
+        html += '<td class="group-num">'+t.bc+'</td>';
+        html += '<td class="'+diffCls+'">'+diffStr+'</td>';
+      }
+      html += '<td class="group-pts">'+t.pts+'</td>';
+      html += '</tr>';
+    });
 
-    if (!cdmStarted) {
-      block.innerHTML += '<div class="group-pending">Disponible dès le 11 juin 2026</div>';
-      // Afficher quand même les nations sans stats
-      const tableHtml = '<table class="group-table"><thead><tr>' +
-        '<th style="width:20px"></th><th>Nation</th>' +
-        '</tr></thead><tbody>' +
-        ranked.map(function(t, i) {
-          const flag = FLAG_MAP[t.name] || '';
-          const flagImg = flag ? '<img src="https://flagcdn.com/w20/' + flag + '.png" class="group-flag" alt="">' : '';
-          return '<tr><td class="group-rank">' + (i+1) + '</td>' +
-            '<td><div class="group-nation">' + flagImg + '<span class="group-nation-name">' + t.name + '</span></div></td>' +
-            '</tr>';
-        }).join('') +
-        '</tbody></table>';
-      block.innerHTML = '<div class="group-header"><span class="group-header-name">' + g.name + '</span><span class="group-header-tag">CDM 2026</span></div>' + tableHtml;
-    } else {
-      const tableHtml = '<table class="group-table"><thead><tr>' +
-        '<th style="width:20px"></th><th>Nation</th>' +
-        '<th class="hide-mobile">MJ</th><th class="hide-mobile">V</th><th class="hide-mobile">N</th><th class="hide-mobile">D</th>' +
-        '<th>BP</th><th>BC</th><th>Diff</th><th>Pts</th>' +
-        '</tr></thead><tbody>' +
-        ranked.map(function(t, i) {
-          const flag = FLAG_MAP[t.name] || '';
-          const flagImg = flag ? '<img src="https://flagcdn.com/w20/' + flag + '.png" class="group-flag" alt="">' : '';
-          const diff = t.bp - t.bc;
-          const diffCls = diff > 0 ? 'group-diff-pos' : diff < 0 ? 'group-diff-neg' : 'group-diff-zero';
-          const diffStr = diff > 0 ? '+'+diff : String(diff);
-          const qualCls = i < 2 ? ' qualified' : '';
-          const id = NATION_IDS[t.name];
-          const onclick = id ? ' style="cursor:pointer" onclick="window.location.href='squad.html?team=' + id + ''"' : '';
-          return '<tr class="' + qualCls + '"' + onclick + '>' +
-            '<td class="group-rank">' + (i+1) + '</td>' +
-            '<td><div class="group-nation">' + flagImg + '<span class="group-nation-name">' + t.name + '</span></div></td>' +
-            '<td class="group-num hide-mobile">' + t.mj + '</td>' +
-            '<td class="group-num hide-mobile">' + t.v + '</td>' +
-            '<td class="group-num hide-mobile">' + t.n + '</td>' +
-            '<td class="group-num hide-mobile">' + t.d + '</td>' +
-            '<td class="group-num">' + t.bp + '</td>' +
-            '<td class="group-num">' + t.bc + '</td>' +
-            '<td class="' + diffCls + '">' + diffStr + '</td>' +
-            '<td class="group-pts">' + t.pts + '</td>' +
-            '</tr>';
-        }).join('') +
-        '</tbody></table>';
-      block.innerHTML = '<div class="group-header"><span class="group-header-name">' + g.name + '</span><span class="group-header-tag">CDM 2026</span></div>' + tableHtml;
-    }
-
+    html += '</tbody></table>';
+    block.innerHTML = html;
     wrapper.appendChild(block);
   });
 
   grid.appendChild(wrapper);
 }
+
 init();
 </script>
 
