@@ -44,7 +44,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .st{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;}
 .sb{font-size:10px;font-family:'DM Mono',monospace;letter-spacing:1px;background:rgba(0,229,160,0.08);color:var(--g);border:1px solid rgba(0,229,160,0.18);padding:2px 7px;border-radius:4px;}
 /* TABLE */
-.tw{background:var(--s1);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:32px;}
+.tw{background:var(--s1);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:0;}
 table{width:100%;border-collapse:collapse;}
 thead tr{border-bottom:1px solid var(--border);}
 th{padding:11px 16px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--m);font-weight:500;}
@@ -95,6 +95,13 @@ footer{border-top:1px solid var(--border);padding:20px 0;text-align:center;font-
 .hero.hero-cdm{background:linear-gradient(180deg,rgba(212,168,67,0.07) 0%,transparent 100%);}
 .hero.hero-cdm h1{color:#d4a843;}
 
+
+/* ── PAGINATION ── */
+.pagination { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; margin-bottom:32px; }
+.pag-btn { background:var(--s2); border:1px solid var(--border); color:var(--m2); font-size:12px; font-family:'DM Sans',sans-serif; padding:6px 14px; border-radius:8px; cursor:pointer; transition:all .2s; }
+.pag-btn:hover { border-color:var(--g); color:var(--g); background:rgba(0,229,160,0.06); }
+.pag-btn.disabled { opacity:0.4; cursor:default; }
+.pag-info { font-size:12px; color:var(--m); font-family:'DM Mono',monospace; }
 </style>
 </head>
 <body>
@@ -138,18 +145,21 @@ footer{border-top:1px solid var(--border);padding:20px 0;text-align:center;font-
       <thead><tr><th style="width:40px">#</th><th style="width:44px"></th><th>Joueur</th><th style="width:80px">Ligue</th><th style="width:80px;text-align:right">Buts</th><th style="width:80px;text-align:right">Matchs</th><th style="width:80px;text-align:right">Moy.</th></tr></thead>
       <tbody id="tb-goals"></tbody>
     </table></div>
+    <div class="pagination" id="pag-tb-goals"></div>
 
     <div class="sh"><div class="st">🎯 Top Passeurs</div><div class="sb">SAISON</div></div>
     <div class="tw"><table>
       <thead><tr><th style="width:40px">#</th><th style="width:44px"></th><th>Joueur</th><th style="width:80px">Ligue</th><th style="width:80px;text-align:right">Passes</th><th style="width:80px;text-align:right">Matchs</th><th style="width:80px;text-align:right">Moy.</th></tr></thead>
       <tbody id="tb-assists"></tbody>
     </table></div>
+    <div class="pagination" id="pag-tb-assists"></div>
 
     <div class="sh"><div class="st">📊 Top Buts + Passes</div><div class="sb">SAISON</div></div>
     <div class="tw"><table>
       <thead><tr><th style="width:40px">#</th><th style="width:44px"></th><th>Joueur</th><th style="width:80px">Ligue</th><th style="width:70px;text-align:right">Buts</th><th style="width:70px;text-align:right">Passes</th><th style="width:70px;text-align:right">GA</th><th style="width:80px;text-align:right">Matchs</th><th style="width:80px;text-align:right">Moy.</th></tr></thead>
       <tbody id="tb-ga"></tbody>
     </table></div>
+    <div class="pagination" id="pag-tb-ga"></div>
 
   </div>
 </div>
@@ -214,40 +224,58 @@ function renderRow(p, rank, col) {
   const assistsAvg = n ? (a/n).toFixed(2) : '0.00';
 
   const extra = col==='ga'
-    ? `<td style="text-align:right"><span class="num g">${g}</span></td><td style="text-align:right"><span class="num a">${a}</span></td><td style="text-align:right"><span class="num ga">${g+a}</span></td><td style="text-align:right"><span class="num" style="color:var(--m2)">${n}</span></td><td style="text-align:right"><span class="num" style="color:var(--y)">${avg}</span></td>`
+    ? '<td style="text-align:right"><span class="num ga">' + (g+a) + '</span></td><td style="text-align:right"><span class="num" style="color:var(--m2)">' + n + '</span></td><td style="text-align:right"><span class="num" style="color:var(--y)">' + avg + '</span></td>'
     : col==='goals'
-      ? `<td style="text-align:right"><span class="num g">${g}</span></td><td style="text-align:right"><span class="num" style="color:var(--m2)">${n}</span></td><td style="text-align:right"><span class="num" style="color:var(--y)">${goalsAvg}</span></td>`
-      : `<td style="text-align:right"><span class="num a">${a}</span></td><td style="text-align:right"><span class="num" style="color:var(--m2)">${n}</span></td><td style="text-align:right"><span class="num" style="color:var(--y)">${assistsAvg}</span></td>`;
+      ? '<td style="text-align:right"><span class="num g">' + g + '</span></td><td style="text-align:right"><span class="num" style="color:var(--m2)">' + n + '</span></td><td style="text-align:right"><span class="num" style="color:var(--y)">' + goalsAvg + '</span></td>'
+      : '<td style="text-align:right"><span class="num a">' + a + '</span></td><td style="text-align:right"><span class="num" style="color:var(--m2)">' + n + '</span></td><td style="text-align:right"><span class="num" style="color:var(--y)">' + assistsAvg + '</span></td>';
 
-  return `<tr onclick="window.location.href='player.html?id=${p.id}'">
-    <td class="rk ${rkcls}">${rank}</td>
-    <td style="width:36px;padding:6px 4px"><div style="width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:14px">${photo?`<img src="${photo}" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='⚽'">` : '⚽'}</div></td>
-    <td><div class="pn">${p.name}</div><div class="pt">${p.teamName||''}</div></td>
-    <td><span class="lpill ${lb.cls}">${lb.label}</span></td>
-    ${extra}
-  </tr>`;
+  return '<tr onclick="window.location.href=&quot;player.html?id=' + p.id + '&quot;">' +
+    '<td class="rk ' + rkcls + '">' + rank + '</td>' +
+    '<td style="width:36px;padding:6px 4px"><div style="width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:14px">' + (photo ? '<img src="' + photo + '" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML=&quot;⚽&quot;">' : '⚽') + '</div></td>' +
+    '<td><div class="pn">' + p.name + '</div><div class="pt">' + (p.teamName||'') + '</div></td>' +
+    '<td><span class="lpill ' + lb.cls + '">' + lb.label + '</span></td>' +
+    extra +
+    '</tr>';
 }
 
-function renderTable(tbodyId, sorted, col, limit) {
+function renderTable(tbodyId, sorted, col, page) {
+  page = page || 1;
   _sorted[tbodyId] = sorted;
-  const rows = sorted.slice(0, limit||10);
-  const hasMore = sorted.length > 10 && (!limit || limit === 10);
-  let html = rows.map((p,i)=>renderRow(p,i+1,col)).join('');
-  if (hasMore) {
-    html += '<tr><td colspan="8" style="text-align:center;padding:14px">' +
-      '<button onclick="expandTable(&quot;' + tbodyId + '&quot;,&quot;' + col + '&quot;)"' +
-      ' style="background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);color:#00e5a0;font-size:12px;font-weight:600;padding:7px 20px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s">' +
-      'Voir les 20 premiers ↓</button></td></tr>';
-  }
-  document.getElementById(tbodyId).innerHTML = html;
+  const total = sorted.length;
+  const start = (page - 1) * PAGE_SIZE;
+  const rows = sorted.slice(start, start + PAGE_SIZE);
+  const rankOffset = start;
+  document.getElementById(tbodyId).innerHTML = rows.length
+    ? rows.map((p,i) => renderRow(p, rankOffset + i + 1, col)).join('')
+    : '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--m)">Aucun joueur</td></tr>';
+
+  const pagEl = document.getElementById('pag-' + tbodyId);
+  if (!pagEl) return;
+  pagEl.innerHTML = '';
+  const pages = Math.ceil(total / PAGE_SIZE);
+  if (pages <= 1) return;
+
+  const prev = document.createElement('button');
+  prev.className = 'pag-btn' + (page === 1 ? ' disabled' : '');
+  prev.textContent = '← Précédent';
+  prev.onclick = function() { if (page > 1) renderTable(tbodyId, sorted, col, page - 1); };
+  pagEl.appendChild(prev);
+
+  const info = document.createElement('span');
+  info.className = 'pag-info';
+  info.textContent = (start + 1) + '–' + Math.min(start + PAGE_SIZE, total) + ' / ' + total;
+  pagEl.appendChild(info);
+
+  const next = document.createElement('button');
+  next.className = 'pag-btn' + (page === pages ? ' disabled' : '');
+  next.textContent = 'Suivant →';
+  next.onclick = function() { if (page < pages) renderTable(tbodyId, sorted, col, page + 1); };
+  pagEl.appendChild(next);
 }
 
-// Cache des listes triées pour l'expansion
+const PAGE_SIZE = 10;
 const _sorted = {};
-function expandTable(tbodyId, col) {
-  const list = _sorted[tbodyId] || [];
-  renderTable(tbodyId, list, col, 20);
-}
+
 
 function render() {
   const list = getList();
@@ -258,9 +286,9 @@ function render() {
   _sorted['tb-goals']   = byGoals;
   _sorted['tb-assists'] = byAssists;
   _sorted['tb-ga']      = byGA;
-  renderTable('tb-goals',   byGoals,   'goals',   10);
-  renderTable('tb-assists', byAssists, 'assists', 10);
-  renderTable('tb-ga',      byGA,      'ga',      10);
+  renderTable('tb-goals',   byGoals,   'goals');
+  renderTable('tb-assists', byAssists, 'assists');
+  renderTable('tb-ga',      byGA,      'ga');
 }
 
 init();
