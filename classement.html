@@ -193,6 +193,22 @@ async function init() {
     allPlayers = (data.players||[])
       .filter(p => p.leagueId !== 6)
       .map(p => ({...p, photo: photosMap[p.id]||photosMap[String(p.id)]||p.photo||''}));
+
+    // Construire _leagueStats depuis data.matches
+    window._leagueStats = {};
+    for (const match of (data.matches||[]).filter(m => m.leagueId !== 6)) {
+      for (const mp of (match.players||[])) {
+        if (!mp.id || mp.played === false) continue;
+        const pid = String(mp.id);
+        const lid = match.leagueId;
+        if (!window._leagueStats[pid]) window._leagueStats[pid] = {};
+        if (!window._leagueStats[pid][lid]) window._leagueStats[pid][lid] = {goals:0,assists:0,games:0};
+        window._leagueStats[pid][lid].goals   += mp.goals   || 0;
+        window._leagueStats[pid][lid].assists += mp.assists || 0;
+        window._leagueStats[pid][lid].games   += 1;
+      }
+    }
+
     document.getElementById('loader').style.display = 'none';
     document.getElementById('content').style.display = 'block';
     render();
@@ -211,7 +227,20 @@ function setFilter(lid, btn) {
 function getList() {
   if (currentFilter === 'all') return allPlayers;
   const lid = parseInt(currentFilter);
-  return allPlayers.filter(p => (p.allLeagueIds||[p.leagueId]).includes(lid));
+  // Filtrer les joueurs qui ont joué dans cette ligue
+  const filtered = allPlayers.filter(p => (p.allLeagueIds||[p.leagueId]).includes(lid));
+  // Remplacer leurs stats par les stats spécifiques à cette ligue
+  return filtered.map(p => {
+    const pid = String(p.id);
+    const ls = window._leagueStats?.[pid]?.[lid];
+    if (!ls) return null; // joueur sans stats dans cette ligue
+    return {
+      ...p,
+      totalGoals:   ls.goals,
+      totalAssists: ls.assists,
+      totalGames:   ls.games
+    };
+  }).filter(Boolean);
 }
 
 function renderRow(p, rank, col) {
