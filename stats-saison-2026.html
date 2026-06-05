@@ -258,7 +258,40 @@ tr:hover td { background:var(--s3); }
 .dot{width:6px;height:6px;border-radius:50%;background:#ff4d6d;animation:blink 1.4s infinite;display:inline-block;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 .navbar-live{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#ff4d6d;letter-spacing:1px;}
-@media(max-width:520px){.navbar-links{display:none;}}
+@media(max-width:520px){ .navbar-links { display:none; } }
+/* ── HAMBURGER MOBILE ── */
+.hamburger {
+  display:none; flex-direction:column; justify-content:center;
+  gap:5px; width:36px; height:36px; cursor:pointer;
+  background:rgba(255,255,255,0.05); border-radius:8px;
+  padding:7px; border:none;
+}
+.hamburger span {
+  display:block; height:2px; background:rgba(255,255,255,0.7);
+  border-radius:2px; transition:all .25s;
+}
+.hamburger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity:0; }
+.hamburger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+.mobile-menu {
+  display:none; position:fixed; top:54px; left:0; right:0;
+  backdrop-filter:blur(20px); border-bottom:1px solid rgba(255,255,255,0.08);
+  padding:12px 16px 16px; z-index:199; flex-direction:column; gap:4px;
+}
+.mobile-menu.open { display:flex; }
+.mobile-menu a {
+  font-size:13px; font-weight:600; padding:10px 14px; border-radius:8px;
+  text-decoration:none; transition:all .2s; letter-spacing:0.3px;
+}
+.mobile-menu-sep { height:1px; background:rgba(255,255,255,0.06); margin:4px 0; }
+@media(max-width:520px){ .hamburger { display:flex; } }
+.mobile-menu { background:rgba(8,10,15,0.98); }
+.mobile-menu a { color:rgba(255,255,255,0.6); }
+.mobile-menu a:hover { background:rgba(255,255,255,0.06); color:#fff; }
+.mobile-menu a.active { background:#00e5a0; color:#080a0f; }
+.mobile-menu a.gold { color:#d4a843; }
+.mobile-menu a.gold:hover { background:rgba(212,168,67,0.12); }
+.mobile-menu a.green-link { color:rgba(0,229,160,0.7); }}
 
 </style>
 <script type="application/ld+json">
@@ -294,8 +327,9 @@ tr:hover td { background:var(--s3); }
     <div class="navbar-sep"></div>
     <a href="worldcup.html" class="navbar-link gold">🏆 CDM</a>
   </div>
-  <div class="navbar-right"><div class="navbar-live"><div class="dot"></div>LIVE</div></div>
+  <div class="navbar-right"><div class="navbar-live"><div class="dot"></div>LIVE</div><button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu"><span></span><span></span><span></span></button></div>
 </nav>
+<div class="mobile-menu" id="mobileMenu"><a href="index.html">Accueil</a><a href="predictions.html">Prédictions</a><a href="classement.html">Classement</a><div class="mobile-menu-sep"></div><a href="worldcup.html" class="gold">🏆 CDM</a></div>
 
 <!-- Bannière Winamax top -->
 <a href="https://www.winamax.fr/paris-sportifs/sports/1?code=CMONBN" target="_blank" rel="nofollow noopener" class="wina-banner">
@@ -650,6 +684,25 @@ loadData();
     </div>
   </div>
 </footer>
+<script>
+function toggleMenu() {
+  var btn = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  btn.classList.toggle('open');
+  menu.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+    btn.classList.remove('open');
+    menu.classList.remove('open');
+  }
+});
+</script>
+
+<!-- Bouton flottant CDM -->
+<a href="worldcup.html" style="position:fixed;bottom:24px;right:20px;z-index:300;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#d4a843,#b8902a);color:#080608;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;padding:10px 16px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(212,168,67,0.4);transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 6px 28px rgba(212,168,67,0.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(212,168,67,0.4)'">🏆 CDM 2026</a>
 <script src="cookies.js"></script>
 </body>
 </html>
