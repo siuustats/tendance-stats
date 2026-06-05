@@ -115,13 +115,6 @@ footer{border-top:1px solid var(--border);padding:20px 0;text-align:center;font-
 .mobile-menu a.gold:hover{background:rgba(212,168,67,0.12);}
 .mobile-menu-sep{height:1px;background:rgba(255,255,255,0.06);margin:4px 0;}
 @media(max-width:520px){.hamburger{display:flex;}}
-.wina-banner { background:linear-gradient(135deg,#c0392b,#96281b); padding:12px 24px; display:flex; align-items:center; justify-content:center; gap:16px; flex-wrap:wrap; text-decoration:none; transition:filter .2s; }
-.wina-banner:hover { filter:brightness(1.1); }
-.wina-banner span { font-size:14px; font-weight:600; color:#fff; }
-.wina-banner span strong { color:#ffd60a; }
-.wina-cta { background:#ffd60a; color:#1a0a00; font-weight:700; padding:7px 18px; border-radius:6px; font-size:12px; white-space:nowrap; }
-.legal { text-align:center; padding:24px; font-size:11px; color:var(--m); border-top:1px solid var(--border); line-height:1.8; }
-.legal a { color:var(--m2); }
 
 .hero { background:linear-gradient(180deg,rgba(0,229,160,0.05) 0%,transparent 100%); border-bottom:1px solid var(--border); padding:48px 24px 36px; text-align:center; }
 .hero h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(36px,7vw,64px); letter-spacing:2px; background:linear-gradient(135deg,#00ffb3,#00e5a0); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:12px; text-align:center; }
@@ -135,13 +128,6 @@ footer{border-top:1px solid var(--border);padding:20px 0;text-align:center;font-
 .pag-btn:hover { border-color:var(--g); color:var(--g); background:rgba(0,229,160,0.06); }
 .pag-btn.disabled { opacity:0.4; cursor:default; }
 .pag-info { font-size:12px; color:var(--m); font-family:'DM Mono',monospace; }
-.wina-banner { background:linear-gradient(135deg,#c0392b,#96281b); padding:12px 24px; display:flex; align-items:center; justify-content:center; gap:16px; flex-wrap:wrap; text-decoration:none; transition:filter .2s; }
-.wina-banner:hover { filter:brightness(1.1); }
-.wina-banner span { font-size:14px; font-weight:600; color:#fff; }
-.wina-banner span strong { color:#ffd60a; }
-.wina-cta { background:#ffd60a; color:#1a0a00; font-weight:700; padding:7px 18px; border-radius:6px; font-size:12px; white-space:nowrap; }
-.legal { text-align:center; padding:24px; font-size:11px; color:var(--m); border-top:1px solid var(--border); line-height:1.8; }
-.legal a { color:var(--m2); }
 </style>
 <script type="application/ld+json">
 {
@@ -231,6 +217,20 @@ footer{border-top:1px solid var(--border);padding:20px 0;text-align:center;font-
     Saison 2025/2026
   </div>
 </footer>
+
+<div style="position:relative;z-index:10;background:linear-gradient(90deg,#e30613,#c0000f);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+  <div style="color:#fff;font-size:13px;font-weight:600;">🎁 Winamax — Jusqu'à <strong>200€ offerts</strong> sur votre 1er dépôt</div>
+  <a href="https://www.winamax.fr/parrain?code=CMONBN" target="_blank" rel="noopener sponsored"
+     style="background:#fff;color:#e30613;font-size:12px;font-weight:700;padding:7px 16px;border-radius:6px;text-decoration:none;white-space:nowrap;letter-spacing:0.5px;">
+    J'en profite →
+  </a>
+</div>
+<div style="background:#0a0b0f;text-align:center;padding:6px 24px;font-size:10px;color:#6b7280;line-height:1.6;">
+  Les jeux d'argent et de hasard sont interdits aux mineurs. Jouer comporte des risques : endettement, dépendance.
+  Appelez le <strong style="color:#9ca3af;">09 74 75 13 13</strong> (appel non surtaxé) |
+  <a href="https://www.joueurs-info-service.fr" target="_blank" style="color:#9ca3af;">joueurs-info-service.fr</a> |
+  18+ | Winamax est agréé par l'ANJ
+</div>
 <div style="text-align:center;padding:12px 24px;font-size:11px;color:#4b5563;border-top:1px solid #111318;"><div style="margin-bottom:6px"><a href="mentions-legales.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Mentions légales</a> · <a href="confidentialite.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Confidentialité</a> · <a href="contact.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Contact</a></div>© 2026 TendanceStats. Tous droits réservés.</div>
 
 <script>
@@ -381,17 +381,7 @@ function render() {
 }
 
 init();
-</script>
-
-<a href="https://www.winamax.fr/paris-sportifs/sports/1?code=CMONBN" target="_blank" rel="nofollow noopener" class="wina-banner" style="margin-top:32px;display:flex">
-  <span>⚽ Pariez sur vos joueurs en forme avec Winamax — <strong>200€ offerts</strong> à l'inscription</span>
-  <span class="wina-cta">Voir les cotes →</span>
-</a>
-<div class="legal">
-  Les jeux d'argent et de hasard sont interdits aux mineurs. Jouer comporte des risques.<br>
-  Appelez le <strong>09 74 75 13 13</strong> | <a href="https://www.joueurs-info-service.fr" target="_blank">joueurs-info-service.fr</a> | 18+ | Winamax agréé ANJ
-</div>
-<script>
+</script><script>
 function toggleMenu() {
   var btn = document.getElementById('hamburger');
   var menu = document.getElementById('mobileMenu');
