@@ -539,21 +539,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 
 <!-- Bloc SEO statique -->
-<div style="max-width:1280px;margin:0 auto;padding:40px 24px 20px;border-top:1px solid #1e2130">
+<div style="max-width:1280px;margin:0 auto;padding:40px 24px 20px">
   <h2 style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:#9ca3af;margin-bottom:12px">Coupe du Monde 2026 — Stats, Pronostics & Joueurs à Surveiller</h2>
   <p style="font-size:13px;color:#6b7280;line-height:1.8;">
     Tendance Stats est votre référence pour suivre les statistiques et tendances de la <strong style="color:#9ca3af">Coupe du Monde 2026</strong> organisée aux États-Unis, au Canada et au Mexique du 11 juin au 19 juillet 2026. Suivez les <strong style="color:#9ca3af">joueurs à surveiller</strong> comme Kylian Mbappé, Lionel Messi, Erling Haaland, Vinicius Jr ou Jude Bellingham — leurs stats CDM, leur TendScore et leur forme au fil de la compétition. Consultez les <strong style="color:#9ca3af">effectifs des 48 nations</strong> qualifiées, le classement des buteurs et passeurs CDM, et nos analyses tendances pour vos pronostics sur la Coupe du Monde 2026. Notre indicateur exclusif <strong style="color:#9ca3af">TendScore</strong> calcule en temps réel la tendance de chaque joueur en croisant ses performances individuelles, les résultats de sa sélection et la difficulté de l'adversaire à venir — pour identifier les joueurs les plus susceptibles de briller lors du prochain match de la CDM 2026. Données mises à jour automatiquement après chaque journée de la compétition.
   </p>
 </div>
-<footer>
-  <div class="wrap">
-    <strong style="color:#9ca3af">Tendance Stats</strong> &nbsp;·&nbsp;
-    Coupe du Monde 2026 &nbsp;·&nbsp;
-    Données : <span style="color:#9ca3af">sources publiques</span> &nbsp;·&nbsp;
-    <span id="last-update"></span> &nbsp;·&nbsp;
-    <a href="stats-cdm-2026.html" style="color:var(--m);font-size:11px;text-decoration:none;opacity:0.6;transition:opacity .2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">Stats détaillées CDM →</a>
-  </div>
-</footer>
+
 
 <!-- Modal carte joueur CDM -->
 <div class="card-modal-overlay" id="cardModal" onclick="if(event.target===this)closeCardModal()">
@@ -1300,28 +1292,44 @@ function renderGroups(matches) {
 init();
 </script>
 
-<div style="text-align:center;padding:20px 24px 4px;font-size:11px;color:#3a3545;">
-  <a href="index.html" style="color:#3a3545;text-decoration:none;margin:0 10px;">Stats saison clubs</a>·
-  <a href="predictions-cdm.html" style="color:#3a3545;text-decoration:none;margin:0 10px;">Prédictions Coupe du Monde</a>·
-  <a href="classement-cdm.html" style="color:#3a3545;text-decoration:none;margin:0 10px;">Classement CDM 2026</a>·
-  <a href="squad.html" style="color:#3a3545;text-decoration:none;margin:0 10px;">Effectifs 48 nations</a>·
-  <a href="stats-cdm-2026.html" style="color:#3a3545;text-decoration:none;margin:0 10px;">Stats Coupe du Monde 2026</a>
+<!-- FOOTER STANDARD -->
+<div style="height:1px;background:rgba(255,255,255,0.15);"></div>
+<div style="background:var(--bg);padding:16px 24px 8px;text-align:center;">
+  <div style="font-size:12px;color:var(--m);margin-bottom:8px;">
+    <strong style="color:#9ca3af">Tendance Stats</strong> &nbsp;·&nbsp;
+    Coupe du Monde 2026 &nbsp;·&nbsp;
+    Données : <span style="color:#9ca3af">sources publiques</span> &nbsp;·&nbsp;
+    <span id="last-update"></span> &nbsp;·&nbsp;
+    <a href="stats-cdm-2026.html" style="color:var(--m);font-size:11px;text-decoration:none;opacity:0.6;transition:opacity .2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">Stats détaillées CDM →</a>
+  </div>
+  <div style="font-size:11px;color:#3a3545;">
+    <a href="index.html" style="color:#3a3545;text-decoration:none;margin:0 8px;">Stats saison clubs</a>·
+    <a href="predictions-cdm.html" style="color:#3a3545;text-decoration:none;margin:0 8px;">Prédictions CDM</a>·
+    <a href="classement-cdm.html" style="color:#3a3545;text-decoration:none;margin:0 8px;">Classement CDM 2026</a>·
+    <a href="squad.html" style="color:#3a3545;text-decoration:none;margin:0 8px;">Effectifs 48 nations</a>·
+    <a href="stats-cdm-2026.html" style="color:#3a3545;text-decoration:none;margin:0 8px;">Stats Coupe du Monde 2026</a>
+  </div>
 </div>
-
-<div style="position:relative;z-index:10;background:linear-gradient(90deg,#e30613,#c0000f);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+<div style="padding:0 0 12px 0;"><div style="height:1px;background:rgba(255,255,255,0.15);"></div></div>
+<div style="background:linear-gradient(90deg,#e30613,#c0000f);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
   <div style="color:#fff;font-size:13px;font-weight:600;">🎁 Winamax — Jusqu'à <strong>200€ offerts</strong> sur votre 1er dépôt</div>
-  <a href="https://www.winamax.fr/parrain?code=CMONBN" target="_blank" rel="noopener sponsored"
-     style="background:#fff;color:#e30613;font-size:12px;font-weight:700;padding:7px 16px;border-radius:6px;text-decoration:none;white-space:nowrap;letter-spacing:0.5px;">
-    J'en profite →
-  </a>
+  <a href="https://www.winamax.fr/parrain?code=CMONBN" target="_blank" rel="noopener sponsored" style="background:#fff;color:#e30613;font-size:12px;font-weight:700;padding:7px 16px;border-radius:6px;text-decoration:none;white-space:nowrap;letter-spacing:0.5px;">J'en profite →</a>
 </div>
-<div style="background:#0a0b0f;text-align:center;padding:6px 24px;font-size:10px;color:#6b7280;line-height:1.6;">
+<div style="background:#0a0b0f;text-align:center;padding:8px 24px;font-size:10px;color:#6b7280;line-height:1.6;">
   Les jeux d'argent et de hasard sont interdits aux mineurs. Jouer comporte des risques : endettement, dépendance.
   Appelez le <strong style="color:#9ca3af;">09 74 75 13 13</strong> (appel non surtaxé) |
   <a href="https://www.joueurs-info-service.fr" target="_blank" style="color:#9ca3af;">joueurs-info-service.fr</a> |
   18+ | Winamax est agréé par l'ANJ
 </div>
-<div style="text-align:center;padding:12px 24px;font-size:11px;color:#4b5563;border-top:1px solid #111318;"><div style="margin-bottom:6px"><a href="mentions-legales.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Mentions légales</a> · <a href="confidentialite.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Confidentialité</a> · <a href="contact.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Contact</a></div>© 2026 TendanceStats. Tous droits réservés.</div>
+<div style="background:#05040a;border-top:1px solid rgba(255,255,255,0.06);padding:16px 24px;text-align:center;font-size:11px;color:#4b5563;">
+  <div style="margin-bottom:8px;">
+    <a href="mentions-legales.html" style="color:#6b7280;text-decoration:none;margin:0 10px;transition:color .2s;" onmouseover="this.style.color='#9ca3af'" onmouseout="this.style.color='#6b7280'">Mentions légales</a>·
+    <a href="confidentialite.html" style="color:#6b7280;text-decoration:none;margin:0 10px;transition:color .2s;" onmouseover="this.style.color='#9ca3af'" onmouseout="this.style.color='#6b7280'">Confidentialité</a>·
+    <a href="contact.html" style="color:#6b7280;text-decoration:none;margin:0 10px;transition:color .2s;" onmouseover="this.style.color='#9ca3af'" onmouseout="this.style.color='#6b7280'">Contact</a>
+  </div>
+  <div style="color:#3a3f4a;">© 2026 TendanceStats. Tous droits réservés.</div>
+</div>
+
 <script>
 function toggleMenu() {
   var btn = document.getElementById('hamburger');
