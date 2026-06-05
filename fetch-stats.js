@@ -733,6 +733,20 @@ body{font-family:'DM Sans',sans-serif;background:#080a0f;color:#f0f2f8;min-heigh
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 .navbar-live{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#ff4d6d;letter-spacing:1px;font-family:'DM Mono',monospace;}
 @media(max-width:520px){.navbar-links{display:none;}}
+.hamburger{display:none;flex-direction:column;justify-content:center;gap:5px;width:36px;height:36px;cursor:pointer;background:rgba(255,255,255,0.05);border-radius:8px;padding:7px;border:none;}
+.hamburger span{display:block;height:2px;background:rgba(255,255,255,0.7);border-radius:2px;transition:all .25s;}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hamburger.open span:nth-child(2){opacity:0;}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+.mobile-menu{display:none;position:fixed;top:54px;left:0;right:0;background:rgba(8,10,15,0.98);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.08);padding:12px 16px 16px;z-index:199;flex-direction:column;gap:4px;}
+.mobile-menu.open{display:flex;}
+.mobile-menu a{font-size:13px;font-weight:600;padding:10px 14px;border-radius:8px;color:rgba(255,255,255,0.6);text-decoration:none;transition:all .2s;letter-spacing:0.3px;}
+.mobile-menu a:hover{background:rgba(255,255,255,0.06);color:#fff;}
+.mobile-menu a.active{background:#00e5a0;color:#080a0f;}
+.mobile-menu a.gold{color:#d4a843;}
+.mobile-menu a.gold:hover{background:rgba(212,168,67,0.12);}
+.mobile-menu-sep{height:1px;background:rgba(255,255,255,0.06);margin:4px 0;}
+@media(max-width:520px){.hamburger{display:flex;}}
 
 .cta-primary{background:#00e5a0;color:#080a0f}
 .cta-secondary{background:#111318;border:1px solid #1e2130;color:#9ca3af}
@@ -751,8 +765,9 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
     <div class="navbar-sep"></div>
     <a href="../worldcup.html" class="navbar-link gold">🏆 CDM</a>
   </div>
-  <div class="navbar-right"><div class="navbar-live"><div class="dot"></div>LIVE</div></div>
+  <div class="navbar-right"><div class="navbar-live"><div class="dot"></div>LIVE</div><button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu"><span></span><span></span><span></span></button></div>
 </nav>
+<div class="mobile-menu" id="mobileMenu"><a href="../index.html" class="active">Accueil</a><a href="../predictions.html">Prédictions</a><a href="../classement.html">Classement</a><div class="mobile-menu-sep"></div><a href="../worldcup.html" class="gold">🏆 CDM</a></div>
 
 <div class="wrap">
   <div class="hero">
@@ -844,6 +859,23 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
   <div style="margin-bottom:6px"><a href="../mentions-legales.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Mentions légales</a> · <a href="../confidentialite.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Confidentialité</a> · <a href="../contact.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Contact</a></div>
   © 2026 TendanceStats. Tous droits réservés.
 </div>
+<script>
+function toggleMenu() {
+  var btn = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  btn.classList.toggle('open');
+  menu.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+    btn.classList.remove('open');
+    menu.classList.remove('open');
+  }
+});
+</script>
+<a href="../worldcup.html" style="position:fixed;bottom:24px;right:20px;z-index:300;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#d4a843,#b8902a);color:#080608;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;padding:10px 16px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(212,168,67,0.4);transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 6px 28px rgba(212,168,67,0.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(212,168,67,0.4)'">🏆 CDM 2026</a>
 <script src="../cookies.js"></script>
 <script>
 (function() {
