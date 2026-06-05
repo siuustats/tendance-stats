@@ -593,7 +593,768 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   </div>
 </div>
+
+
+
+<!-- Bloc SEO statique -->
+<div style="max-width:1280px;margin:0 auto;padding:40px 24px 20px;border-top:1px solid #1e2130">
+  <h2 style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:#9ca3af;margin-bottom:12px">Statistiques Football & Joueurs en Forme — Saison 2025/2026</h2>
+  <p style="font-size:13px;color:#6b7280;line-height:1.8;">
+    Tendance Stats suit en temps réel les joueurs les plus en forme de la saison sur les 5 grands championnats européens : <strong style="color:#9ca3af">Premier League</strong>, <strong style="color:#9ca3af">Ligue 1</strong>, <strong style="color:#9ca3af">La Liga</strong>, <strong style="color:#9ca3af">Serie A</strong> et <strong style="color:#9ca3af">Bundesliga</strong>, ainsi que la Ligue des Champions, l'Europa League et la Conference League. Notre indicateur exclusif <strong style="color:#9ca3af">TendScore</strong> identifie les joueurs en série, en confiance et décisifs sur leurs 5 derniers matchs — buteurs, passeurs et joueurs influents à surveiller pour vos pronostics et paris sportifs. Chaque carte joueur affiche la forme récente sur 5 matchs, le nombre de buts et passes décisives, ainsi qu'une barre de tendance calculée en temps réel. Les prédictions TendanceStats croisent les performances individuelles, les résultats de l'équipe et la force de l'adversaire pour identifier les joueurs les plus susceptibles de briller lors du prochain match. Données collectées et mises à jour automatiquement après chaque journée de championnats et de coupes européennes.
+  </p>
 </div>
+<script>
+const DATA_URL = 'data.json';
+const SEASON = 2024;
+
+const LEAGUES = [
+  { id: 61,  name: 'Ligue 1',        flag: 'fr',     flagAlt:'FR', cls: 'l1',  label: 'L1' },
+  { id: 39,  name: 'Premier League', flag: 'gb-eng', flagAlt:'EN', cls: 'pl',  label: 'PL' },
+  { id: 140, name: 'La Liga',        flag: 'es',     flagAlt:'ES', cls: 'liga', label: 'Liga' },
+  { id: 135, name: 'Serie A',        flag: 'it',     flagAlt:'IT', cls: 'sa',  label: 'SA' },
+  { id: 78,  name: 'Bundesliga',     flag: 'de',     flagAlt:'DE', cls: 'bl',  label: 'BL' },
+];
+
+let allPlayers = [];
+let currentLeague = 'all';
+let currentPageIndex = 1;
+const PAGE_SIZE = 20;
+
+async function apiFetch(endpoint) { /* inutilisé — données lues depuis data.json */ }
+
+function setMsg(msg, prog) {
+  document.getElementById('load-msg').textContent = msg;
+  if (prog) document.getElementById('load-prog').textContent = prog;
+}
+
+async function init() {
+  document.getElementById('loader').style.display = 'flex';
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('error-box').style.display = 'none';
+  allPlayers = [];
+
+  try {
+    setMsg('Chargement des données...', 'Lecture du fichier stats');
+    const [res, photosRes] = await Promise.all([
+      fetch('data.json?v=' + Date.now()),
+      fetch('photos.json?v=' + Date.now()).catch(() => null)
+    ]);
+    if (!res.ok) throw new Error(`data.json introuvable (HTTP ${res.status})`);
+    const data = await res.json();
+    const photosMap = photosRes?.ok ? await photosRes.json() : {};
+
+    window._photosMap = photosMap;
+    // Injecter les photos SofaScore (convertir id en string et number pour matcher)
+    allPlayers = (data.players || [])
+      .filter(p => p.leagueId !== 6) // exclure CDM — réservé à worldcup.html
+      .map(p => ({
+        ...p,
+        photo: photosMap[p.id] || photosMap[String(p.id)] || photosMap[Number(p.id)] || p.photo || ''
+      }));
+
+    const d = new Date(data.updatedAt);
+    document.getElementById('last-update').textContent =
+      'Mis à jour le ' + d.toLocaleDateString('fr-FR') + ' à ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+
+    window._fixtures = data.fixtures || [];
+    window._matches  = data.matches  || [];
+    // Précalculer stats par joueur ET par ligue (toutes compétitions)
+    window._leagueStats = {};
+    for (const match of window._matches) {
+      for (const mp of (match.players || [])) {
+        if (!mp.id || mp.played === false || mp.played === null) continue;
+        const pid = String(mp.id);
+        const lid = match.leagueId;
+        if (!window._leagueStats[pid]) window._leagueStats[pid] = {};
+        if (!window._leagueStats[pid][lid]) window._leagueStats[pid][lid] = {goals:0,assists:0,games:0};
+        window._leagueStats[pid][lid].goals   += mp.goals   || 0;
+        window._leagueStats[pid][lid].assists += mp.assists || 0;
+        window._leagueStats[pid][lid].games   += 1;
+      }
+    }
+    window._euroStats = window._leagueStats; // compatibilité
+    render();
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+
+  } catch (e) {
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('error-box').style.display = 'block';
+    document.getElementById('err-msg').innerHTML =
+      `Impossible de charger les données : <strong>${e.message}</strong><br><br>
+      Le fichier <code>data.json</code> n'a pas encore été généré.<br>
+      Lance le script GitHub Actions manuellement une première fois.`;
+  }
+}
+
+function buildForm(goals, assists, games) {
+  // Generate a realistic-looking form based on stats
+  const form = [];
+  const rate = (goals + assists * 0.5) / Math.max(games, 1);
+  for (let i = 0; i < 10; i++) {
+    const r = Math.random();
+    if (r < rate * 0.6 && goals > 0) form.push('g');
+    else if (r < rate * 0.9 && assists > 0) form.push('a');
+    else form.push('x');
+  }
+  return form;
+}
+
+function buildRecentForm(goals, assists, games) {
+  const form = [];
+  const rateG = goals / Math.max(games, 1);
+  const rateA = assists / Math.max(games, 1);
+  for (let i = 0; i < 10; i++) {
+    const r = Math.random();
+    const boost = i >= 5 ? 1.2 : 0.85;
+    if (r < rateG * boost && goals > 0) form.push('g');
+    else if (r < (rateG + rateA) * boost && assists > 0) form.push('a');
+    else form.push('x');
+  }
+  return form;
+}
+
+function calcSignal(goals, assists, games, rank) {
+  const base = Math.min(95, 50 + goals * 1.5 + assists * 0.8);
+  const rankPenalty = rank * 1.2;
+  return Math.max(45, Math.round(base - rankPenalty + Math.random() * 5));
+}
+
+function getPlayers() {
+  if (currentLeague === 'all') return allPlayers;
+  return allPlayers.filter(p => {
+    const lid = parseInt(currentLeague);
+    // Vérifier dans toutes les ligues du joueur (pas seulement la principale)
+    if (p.allLeagueIds && p.allLeagueIds.length) return p.allLeagueIds.includes(lid);
+    return p.leagueId === lid;
+  });
+}
+
+// Stats filtrées par ligue — last5Only=true pour cartes, false pour classement (toute saison)
+function getLeagueStats(player, leagueId, last5Only=false) {
+  if (!leagueId) return null;
+
+  // Pour les cartes — depuis last5 (max 5 matchs récents de cette ligue)
+  const filtered = (player.last5 || []).filter(m => m.leagueId === leagueId);
+  const last5 = filtered.slice(0, 5);
+  const g5 = last5.reduce((s, m) => s + (m.goals||0), 0);
+  const a5 = last5.reduce((s, m) => s + (m.assists||0), 0);
+
+  if (last5Only) {
+    if (!last5.length) return null;
+    return { goals:g5, assists:a5, games:last5.length, avg:((g5+a5)/last5.length).toFixed(2), last5 };
+  }
+
+  // Pour le classement — depuis _leagueStats (toute la saison)
+  const pid = String(player.id);
+  const season = window._leagueStats?.[pid]?.[leagueId];
+  if (!season) return null; // joueur sans stats dans cette ligue → exclu du classement
+  const { goals, assists, games } = season;
+  const avg = games > 0 ? ((goals+assists)/games).toFixed(2) : '0.00';
+  return { goals, assists, games, avg, last5 };
+}
+
+// ── Modal carte joueur ────────────────────────────────────────────────────
+const LMAP_MODAL = {
+  17:{l:'PL',  c:'pl',  color:'#a78bfa'}, 34:{l:'L1',   c:'l1',  color:'#60a5fa'},
+   8:{l:'Liga',c:'liga',color:'#fbbf24'}, 23:{l:'SA',   c:'sa',  color:'#34d399'},
+  35:{l:'BL',  c:'bl',  color:'#f87171'},  7:{l:'LDC',  c:'cl',  color:'#818cf8'},
+   5:{l:'EL',  c:'el',  color:'#fb923c'},20296:{l:'ECL', c:'ecl', color:'#6ee7b7'}
+};
+
+function closeCardModal() {
+  document.getElementById('cardModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function openCardModal(player) {
+  const euroIds = [7, 5, 20296];
+  const fixtures = window._fixtures || [];
+
+  // Détecter les ligues jouées par le joueur
+  const leaguesPlayed = new Set();
+  // Depuis last5
+  (player.last5 || []).forEach(m => { if (m.leagueId) leaguesPlayed.add(m.leagueId); });
+  // Depuis allLeagueIds (si disponible)
+  (player.allLeagueIds || []).forEach(id => leaguesPlayed.add(id));
+  // Toujours inclure la ligue principale du joueur
+  if (player.leagueId) leaguesPlayed.add(player.leagueId);
+
+  const euroPlayed = [...leaguesPlayed].filter(id => euroIds.includes(id));
+  // Ligue domestique = leagueId principal si c'est bien une ligue domestique
+  // Sinon chercher dans last5 une ligue non-euro
+  let domLeague = player.leagueId && !euroIds.includes(player.leagueId) ? player.leagueId : null;
+  if (!domLeague) {
+    // Chercher depuis last5
+    const domFromLast5 = [...leaguesPlayed].find(id => !euroIds.includes(id));
+    // Chercher depuis _leagueStats (tous les matchs de saison)
+    const pid = String(player.id);
+    const allStatLeagues = Object.keys(window._leagueStats?.[pid] || {}).map(Number);
+    const domFromStats = allStatLeagues.find(id => !euroIds.includes(id));
+    domLeague = domFromLast5 || domFromStats || null;
+    // Ajouter aussi les ligues euro depuis _leagueStats
+    allStatLeagues.filter(id => euroIds.includes(id)).forEach(id => leaguesPlayed.add(id));
+  }
+
+  // Construire les filtres — ligue dom + ligues euro jouées
+  const filters = [];
+  if (domLeague) filters.push({ id: String(domLeague), label: LMAP_MODAL[domLeague]?.l || 'Dom' });
+  euroPlayed.forEach(id => filters.push({ id: String(id), label: LMAP_MODAL[id]?.l || 'EUR' }));
+  // Filtre "Tous" si 2+ ligues
+  if (filters.length >= 2) filters.unshift({ id: 'all', label: 'Tous' });
+
+  let activeFilter = filters.length ? String(filters[0].id) : 'all';
+
+  // Header
+  const sc = player.signal > 88 ? 'var(--o)' : player.signal > 78 ? 'var(--g)' : 'var(--b)';
+  document.getElementById('cmAvatar').innerHTML = player.photo
+    ? `<img src="${player.photo}" onerror="this.outerHTML='⚽'">`
+    : '⚽';
+  document.getElementById('cmName').textContent  = player.name;
+  document.getElementById('cmTeam').textContent  = player.teamName || '';
+  document.getElementById('cmScore').style.color = sc;
+  document.getElementById('cmScore').textContent = player.signal;
+
+  const lb = LMAP_MODAL[player.leagueId];
+  document.getElementById('cmBadge').innerHTML = lb
+    ? `<span class="lpill ${lb.c}">${lb.l}</span>`
+    : '';
+
+  function renderBody() {
+    const lid = activeFilter === 'all' ? null : parseInt(activeFilter);
+    const pid = String(player.id);
+
+    // Toujours reconstruire depuis _matches — garantit scores + équipes + filtre par ligue
+    const history = [];
+    for (const match of (window._matches || [])) {
+      if (lid && match.leagueId !== lid) continue;
+      const mp = (match.players || []).find(pl => String(pl.id) === pid);
+      if (!mp) continue;
+      history.push({
+        date:      match.date,
+        leagueId:  match.leagueId,
+        homeTeam:  match.homeTeam,
+        awayTeam:  match.awayTeam,
+        homeGoals: match.homeGoals,
+        awayGoals: match.awayGoals,
+        goals:     mp.goals   || 0,
+        assists:   mp.assists || 0,
+        played:    mp.played,
+        absenceReason: mp.absenceReason || null,
+        teamWon:   mp.teamWon,
+      });
+    }
+    history.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const last5 = history.slice(0, 5);
+    const g = last5.reduce((s, m) => s + (m.goals||0), 0);
+    const a = last5.reduce((s, m) => s + (m.assists||0), 0);
+    const moy = last5.length ? ((g+a)/last5.length).toFixed(2) : '0.00';
+
+    // Prochain match filtré
+    const fixList = lid ? fixtures.filter(f => f.leagueId === lid) : fixtures;
+    const nextMatch = fixList.find(f =>
+      f.homeTeam === player.teamName || f.awayTeam === player.teamName
+    );
+
+    // Prédiction
+    const predResult = calcPredScore(player, fixList, allPlayers);
+    const predLabel  = getPredLabel(predResult.score);
+
+    let html = '';
+
+    // Filtres
+    if (filters.length > 1) {
+      html += '<div class="cm-filters">';
+      filters.forEach(f => {
+        const isActive = f.id === activeFilter;
+        html += `<button class="cm-filter-btn${isActive?' active':''}" onclick="window._cmFilter('${f.id}')">${f.label}</button>`;
+      });
+      html += '</div>';
+    }
+
+    // Stats chips
+    html += `<div class="cm-chips">
+      <div class="cm-chip"><div class="cm-chip-n" style="color:var(--g)">${g}</div><div class="cm-chip-l">Buts</div></div>
+      <div class="cm-chip"><div class="cm-chip-n" style="color:var(--b)">${a}</div><div class="cm-chip-l">Passes</div></div>
+      <div class="cm-chip"><div class="cm-chip-n" style="color:var(--o)">${g+a}</div><div class="cm-chip-l">GA/5J</div></div>
+      <div class="cm-chip"><div class="cm-chip-n" style="color:var(--y)">${moy}</div><div class="cm-chip-l">Moy.</div></div>
+    </div>`;
+
+    // Historique
+    html += '<div class="cm-section">Historique</div>';
+    if (!last5.length) {
+      html += '<div style="color:var(--m);font-size:12px">Aucun match enregistré</div>';
+    } else {
+      last5.forEach(m => {
+        const date  = new Date(m.date||'').toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+        const won   = m.teamWon;
+        const label = won === true ? 'V' : won === false ? 'D' : 'N';
+        const rcls  = won === true ? 'var(--g)' : won === false ? '#ff5050' : 'var(--m)';
+        const rbg   = won === true ? 'rgba(0,229,160,.15)' : won === false ? 'rgba(255,80,80,.15)' : 'rgba(30,34,48,.5)';
+        const lb2      = LMAP_MODAL[m.leagueId] || {l:'—',c:'x',color:'#9ca3af'};
+        const home     = m.homeTeam  || player.teamName;
+        const away     = m.awayTeam  || '—';
+        const scoreStr = m.homeGoals !== undefined ? `${m.homeGoals}-${m.awayGoals}` : '—';
+
+        let pills = '';
+        if (m.played === null) pills += '<span class="cm-stat-pill" style="background:rgba(107,114,128,.15);color:#6b7280">❌ Absent</span>';
+        else if (m.played === false) pills += '<span class="cm-stat-pill" style="background:rgba(107,114,128,.15);color:#6b7280">🪑 Banc</span>';
+        else {
+          if (m.goals > 0)   pills += `<span class="cm-stat-pill" style="background:rgba(0,229,160,.15);color:var(--g)">⚽ ${m.goals}B</span>`;
+          if (m.assists > 0) pills += `<span class="cm-stat-pill" style="background:rgba(94,129,244,.15);color:var(--b)">🎯 ${m.assists}P</span>`;
+        }
+
+        html += `<div class="cm-match-row">
+          <span class="cm-match-date">${date}</span>
+          <span class="lpill ${lb2.c}" style="font-size:9px;padding:1px 5px">${lb2.l}</span>
+          <div class="cm-match-teams">${home} <span style="color:var(--m)">vs</span> ${away}</div>
+          <span class="cm-match-score">${scoreStr}</span>
+          ${pills}
+          <div class="cm-result" style="background:${rbg};color:${rcls}">${label}</div>
+        </div>`;
+      });
+    }
+
+    // Prochain match
+    html += '<div class="cm-section">Prochain match</div>';
+    if (!nextMatch) {
+      html += '<div style="color:var(--m);font-size:12px">Aucun match programmé</div>';
+    } else {
+      const lb3 = LMAP_MODAL[nextMatch.leagueId] || {l:'—',c:'x'};
+      const isHome = nextMatch.homeTeam === player.teamName;
+      const opp = isHome ? nextMatch.awayTeam : nextMatch.homeTeam;
+      const dateStr = new Date(nextMatch.date).toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit'});
+      const predColor = predLabel ? predLabel.color : '#9ca3af';
+      const predText  = predLabel ? predLabel.label  : '—';
+      const barW = Math.round(predResult.score) + '%';
+
+      html += `<div class="cm-next">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span class="lpill ${lb3.c}" style="font-size:9px;padding:1px 5px">${lb3.l}</span>
+          <span class="cm-next-match">${nextMatch.homeTeam} vs ${nextMatch.awayTeam}</span>
+        </div>
+        <div class="cm-next-date">${dateStr}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+          <div class="cm-pred-bar" style="flex:1">
+            <div class="cm-pred-fill" style="width:${barW};background:${predColor}"></div>
+          </div>
+          <span style="font-size:12px;font-weight:700;color:${predColor};white-space:nowrap">${predText}</span>
+        </div>
+      </div>`;
+    }
+
+    // Lien page joueur
+    html += `<a class="cm-view-btn" href="player.html?id=${player.id}">Voir la fiche complète →</a>`;
+
+    document.getElementById('cmBody').innerHTML = html;
+  }
+
+  window._cmFilter = (filterId) => {
+    activeFilter = String(filterId);
+    renderBody();
+  };
+
+  renderBody();
+  document.getElementById('cardModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+function render() {
+  const list = getPlayers();
+
+  // KPIs
+  const totalGoals = list.reduce((s, p) => s + (p.totalGoals||p.goals||0), 0);
+  const hotCount = list.filter(p => p.hot || (p.trendScore||0) > 0).length;
+  document.getElementById('k-players').textContent = list.length;
+  document.getElementById('k-hot').textContent = hotCount;
+  document.getElementById('k-goals').textContent = totalGoals;
+
+  // Trier par B+P selon la ligue filtrée
+  const lid2 = currentLeague !== 'all' ? parseInt(currentLeague) : null;
+
+  // Filtrer les joueurs ayant des stats dans la ligue sélectionnée
+  const filteredList = lid2
+    ? list.filter(p => getLeagueStats(p, lid2) !== null)
+    : list;
+
+  const sortedList = [...filteredList].sort((a, b) => {
+    const statsA = lid2 ? getLeagueStats(a, lid2) : null;
+    const statsB = lid2 ? getLeagueStats(b, lid2) : null;
+    const bpA = statsA ? statsA.goals + statsA.assists : (a.totalGoals||a.goals||0) + (a.totalAssists||a.assists||0);
+    const bpB = statsB ? statsB.goals + statsB.assists : (b.totalGoals||b.goals||0) + (b.totalAssists||b.assists||0);
+    if (bpB !== bpA) return bpB - bpA;
+    return (b.signal||0) - (a.signal||0);
+  });
+
+  renderAlerts(list, window._fixtures || []);
+  renderGrid(list);
+  renderTable(sortedList, window._photosMap || {}, 1, lid2);
+}
+
+function calcPredScore(player, fixtures, allPlayers) {
+  const ga5    = (player.recent_goals||0) + (player.recent_assists||0);
+  const ts     = player.trendScore || 0;
+
+  // Forme joueur — poids fort (70% avec fixture, 100% sans)
+  const playerScore = Math.min(100, (ga5 * 15) + (ts * 0.7));
+
+  // Trouver prochain match de l'équipe
+  const nextMatch = (fixtures || []).find(f =>
+    f.homeTeam === player.teamName || f.awayTeam === player.teamName
+  );
+
+  let opponent  = null;
+  let matchDate = null;
+  let finalScore;
+
+  if (nextMatch) {
+    const isHome = nextMatch.homeTeam === player.teamName;
+    opponent     = isHome ? nextMatch.awayTeam : nextMatch.homeTeam;
+    matchDate    = nextMatch.date;
+
+    const wins  = (player.last5||[]).filter(m => m.teamWon === true).length;
+    const total = (player.last5||[]).length || 1;
+    const teamScore = Math.round((wins / total) * 100);
+
+    const oppPlayers = allPlayers.filter(p => p.teamName === opponent);
+    let oppScore = 50;
+    if (oppPlayers.length > 0) {
+      const oppWins  = oppPlayers[0]?.last5?.filter(m => m.teamWon === true).length || 0;
+      const oppTotal = oppPlayers[0]?.last5?.length || 1;
+      oppScore = Math.round((1 - oppWins / oppTotal) * 100);
+    }
+    finalScore = Math.round(playerScore * 0.70 + teamScore * 0.15 + oppScore * 0.15);
+  } else {
+    // Pas de fixture — score basé uniquement sur la forme joueur
+    finalScore = Math.round(playerScore);
+  }
+
+  return { score: Math.min(98, finalScore), opponent, matchDate };
+}
+
+function getPredLabel(score) {
+  if (score >= 75) return { label: '🔥 EN FEU',   color: '#ff9f43', colorDim: '#ff9f4388' };
+  if (score >= 55) return { label: '⚡ CHAUD',     color: '#ffd32a', colorDim: '#ffd32a88' };
+  if (score >= 35) return { label: '📈 EN FORME',  color: '#00e5a0', colorDim: '#00e5a088' };
+  if (score >= 20) return { label: '💤 DISCRET',   color: '#9ca3af', colorDim: '#9ca3af88' };
+  return null;
+}
+
+function renderAlerts(list, fixtures) {
+  // 1 joueur par ligue si possible, sinon top par trendScore
+  const leaguesSeen = new Set();
+  const picked = [];
+
+  const lid = currentLeague !== 'all' ? parseInt(currentLeague) : null;
+  const euroIds = [7, 5, 20296];
+  // Si filtre européen : fixtures de cette compétition seulement
+  const filteredFixtures = (lid && euroIds.includes(lid))
+    ? fixtures.filter(f => f.leagueId === lid)
+    : fixtures;
+
+  // Calculer le score de prédiction pour chaque joueur et trier
+  const withScores = [...list].map(p => ({
+    ...p,
+    _predScore: calcPredScore(p, filteredFixtures, list).score
+  })).sort((a,b) => b._predScore - a._predScore);
+
+  // Garder uniquement les joueurs avec un prochain match dans cette compétition
+  const withMatch = withScores.filter(p => calcPredScore(p, filteredFixtures, list).opponent);
+
+  // En filtre européen : top 4 par score sans diversification
+  // En filtre domestique : 1 joueur par ligue d'abord, puis compléter
+  if (lid && [7, 5, 20296].includes(lid)) {
+    for (const p of withMatch) {
+      if (picked.length >= 4) break;
+      picked.push(p);
+    }
+  } else {
+    for (const p of withMatch) {
+      if (picked.length >= 4) break;
+      if (!leaguesSeen.has(p.leagueId)) {
+        leaguesSeen.add(p.leagueId);
+        picked.push(p);
+      }
+    }
+    for (const p of withMatch) {
+      if (picked.length >= 4) break;
+      if (!picked.find(x => x.id === p.id)) picked.push(p);
+    }
+  }
+
+  const c = document.getElementById('alerts');
+  c.innerHTML = '';
+  const colors = ['var(--o)','var(--g)','var(--b)','var(--y)'];
+
+  picked.forEach((p, i) => {
+    const { score, opponent, matchDate } = calcPredScore(p, filteredFixtures, list);
+    const predLabel = getPredLabel(score);
+    if (!predLabel) return;
+
+    const g5   = p.recent_goals || 0;
+    const a5   = p.recent_assists || 0;
+    const ga5  = g5 + a5;
+    const fill = score;
+    const dateStr = matchDate
+      ? new Date(matchDate).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})
+      : '—';
+
+    if (!opponent) return; // ne pas afficher les joueurs sans prochain match
+    const matchBadge = '<span style="font-size:10px;color:var(--m2);margin-left:auto;background:var(--s3);padding:2px 8px;border-radius:4px">vs ' + opponent + ' · ' + dateStr + '</span>';
+
+    const barW = fill + '%';
+    const barBg = 'linear-gradient(90deg,' + predLabel.color + ',' + predLabel.colorDim + ')';
+
+    const d = document.createElement('div');
+    d.className = 'alert';
+    d.style.cssText = 'border-left-color:' + predLabel.color + '; animation-delay:' + (i*0.08) + 's; cursor:pointer';
+    d.onclick = () => window.location.href = 'player.html?id=' + p.id;
+    d.innerHTML = '<div class="alert-ic" style="font-size:20px">' + predLabel.label.split(' ')[0] + '</div>'
+      + '<div class="alert-txt" style="flex:1">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+      + '<strong style="color:var(--text);font-size:14px">' + p.name + '</strong>'
+      + '<span style="font-size:11px;color:var(--m2)">' + (p.teamName||'') + '</span>'
+      + matchBadge
+      + '</div>'
+      + '<div style="display:flex;align-items:center;gap:8px">'
+      + '<div style="flex:1;height:6px;background:#1e2130;border-radius:3px;overflow:hidden">'
+      + '<div style="width:' + barW + ';height:6px;background:' + barBg + ';border-radius:3px"></div>'
+      + '</div>'
+      + '<span style="font-size:11px;font-weight:700;color:' + predLabel.color + ';white-space:nowrap;min-width:80px">' + predLabel.label + '</span>'
+      + '</div>'
+      + '<div style="font-size:11px;color:var(--m);margin-top:6px;display:flex;gap:12px">'
+      + '<span>⚽ <strong style="color:#00e5a0">' + g5 + 'B</strong></span>'
+      + '<span>🎯 <strong style="color:#5e81f4">' + a5 + 'P</strong>/5J</span>'
+      + '<span style="margin-left:auto">TendScore : ' + (p.trendScore||0) + '</span>'
+      + '</div>'
+      + '</div>';
+    c.appendChild(d);
+  });
+
+  // Animer les barres après insertion dans le DOM
+
+
+  if (c.children.length === 0) {
+    c.innerHTML = '<div style="color:var(--m);font-size:13px;padding:16px">Données insuffisantes pour générer des prédictions.</div>';
+  }
+}
+
+function renderGrid(list) {
+  const hot = list.filter(p => p.hot || (p.trendScore||0) > 0).slice(0, 8);
+  const c = document.getElementById('pgrid');
+  c.innerHTML = '';
+  hot.forEach((p, i) => {
+    const last5 = (p.last5 || []).slice(0, 5);
+    const recent_g = last5.reduce((s, m) => s + (m.goals || 0), 0);
+    const recent_a = last5.reduce((s, m) => s + (m.assists || 0), 0);
+    const formHtml = (p.last5 || p.form || []).map((f, i) => {
+      const match = p.last5?.[i];
+      if (match?.played === null) return `<div class="fd ab">❌</div>`;
+      if (match?.played === false) return `<div class="fd b">🪑</div>`;
+      const won = match?.teamWon;
+      const label = won === true ? 'V' : won === false ? 'D' : 'N';
+      const cls   = won === true ? 'g' : won === false ? 'r' : 'x';
+      return `<div class="fd ${cls}">${label}</div>`;
+    }).join('');
+    const sc = p.signal > 88 ? 'var(--o)' : p.signal > 78 ? 'var(--g)' : 'var(--b)';
+
+    const card = document.createElement('div');
+    card.className = 'pc';
+    card.style.animationDelay = (i*0.06)+'s';
+    card.style.cursor = 'pointer';
+    card.onclick = () => openCardModal(p);
+    card.innerHTML = `
+      <div class="hot-tag">🔥 EN FORME</div>
+      <div class="ct">
+        <div class="pinfo">
+          <div class="pav">
+            <img src="${p.photo||''}" onerror="this.outerHTML='⚽'" onload="if(this.naturalWidth===0)this.outerHTML='⚽'" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/>
+          </div>
+          <div>
+            <div class="pname">${p.name}</div>
+            <div class="pteam">${p.teamName||p.team||''}</div>
+          </div>
+        </div>
+        <div class="pscore">
+          <div class="pscore-n" style="color:${sc}">${p.signal}</div>
+          <div class="pscore-l">TendScore</div>
+        </div>
+      </div>
+      <div class="formrow">
+        <span class="fl">${last5.length} match${last5.length>1?'s':''}</span>
+        <div class="fdots">${formHtml}</div>
+      </div>
+      <div class="chips">
+        <div class="chip"><div class="chip-n" style="color:var(--g)">${recent_g}</div><div class="chip-l">Buts</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--b)">${recent_a}</div><div class="chip-l">Passes</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--o)">${recent_g + recent_a}</div><div class="chip-l">GA/5J</div></div>
+        <div class="chip"><div class="chip-n" style="color:var(--y)">${((recent_g+recent_a)/Math.max(Math.min(last5.length||1,5),1)).toFixed(2)}</div><div class="chip-l">Moy.</div></div>
+      </div>
+      <div class="sigbar">
+        <div class="sigbar-head"><span>TendScore</span><span>${p.signal}%</span></div>
+        <div class="track"><div class="fill" style="width:${p.signal}%"></div></div>
+      </div>
+      <div class="ltag" style="display:flex;align-items:center;justify-content:space-between;">
+        <div><span class="lpill ${p.leagueCls==='lg'?'liga':p.leagueCls}">${p.leagueLabel==='LIGA'?'Liga':p.leagueLabel}</span> ${p.leagueName}</div>
+        <a href="https://www.winamax.fr/paris-sportifs/sports/1?code=CMONBN" target="_blank" rel="noopener sponsored" onclick="event.stopPropagation()"
+           style="font-size:10px;font-weight:700;color:#fff;background:#e30613;padding:4px 10px;border-radius:4px;text-decoration:none;white-space:nowrap;">
+          Voir la cote →
+        </a>
+      </div>
+    `;
+    c.appendChild(card);
+  });
+  if (hot.length === 0) c.innerHTML = '<div style="color:var(--m);font-size:13px;padding:16px">Aucun joueur "en forme" pour cette sélection.</div>';
+}
+
+function renderTable(list, photosMap={}, page=1, filterLeagueId=null) {
+  currentPageIndex = page;
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  const total = Math.min(list.length, 40);
+  const start = (page - 1) * PAGE_SIZE;
+  const slice = list.slice(start, start + PAGE_SIZE);
+
+  slice.forEach((p, i) => {
+    const rank = start + i + 1;
+    const tr = document.createElement('tr');
+    const photo = photosMap?.[p.id] || p.photo || '';
+    tr.style.cursor = 'pointer';
+    tr.onclick = () => { window.location.href = `player.html?id=${p.id}`; };
+    tr.innerHTML = `
+      <td class="rk">${rank}</td>
+      <td style="width:36px;padding:6px 4px">
+        <div style="width:32px;height:32px;border-radius:50%;overflow:hidden;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:14px">
+          ${photo ? `<img src="${photo}" style="width:100%;height:100%;object-fit:cover" onerror="this.outerHTML='⚽'">` : '⚽'}
+        </div>
+      </td>
+      <td>
+        <div class="pn">${p.name}</div>
+        <div class="pt">${p.teamName||p.team}</div>
+      </td>
+      <td>${(() => {
+        const euroIds = [7, 5, 20296];
+        const EURO_BADGES = {
+          7: { cls:'cl', label:'LDC' },
+          5: { cls:'el', label:'EL' },
+          20296: { cls:'ecl', label:'ECL' }
+        };
+        if (filterLeagueId && euroIds.includes(filterLeagueId)) {
+          const b = EURO_BADGES[filterLeagueId];
+          return `<span class="lpill ${b.cls}">${b.label}</span>`;
+        }
+        return `<span class="lpill ${p.leagueCls==='lg'?'liga':p.leagueCls}">${p.leagueLabel==='LIGA'?'Liga':p.leagueLabel}</span>`;
+      })()}</td>
+      ${(() => {
+        const ls = filterLeagueId ? getLeagueStats(p, filterLeagueId) : null;
+        const g = ls ? ls.goals   : (p.totalGoals||p.goals||0);
+        const a = ls ? ls.assists : (p.totalAssists||p.assists||0);
+        const n = ls ? ls.games   : (p.totalGames||p.games||0);
+        const m = ls ? ls.avg     : (p.avg||0);
+        return `<td><span class="num g">${g}</span></td>
+      <td><span class="num a">${a}</span></td>
+      <td><span class="num" style="color:var(--m2)">${n}</span></td>
+      <td><span class="num" style="color:var(--y)">${m}</span></td>`;
+      })()}
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Pagination
+  const pages = Math.ceil(total / PAGE_SIZE);
+  const pag = document.getElementById('paginationIndex');
+  if (!pag) return;
+  pag.innerHTML = '';
+  if (pages <= 1) return;
+  const prev = document.createElement('button');
+  prev.className = 'pag-btn' + (page === 1 ? ' disabled' : '');
+  prev.textContent = '← Précédent';
+  prev.style.opacity = page === 1 ? '0.4' : '1';
+  prev.onclick = () => { if (page > 1) renderTable(list, photosMap, page - 1, filterLeagueId); };
+  pag.appendChild(prev);
+
+  const info = document.createElement('span');
+  info.className = 'pag-info';
+  info.textContent = `${start + 1}–${Math.min(start + PAGE_SIZE, total)} / ${total}`;
+  pag.appendChild(info);
+
+  const next = document.createElement('button');
+  next.className = 'pag-btn' + (page === pages ? ' disabled' : '');
+  next.textContent = 'Suivant →';
+  next.style.opacity = page === pages ? '0.4' : '1';
+  next.onclick = () => { if (page < pages) renderTable(list, photosMap, page + 1, filterLeagueId); };
+  pag.appendChild(next);
+}
+
+function filter(league, btn) {
+  currentLeague = league;
+  currentPageIndex = 1;
+  sessionStorage.setItem('lastLeague', league);
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  if (allPlayers.length > 0) render();
+}
+
+// Boot
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) {
+    init().then(() => {
+      const saved = sessionStorage.getItem('lastLeague');
+      if (saved && saved !== 'all') {
+        const btn = document.querySelector(`.fbtn[data-l="${saved}"]`);
+        if (btn) filter(saved, btn);
+      }
+    });
+  }
+});
+init().then(() => {
+  const saved = sessionStorage.getItem('lastLeague');
+  if (saved && saved !== 'all') {
+    const btn = document.querySelector(`.fbtn[data-l="${saved}"]`);
+    if (btn) filter(saved, btn);
+  }
+});
+</script>
+  <!-- Modal carte joueur -->
+  <div class="card-modal-overlay" id="cardModal" onclick="if(event.target===this)closeCardModal()">
+    <div class="card-modal">
+      <div class="cm-header">
+        <div class="cm-avatar" id="cmAvatar"></div>
+        <div class="cm-info">
+          <div class="cm-name" id="cmName"></div>
+          <div class="cm-team" id="cmTeam"></div>
+          <div style="margin-top:4px" id="cmBadge"></div>
+        </div>
+        <div class="cm-score">
+          <div class="cm-score-n" id="cmScore"></div>
+          <div class="cm-score-l">TENDSCORE</div>
+        </div>
+        <button class="cm-close" onclick="closeCardModal()">✕</button>
+      </div>
+      <div class="cm-body" id="cmBody"></div>
+    </div>
+  </div>
+
+<script>
+function toggleMenu() {
+  var btn = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  btn.classList.toggle('open');
+  menu.classList.toggle('open');
+}
+// Fermer le menu en cliquant en dehors
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  if (!btn.contains(e.target) && !menu.contains(e.target)) {
+    btn.classList.remove('open');
+    menu.classList.remove('open');
+  }
+});
+</script>
+
+</div><!-- /wrap -->
 
 <!-- FOOTER STANDARD -->
 <div style="height:1px;background:rgba(255,255,255,0.15);"></div>
@@ -632,24 +1393,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   </div>
   <div style="color:#3a3f4a;">© 2026 TendanceStats. Tous droits réservés.</div>
 </div>
-<script>
-function toggleMenu() {
-  var btn = document.getElementById('hamburger');
-  var menu = document.getElementById('mobileMenu');
-  btn.classList.toggle('open');
-  menu.classList.toggle('open');
-}
-document.addEventListener('click', function(e) {
-  var btn = document.getElementById('hamburger');
-  var menu = document.getElementById('mobileMenu');
-  if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
-    btn.classList.remove('open');
-    menu.classList.remove('open');
-  }
-});
-</script>
-
-
 <a href="worldcup.html" style="position:fixed;bottom:24px;right:20px;z-index:300;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#d4a843,#b8902a);color:#080608;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;padding:10px 16px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(212,168,67,0.4);transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 6px 28px rgba(212,168,67,0.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(212,168,67,0.4)'">🏆 CDM 2026</a>
 <script src="cookies.js"></script>
 </body>
