@@ -495,12 +495,12 @@ async function init() {
 
     render();
   } catch(e) {
-    document.getElementById('predictions-container').innerHTML =
-      '<div class="empty">Données temporairement indisponibles.<br><a href="worldcup.html" style="color:var(--g)">← Retour CDM</a></div>';
+    // Si le fetch échoue, utiliser quand même RANKING_PLAYERS pour afficher le compte à rebours
+    allCdmPlayers = RANKING_PLAYERS.map(p => ({ ...p }));
+    render();
   }
 }
 
-render();
 init();
 </script>
 
