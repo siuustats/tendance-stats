@@ -729,17 +729,16 @@ async function init() {
 
 init().catch(console.error);
 </script>
-  <div class="hist-modal-overlay" id="histModalCdm" onclick="if(event.target===this)closeHistModalCdm()">
-    <div class="hist-modal">
-      <div class="hist-modal-header">
-        <span class="hist-modal-title">📋 Historique complet CDM</span>
-        <button class="hist-modal-close" onclick="closeHistModalCdm()">✕</button>
-      </div>
-      <div class="hist-modal-body" id="histModalCdmBody"></div>
+
+<div class="hist-modal-overlay" id="histModalCdm" onclick="if(event.target===this)closeHistModalCdm()">
+  <div class="hist-modal">
+    <div class="hist-modal-header">
+      <span class="hist-modal-title">📋 Historique complet CDM</span>
+      <button class="hist-modal-close" onclick="closeHistModalCdm()">✕</button>
     </div>
+    <div class="hist-modal-body" id="histModalCdmBody"></div>
   </div>
-
-
+</div>
 
 <script>
 function toggleMenu() {
