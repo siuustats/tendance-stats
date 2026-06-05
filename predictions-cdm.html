@@ -473,11 +473,9 @@ function render() {
   }
 
 async function init() {
-  // Afficher immédiatement le compte à rebours avec les RANKING_PLAYERS statiques
-  allCdmPlayers = RANKING_PLAYERS.map(p => ({ ...p }));
+  // Afficher le compte à rebours immédiatement sans attendre le fetch
   render();
 
-  // Puis charger les données en arrière-plan pour injecter les photos
   try {
     const [dataRes, photosRes] = await Promise.all([
       fetch('data.json?v=' + Date.now()),
@@ -492,15 +490,18 @@ async function init() {
     const todayStr = new Date().toISOString().slice(0, 10);
     allFixtures = (data.fixtures || []).filter(f => f.date && f.date.slice(0, 10) >= todayStr);
 
-    // Mettre à jour avec les photos
-    allCdmPlayers = RANKING_PLAYERS.map(p => ({
-      ...p,
-      photo: photos[p.espnId] || photos[String(p.espnId)] || p.photo || ''
-    }));
+    // Joueurs CDM = joueurs avec leagueId === 6
+    allCdmPlayers = allPlayers
+      .filter(p => p.leagueId === 6 || p.league === 'CDM')
+      .map(p => ({
+        ...p,
+        photo: photos[p.espnId] || photos[String(p.espnId)] || photos[p.id] || p.photo || ''
+      }));
 
     render();
   } catch(e) {
-    // Les RANKING_PLAYERS sans photos sont déjà affichés — rien à faire
+    document.getElementById('predictions-container').innerHTML =
+      '<div class="empty">Données temporairement indisponibles.<br><a href="worldcup.html" style="color:var(--g)">← Retour CDM</a></div>';
   }
 }
 
