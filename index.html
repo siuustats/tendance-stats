@@ -1351,5 +1351,29 @@ document.addEventListener('click', function(e) {
 });
 </script>
 <script src="cookies.js"></script>
+
+<!-- Bouton flottant CDM -->
+<a href="worldcup.html" style="
+  position:fixed;
+  bottom:24px;
+  right:20px;
+  z-index:300;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:linear-gradient(135deg,#d4a843,#b8902a);
+  color:#080608;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:14px;
+  letter-spacing:1.5px;
+  padding:10px 16px;
+  border-radius:50px;
+  text-decoration:none;
+  box-shadow:0 4px 20px rgba(212,168,67,0.4);
+  transition:transform .2s, box-shadow .2s;
+" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 6px 28px rgba(212,168,67,0.6)'"
+   onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(212,168,67,0.4)'">
+  🏆 CDM 2026
+</a>
 </body>
 </html>
