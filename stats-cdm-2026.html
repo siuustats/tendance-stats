@@ -526,6 +526,11 @@ async function loadData() {
     // Filtrer CDM uniquement (leagueId === 6) — pas de fallback avant le 11 juin
     allPlayers = (data.players || data).filter(p => p.leagueId === 6 || p.league === 'CDM');
     allPlayers.sort((a,b) => (b.tendScore||b.trendScore||0) - (a.tendScore||a.trendScore||0));
+    if (data.updatedAt) {
+      const d = new Date(data.updatedAt);
+      const el = document.getElementById('last-update');
+      if (el) el.textContent = 'Mis à jour le ' + d.toLocaleDateString('fr-FR') + ' à ' + d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    }
     renderKPIs();
     renderHotPlayers();
     renderTable();
@@ -646,12 +651,13 @@ loadData();
   18+ | Winamax est agréé par l'ANJ
 </div>
 <div style="height:2px;background:rgba(255,255,255,0.15);"></div>
-<div style="background:var(--bg);padding:16px 24px 8px;text-align:center;">
-  <div style="font-size:12px;color:var(--m);margin-bottom:8px;">
+<div style="background:#080608;padding:16px 24px 8px;text-align:center;">
+  <div style="font-size:12px;color:#6b6478;margin-bottom:8px;">
     <strong style="color:#9ca3af">Tendance Stats</strong> &nbsp;·&nbsp;
     Coupe du Monde 2026 &nbsp;·&nbsp;
     Données : <span style="color:#9ca3af">sources publiques</span> &nbsp;·&nbsp;
-    <a href="worldcup.html" style="color:var(--m);font-size:11px;text-decoration:none;opacity:0.6;transition:opacity .2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">Retour CDM →</a>
+    <span id="last-update"></span> &nbsp;·&nbsp;
+    <a href="worldcup.html" style="color:#6b6478;font-size:11px;text-decoration:none;opacity:0.6;transition:opacity .2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">Retour CDM →</a>
   </div>
   <div style="font-size:11px;color:#3a3545;">
     <a href="index.html" style="color:#3a3545;text-decoration:none;margin:0 8px;">Stats saison clubs</a>·
