@@ -373,7 +373,11 @@ function render() {
         <div style="font-size:13px;color:var(--m2)">Classement des joueurs CDM 2026 inscrits</div>
       </div>
       <div class="match-section">
-        <div class="players-list">${playersHtml || '<div style="padding:16px 20px;font-size:13px;color:var(--m);font-style:italic">📊 Données insuffisantes</div>'}</div>
+        <div class="players-list">
+          <div style="padding:24px;text-align:center;font-size:13px;color:var(--m);font-style:italic">
+            ⏳ Les classements apparaîtront dès le coup d'envoi le 11 juin 2026.
+          </div>
+        </div>
       </div>`;
 
     // Animer les barres
