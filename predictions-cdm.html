@@ -473,6 +473,11 @@ function render() {
   }
 
 async function init() {
+  // Afficher immédiatement le compte à rebours avec les RANKING_PLAYERS statiques
+  allCdmPlayers = RANKING_PLAYERS.map(p => ({ ...p }));
+  render();
+
+  // Puis charger les données en arrière-plan pour injecter les photos
   try {
     const [dataRes, photosRes] = await Promise.all([
       fetch('data.json?v=' + Date.now()),
@@ -487,7 +492,7 @@ async function init() {
     const todayStr = new Date().toISOString().slice(0, 10);
     allFixtures = (data.fixtures || []).filter(f => f.date && f.date.slice(0, 10) >= todayStr);
 
-    // Joueurs CDM inscrits (RANKING_PLAYERS) avec photos injectées
+    // Mettre à jour avec les photos
     allCdmPlayers = RANKING_PLAYERS.map(p => ({
       ...p,
       photo: photos[p.espnId] || photos[String(p.espnId)] || p.photo || ''
@@ -495,9 +500,7 @@ async function init() {
 
     render();
   } catch(e) {
-    // Si le fetch échoue, utiliser quand même RANKING_PLAYERS pour afficher le compte à rebours
-    allCdmPlayers = RANKING_PLAYERS.map(p => ({ ...p }));
-    render();
+    // Les RANKING_PLAYERS sans photos sont déjà affichés — rien à faire
   }
 }
 
