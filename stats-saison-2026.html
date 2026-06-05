@@ -101,6 +101,129 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
 .hero-badge .dot { width:6px; height:6px; border-radius:50%; background:var(--g); }
 
 /* ── WINAMAX ── */
+.wina-banner {
+  background:linear-gradient(135deg, #c0392b 0%, #96281b 100%);
+  padding:14px 24px; display:flex; align-items:center; justify-content:center;
+  gap:16px; flex-wrap:wrap; text-decoration:none; cursor:pointer; transition:filter .2s;
+}
+.wina-banner:hover { filter:brightness(1.1); }
+.wina-banner-text { font-size:15px; font-weight:600; color:#fff; }
+.wina-banner-text strong { color:#ffd60a; }
+.wina-banner-cta { background:#ffd60a; color:#1a0a00; font-weight:700; padding:8px 20px; border-radius:6px; font-size:13px; white-space:nowrap; }
+
+/* ── CONTENT ── */
+.content { max-width:1100px; margin:0 auto; padding:0 24px; }
+
+/* ── SECTION ÉDITORIALE ── */
+.section-editorial { padding:56px 0 40px; }
+.section-title { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; color:var(--g); margin-bottom:8px; }
+.section-subtitle { font-size:14px; color:var(--muted2); margin-bottom:32px; }
+
+.seo-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:24px; margin-bottom:48px; }
+.seo-card { background:var(--s2); border:1px solid var(--border); border-radius:12px; padding:28px; transition:border-color .2s; }
+.seo-card:hover { border-color:var(--g-border); }
+.seo-card-icon { font-size:28px; margin-bottom:14px; }
+.seo-card h2 { font-size:18px; font-weight:600; margin-bottom:10px; line-height:1.3; }
+.seo-card p { font-size:14px; line-height:1.7; color:var(--muted2); }
+.seo-card p strong { color:var(--g); }
+
+.explain-block { background:var(--s2); border-left:3px solid var(--g); border-radius:0 10px 10px 0; padding:24px 28px; margin-bottom:20px; }
+.explain-block h3 { font-size:17px; font-weight:600; margin-bottom:10px; }
+.explain-block p { font-size:14px; line-height:1.75; color:var(--muted2); }
+.explain-block p strong { color:var(--g); }
+
+/* Ligues pills */
+.leagues-grid { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:40px; }
+.league-chip {
+  background:var(--s2); border:1px solid var(--border); border-radius:8px;
+  padding:10px 16px; font-size:13px; color:var(--muted2);
+  display:flex; align-items:center; gap:8px;
+}
+.league-chip .badge { font-family:'DM Mono',monospace; font-size:11px; color:var(--g); font-weight:500; }
+
+/* ── KPIs ── */
+.kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:40px; }
+.kpi-card { background:var(--s2); border:1px solid var(--border); border-radius:12px; padding:20px; text-align:center; }
+.kpi-val { font-family:'Bebas Neue',sans-serif; font-size:40px; line-height:1; }
+.kpi-lbl { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-top:4px; }
+
+/* ── JOUEURS EN FORME ── */
+.section-dynamic { padding:0 0 56px; }
+.dynamic-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+.badge-live { font-size:11px; font-weight:700; letter-spacing:1px; background:rgba(0,229,160,0.1); color:var(--g); border:1px solid var(--g-border); border-radius:20px; padding:4px 12px; }
+
+/* Grille joueurs */
+.players-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; margin-bottom:40px; }
+.player-card {
+  background:var(--s2); border:1px solid var(--border); border-radius:12px;
+  padding:16px; text-decoration:none; color:var(--text);
+  transition:border-color .2s, transform .2s; display:block;
+}
+.player-card:hover { border-color:var(--g-border); transform:translateY(-2px); }
+.pc-top { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.pc-avatar { width:48px; height:48px; border-radius:50%; object-fit:cover; background:var(--s3); flex-shrink:0; }
+.pc-name { font-size:15px; font-weight:600; line-height:1.2; }
+.pc-team { font-size:12px; color:var(--muted2); margin-top:2px; }
+.pc-badge { font-size:10px; font-weight:700; padding:3px 8px; border-radius:4px; margin-left:auto; white-space:nowrap; }
+.badge-hot { background:rgba(255,159,67,0.15); color:var(--orange); }
+.badge-form { background:rgba(0,229,160,0.1); color:var(--g); }
+.pc-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.pc-stat { background:var(--s3); border-radius:8px; padding:8px; text-align:center; }
+.pc-stat-val { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--g); line-height:1; }
+.pc-stat-lbl { font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-top:2px; }
+.pc-ligue { display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; margin-top:10px; }
+
+/* ── FILTRES ── */
+.filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+.filter-btn {
+  background:var(--s2); border:1px solid var(--border); color:var(--muted2);
+  font-size:12px; padding:6px 14px; border-radius:20px; cursor:pointer;
+  transition:all .2s; font-family:'DM Sans',sans-serif;
+}
+.filter-btn:hover, .filter-btn.on { border-color:var(--g); color:var(--g); background:var(--g-dim); }
+
+/* ── TABLEAU CLASSEMENT ── */
+.table-wrap { background:var(--s2); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:16px; }
+table { width:100%; border-collapse:collapse; }
+thead { background:var(--s3); }
+th { font-size:11px; letter-spacing:1px; color:var(--muted); text-transform:uppercase; padding:12px 16px; font-weight:500; }
+td { padding:12px 16px; border-top:1px solid var(--border); font-size:13px; }
+tr:hover td { background:var(--s3); }
+.rank-num { font-family:'DM Mono',monospace; font-size:13px; color:var(--muted); }
+.rank-num.top { color:var(--g); font-weight:700; }
+.td-player { display:flex; align-items:center; gap:10px; }
+.td-avatar { width:32px; height:32px; border-radius:50%; object-fit:cover; background:var(--s3); }
+.td-name { font-size:13px; font-weight:500; }
+.td-team { font-size:11px; color:var(--muted2); }
+.goals-val { color:var(--g); font-family:'DM Mono',monospace; font-weight:600; }
+.assists-val { color:var(--blue); font-family:'DM Mono',monospace; }
+.tendscore-val { color:var(--orange); font-family:'DM Mono',monospace; font-weight:600; }
+.lpill { font-size:10px; font-weight:700; padding:2px 7px; border-radius:4px; }
+.pl  { background:rgba(55,0,179,0.2);  color:#a78bfa; }
+.l1  { background:rgba(0,80,179,0.2);  color:#60a5fa; }
+.liga{ background:rgba(179,0,0,0.2);   color:#f87171; }
+.sa  { background:rgba(0,100,60,0.2);  color:#34d399; }
+.bl  { background:rgba(180,150,0,0.2); color:#fbbf24; }
+.cl  { background:rgba(30,50,150,0.2); color:#93c5fd; }
+.uel { background:rgba(255,100,0,0.2); color:#fb923c; }
+.ecl { background:rgba(0,150,100,0.2); color:#6ee7b7; }
+
+.empty-state { text-align:center; padding:40px; color:var(--muted); font-size:14px; line-height:1.7; }
+.loading-anim { display:inline-flex; gap:6px; }
+.loading-anim span { width:8px; height:8px; border-radius:50%; background:var(--g); animation:blink 1.2s infinite; }
+.loading-anim span:nth-child(2) { animation-delay:.2s; }
+.loading-anim span:nth-child(3) { animation-delay:.4s; }
+@keyframes blink { 0%,80%,100%{opacity:.2} 40%{opacity:1} }
+
+/* ── PAGINATION ── */
+.pagination { display:flex; align-items:center; justify-content:center; gap:8px; margin:16px 0 32px; }
+.pag-btn { background:var(--s2); border:1px solid var(--border); color:var(--muted2); font-size:12px; padding:6px 14px; border-radius:8px; cursor:pointer; transition:all .2s; font-family:'DM Sans',sans-serif; }
+.pag-btn:hover { border-color:var(--g); color:var(--g); }
+.pag-info { font-size:11px; color:var(--muted); font-family:'DM Mono',monospace; }
+
+/* ── LÉGAL ── */
+.legal { text-align:center; padding:24px; font-size:11px; color:var(--muted); border-top:1px solid var(--border); line-height:1.8; }
+.legal a { color:var(--muted2); }
 
 /* ── MOBILE ── */
 @media(max-width:768px){
@@ -209,6 +332,8 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
 <div class="mobile-menu" id="mobileMenu"><a href="index.html">Accueil</a><a href="predictions.html">Prédictions</a><a href="classement.html">Classement</a><div class="mobile-menu-sep"></div><a href="worldcup.html" class="gold">🏆 CDM</a></div>
 
 <!-- Bannière Winamax top -->
+
+
 <!-- HERO SEO -->
 <section class="hero-seo">
   <div class="hero-eyebrow">Saison 2025 / 2026</div>
@@ -345,13 +470,12 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
     </div>
     <div class="pagination" id="pagination"></div>
 
-    <!-- Bannière Winamax sous le classement -->
-    
   </section>
 
 </div><!-- /content -->
 
 <!-- MENTIONS LÉGALES -->
+
 <script>
 const DATA_URL    = 'https://tendancestats.com/data.json';
 const PHOTOS_URL  = 'https://tendancestats.com/photos.json';
@@ -529,37 +653,41 @@ function renderPagination() {
 loadData();
 </script>
 
-
-<div style="position:relative;z-index:10;background:linear-gradient(90deg,#e30613,#c0000f);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+<!-- FOOTER STANDARD -->
+<div style="height:1px;background:rgba(255,255,255,0.15);"></div>
+<div style="background:linear-gradient(90deg,#e30613,#c0000f);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
   <div style="color:#fff;font-size:13px;font-weight:600;">🎁 Winamax — Jusqu'à <strong>200€ offerts</strong> sur votre 1er dépôt</div>
-  <a href="https://www.winamax.fr/parrain?code=CMONBN" target="_blank" rel="noopener sponsored"
-     style="background:#fff;color:#e30613;font-size:12px;font-weight:700;padding:7px 16px;border-radius:6px;text-decoration:none;white-space:nowrap;letter-spacing:0.5px;">
-    J'en profite →
-  </a>
+  <a href="https://www.winamax.fr/parrain?code=CMONBN" target="_blank" rel="noopener sponsored" style="background:#fff;color:#e30613;font-size:12px;font-weight:700;padding:7px 16px;border-radius:6px;text-decoration:none;white-space:nowrap;letter-spacing:0.5px;">J'en profite →</a>
 </div>
-<div style="background:#0a0b0f;text-align:center;padding:6px 24px;font-size:10px;color:#6b7280;line-height:1.6;">
+<div style="background:#0a0b0f;text-align:center;padding:8px 24px;font-size:10px;color:#6b7280;line-height:1.6;">
   Les jeux d'argent et de hasard sont interdits aux mineurs. Jouer comporte des risques : endettement, dépendance.
   Appelez le <strong style="color:#9ca3af;">09 74 75 13 13</strong> (appel non surtaxé) |
   <a href="https://www.joueurs-info-service.fr" target="_blank" style="color:#9ca3af;">joueurs-info-service.fr</a> |
   18+ | Winamax est agréé par l'ANJ
 </div>
-<footer style="border-top:1px solid rgba(255,255,255,0.06);padding:32px 24px 16px;margin-top:48px;">
-  <div style="max-width:1280px;margin:0 auto;">
-    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px;">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;color:#00e5a0">TendanceStats</div>
-      <nav style="display:flex;gap:20px;flex-wrap:wrap;">
-        <a href="index.html" style="font-size:12px;color:#6b7394;text-decoration:none;">Accueil</a>
-        <a href="predictions.html" style="font-size:12px;color:#6b7394;text-decoration:none;">Prédictions</a>
-        <a href="classement.html" style="font-size:12px;color:#6b7394;text-decoration:none;">Classement</a>
-        <a href="worldcup.html" style="font-size:12px;color:#d4a843;text-decoration:none;">🏆 CDM 2026</a>
-      </nav>
-    </div>
-    <div style="border-top:1px solid rgba(255,255,255,0.04);padding-top:16px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;">
-      <p style="font-size:11px;color:#4a5068;margin:0"><div style="margin-bottom:6px"><a href="mentions-legales.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Mentions légales</a> · <a href="confidentialite.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Confidentialité</a> · <a href="contact.html" style="color:#4b5563;text-decoration:none;margin:0 8px">Contact</a></div>© 2026 TendanceStats. Tous droits réservés. Reproduction interdite sans autorisation.</p>
-      <p style="font-size:11px;color:#4a5068;margin:0">Données sportives issues de sources publiques — à titre informatif uniquement.</p>
-    </div>
+<div style="height:2px;background:rgba(255,255,255,0.15);"></div>
+<div style="background:#080a0f;padding:16px 24px 8px;text-align:center;">
+  <div style="font-size:12px;color:#6b7280;margin-bottom:8px;">
+    <strong style="color:#9ca3af">Tendance Stats</strong> &nbsp;·&nbsp;
+    Saison 2025/2026 &nbsp;·&nbsp;
+    Données : <span style="color:#9ca3af">sources publiques</span> &nbsp;·&nbsp;
+    <a href="index.html" style="color:#6b7280;font-size:11px;text-decoration:none;opacity:0.6;transition:opacity .2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">Retour Accueil →</a>
   </div>
-</footer>
+  <div style="font-size:11px;color:#2a2f3a;">
+    <a href="index.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px;">Accueil</a>·
+    <a href="predictions.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px;">Prédictions</a>·
+    <a href="classement.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px;">Classement</a>·
+    <a href="stats-saison-2026.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px;">Stats saison 2025/2026</a>
+  </div>
+</div>
+<div style="background:#05060a;border-top:1px solid rgba(255,255,255,0.06);padding:16px 24px;text-align:center;font-size:11px;color:#4b5563;">
+  <div style="margin-bottom:8px;">
+    <a href="mentions-legales.html" style="color:#6b7280;text-decoration:none;margin:0 10px;transition:color .2s;" onmouseover="this.style.color='#9ca3af'" onmouseout="this.style.color='#6b7280'">Mentions légales</a>·
+    <a href="confidentialite.html" style="color:#6b7280;text-decoration:none;margin:0 10px;transition:color .2s;" onmouseover="this.style.color='#9ca3af'" onmouseout="this.style.color='#6b7280'">Confidentialité</a>·
+    <a href="contact.html" style="color:#6b7280;text-decoration:none;margin:0 10px;transition:color .2s;" onmouseover="this.style.color='#9ca3af'" onmouseout="this.style.color='#6b7280'">Contact</a>
+  </div>
+  <div style="color:#3a3f4a;">© 2026 TendanceStats. Tous droits réservés.</div>
+</div>
 <script>
 function toggleMenu() {
   var btn = document.getElementById('hamburger');
@@ -576,8 +704,6 @@ document.addEventListener('click', function(e) {
   }
 });
 </script>
-
-<!-- Bouton flottant CDM -->
 <a href="worldcup.html" style="position:fixed;bottom:24px;right:20px;z-index:300;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#d4a843,#b8902a);color:#080608;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;padding:10px 16px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(212,168,67,0.4);transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 6px 28px rgba(212,168,67,0.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(212,168,67,0.4)'">🏆 CDM 2026</a>
 <script src="cookies.js"></script>
 </body>
