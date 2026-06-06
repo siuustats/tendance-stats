@@ -92,11 +92,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 .mobile-menu a.green-link:hover { color:#00e5a0; } }
 
     .hero { background:linear-gradient(180deg,rgba(212,168,67,0.06) 0%,transparent 100%); border-bottom:1px solid var(--border); padding:48px 24px 36px; text-align:center; }
-    .hero h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(36px,7vw,64px); letter-spacing:2px; background:linear-gradient(135deg,#f0c060,#d4a843); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:12px; text-align:center; }
-    .hero p { font-size:14px; color:var(--muted2); max-width:560px; margin:0 auto; line-height:1.7; }
-    .hero-badge { display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--gold); background:rgba(212,168,67,0.08); border:1px solid rgba(212,168,67,0.2); border-radius:20px; padding:4px 12px; margin-top:16px; }
-    .hero > .hero-badge { display:block; width:fit-content; margin-left:auto; margin-right:auto; margin-top:16px; }
-    .content { max-width:800px; margin:0 auto; padding:32px 48px 40px; }
+    .hero h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(36px,7vw,64px); letter-spacing:2px; background:linear-gradient(135deg,#f0c060,#d4a843); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:12px; }
+    .hero p { font-size:14px; color:var(--m2); max-width:560px; margin:0 auto; line-height:1.7; }
+    .hero-badge { display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--g); background:var(--g-dim); border:1px solid var(--g-border); border-radius:20px; padding:4px 12px; margin-top:16px; }
+    .content { max-width:860px; margin:0 auto; padding:32px 24px 40px; }
 
     /* Vue sélection d'équipe */
 
@@ -223,16 +222,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 </nav>
 <div class="mobile-menu" id="mobileMenu"><a href="worldcup.html" class="gold">Accueil</a><a href="predictions-cdm.html" class="gold">Prédictions</a><a href="classement-cdm.html" class="gold">Classement</a><a href="squad.html" class="gold active">Effectifs</a><div class="mobile-menu-sep"></div><a href="index.html" class="green-link">⚽ Saison</a></div>
 
-<div class="hero">
-  <h1><span style="-webkit-text-fill-color:initial;font-size:0.8em;vertical-align:middle;line-height:1">🌍</span> Les 48 Sélections</h1>
-  <p>Cliquez sur une nation pour découvrir son effectif</p>
-  <div class="hero-badge">🏆 Coupe du Monde · USA / Canada / Mexique · 11 juin 2026</div>
+<div class="hero" style="background:linear-gradient(180deg,rgba(212,168,67,0.06) 0%,transparent 100%);border-bottom:1px solid #1e1a20;padding:48px 24px 36px;text-align:center;">
+  <h1 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,7vw,64px);letter-spacing:2px;background:linear-gradient(135deg,#f0c060,#d4a843);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;"><span style="-webkit-text-fill-color:initial;background:none;font-size:0.8em;vertical-align:middle;line-height:1;">🌍</span> Les 48 Sélections</h1>
+  <p style="font-size:14px;color:#9c96a8;max-width:560px;margin:0 auto;line-height:1.7;">Cliquez sur une nation pour découvrir son effectif</p>
+  <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#d4a843;background:rgba(212,168,67,0.08);border:1px solid rgba(212,168,67,0.2);border-radius:20px;padding:4px 12px;margin-top:16px;">🏆 Coupe du Monde · USA / Canada / Mexique · 11 juin 2026</span>
 </div>
-
 <div class="content">
 
   <!-- Vue liste des équipes -->
   <div id="teamsView">
+
     <div id="teamsGrid">
       <div class="loading">Chargement...</div>
     </div>
