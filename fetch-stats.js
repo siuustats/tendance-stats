@@ -849,6 +849,12 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
   <div style="max-width:860px;margin:0 auto 20px;padding:0 24px;font-size:13px;color:#6b7280;line-height:1.8;text-align:left;background:#111318;border-radius:12px;border:1px solid #1e2130;padding:20px 24px;">
     ${seoText}
   </div>
+  <div style="max-width:860px;margin:0 auto 16px;padding:0 24px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+    <a href="../stats-saison-2026.html" style="font-size:12px;color:#00e5a0;text-decoration:none;padding:6px 14px;background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.18);border-radius:20px;transition:opacity .2s" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'">⚽ Stats Saison 2025/2026</a>
+    <a href="../stats-cdm-2026.html" style="font-size:12px;color:#d4a843;text-decoration:none;padding:6px 14px;background:rgba(212,168,67,0.07);border:1px solid rgba(212,168,67,0.18);border-radius:20px;transition:opacity .2s" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'">🏆 Stats CDM 2026</a>
+    <a href="../classement.html" style="font-size:12px;color:#9ca3af;text-decoration:none;padding:6px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;transition:opacity .2s" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'">📊 Classement clubs</a>
+    <a href="../classement-cdm.html" style="font-size:12px;color:#9ca3af;text-decoration:none;padding:6px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;transition:opacity .2s" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'">📊 Classement CDM</a>
+  </div>
   <div class="wrap">
     <strong style="color:#f0f2f8">TendanceStats</strong> &nbsp;·&nbsp; Stats ${playerName} 2026 &nbsp;·&nbsp;
     <span style="color:#9ca3af">Données : sources publiques</span> &nbsp;·&nbsp;
