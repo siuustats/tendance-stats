@@ -1009,14 +1009,20 @@ function renderGrid(list, cdmStarted) {
       : '<div class="hot-tag">\ud83d\udd25 EN FORME</div>';
     const subLabel = (p.teamName||'')
       + (p.leagueFlag ? ' <img src="https://flagcdn.com/w20/' + p.leagueFlag + '.png" style="width:16px;height:11px;object-fit:cover;border-radius:2px;vertical-align:middle;margin-left:2px">' : '')
-      + (isStar ? ' \u00b7 <span style="font-size:9px;color:rgba(212,168,67,0.7);font-style:italic">stats en club</span>' : '');
+      + '';
 
     const card = document.createElement('div');
     card.className = 'pc';
     card.style.animationDelay = (i*0.06)+'s';
+    if (isStar) {
+      card.style.borderColor = 'rgba(0,229,160,0.35)';
+      card.style.background = 'linear-gradient(135deg,rgba(0,229,160,0.06) 0%,var(--s1) 60%)';
+      card.style.boxShadow = '0 2px 16px rgba(0,229,160,0.06)';
+    }
     card.onclick = () => openCardModal(p);
     card.innerHTML =
       tagHtml
+      + (isStar ? '<div style="position:absolute;top:0;left:0;font-size:9px;font-weight:700;letter-spacing:0.5px;color:#00e5a0;background:rgba(0,229,160,0.12);border:1px solid rgba(0,229,160,0.25);border-radius:0 0 6px 0;padding:3px 8px;">📊 Stats en club</div>' : '')
       + '<div class="ct">'
       +   '<div class="pinfo">'
       +     '<div class="pav"><img src="' + photo + '" referrerpolicy="no-referrer" onerror="this.outerHTML=\'\u26bd\'" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/></div>'
