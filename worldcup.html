@@ -818,8 +818,8 @@ function render() {
       const cdmP = list.find(p => String(p.id) === star.id);
       const clubP = clubMap[star.id];
       if (cdmP && clubP) {
-        cdmP._clubGoals   = clubP.totalGoals   || 0;
-        cdmP._clubAssists = clubP.totalAssists || 0;
+        cdmP._clubGoals   = (clubP.last5||[]).slice(0,5).reduce((s,m)=>s+(m.goals||0),0);
+        cdmP._clubAssists = (clubP.last5||[]).slice(0,5).reduce((s,m)=>s+(m.assists||0),0);
         cdmP._clubGames   = clubP.totalGames   || 0;
         cdmP._clubSignal  = clubP.signal       || 0;
         cdmP._clubLast5   = clubP.last5        || [];
@@ -989,14 +989,14 @@ function renderGrid(list, cdmStarted) {
     const hasCdmStats = (p.totalGoals||0) + (p.totalAssists||0) > 0;
     const isStar = !hasCdmStats && p._isStar;
     const last5    = isStar ? (p._clubLast5 || []).slice(0,5) : (p.last5 || []).slice(0,5);
-    const recent_g = isStar ? (p._clubGoals  || 0) : last5.reduce((s,m) => s+(m.goals||0), 0);
-    const recent_a = isStar ? (p._clubAssists|| 0) : last5.reduce((s,m) => s+(m.assists||0), 0);
+    const recent_g = last5.reduce((s,m) => s+(m.goals||0), 0);
+    const recent_a = last5.reduce((s,m) => s+(m.assists||0), 0);
     const signal   = isStar ? (p._clubSignal || 0) : (p.signal || 0);
     const photo    = isStar ? (p._clubPhoto  || p.photo || '') : (p.photo || '');
 
     const formHtml = last5.map(match => {
       if (match?.played === null)  return '<div class="fd ab">\u274c</div>';
-      if (match?.played === false) return '<div class="fd b">\ud83e\udeb1</div>';
+      if (match?.played === false) return '<div class="fd b">🪑</div>';
       const won   = match?.teamWon;
       const label = won === true ? 'V' : won === false ? 'D' : 'N';
       const cls   = won === true ? 'g' : won === false ? 'r' : 'x';
@@ -1037,7 +1037,7 @@ function renderGrid(list, cdmStarted) {
       + '<div class="chips">'
       +   '<div class="chip"><div class="chip-n" style="color:var(--g)">' + recent_g + '</div><div class="chip-l">Buts</div></div>'
       +   '<div class="chip"><div class="chip-n" style="color:var(--b)">' + recent_a + '</div><div class="chip-l">Passes</div></div>'
-      +   '<div class="chip"><div class="chip-n" style="color:var(--o)">' + (recent_g+recent_a) + '</div><div class="chip-l">GA total</div></div>'
+      +   '<div class="chip"><div class="chip-n" style="color:var(--o)">' + (recent_g+recent_a) + '</div><div class="chip-l">' + (isStar ? 'GA/5J' : 'GA TOTAL') + '</div></div>'
       +   '<div class="chip"><div class="chip-n" style="color:var(--y)">' + ((recent_g+recent_a)/Math.max(Math.min(last5.length||1,5),1)).toFixed(2) + '</div><div class="chip-l">Moy.</div></div>'
       + '</div>'
       + '<div class="sigbar"><div class="sigbar-head"><span>TendScore</span><span>' + signal + '%</span></div><div class="track"><div class="fill" style="width:' + signal + '%"></div></div></div>'
