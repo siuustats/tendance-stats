@@ -962,8 +962,13 @@ function renderGrid(list, cdmStarted) {
 
   // Joueurs CDM avec vraies stats (buts ou passes)
   const withCdmStats = activeList
-    .filter(p => (p.totalGoals||0) + (p.totalAssists||0) > 0)
-    .sort((a,b) => ((b.totalGoals||0)+(b.totalAssists||0)) - ((a.totalGoals||0)+(a.totalAssists||0)));
+    .filter(p => (p.totalGoals||0) + (p.totalAssists||0) > 0 || (p.trendScore||0) > 0)
+    .sort((a,b) => {
+      const bpA = (a.totalGoals||0) + (a.totalAssists||0);
+      const bpB = (b.totalGoals||0) + (b.totalAssists||0);
+      if (bpB !== bpA) return bpB - bpA;
+      return (b.trendScore||b.signal||0) - (a.trendScore||a.signal||0);
+    });
 
   // Stars sans stats CDM réelles → afficher avec stats club
   const cdmStarIds = new Set(CDM_STAR_IDS.map(s => s.id));
