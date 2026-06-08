@@ -28,7 +28,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <link rel="canonical" href="https://tendancestats.com/worldcup.html">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 <style>
 /* ── VARIABLES CDM (thème doré) ── */
 :root {
@@ -1022,8 +1022,8 @@ function renderGrid(list, cdmStarted) {
     card.onclick = () => openCardModal(p);
     card.innerHTML =
       tagHtml
-      + (isStar ? '<div style="position:absolute;top:0;left:0;font-size:9px;font-weight:700;letter-spacing:0.5px;color:#00e5a0;background:rgba(0,229,160,0.12);border:1px solid rgba(0,229,160,0.25);border-radius:0 0 6px 0;padding:3px 8px;">📊 Stats en club</div>' : '')
-      + '<div class="ct">'
+      + (isStar ? '<div style="position:absolute;top:0;left:0;right:80px;font-family:Orbitron,sans-serif;font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);border-right:1px solid rgba(0,229,160,0.2);border-radius:0 0 8px 0;padding:4px 10px;">STATS EN CLUB</div>' : '')
+      + '<div class="ct" style="' + (isStar ? 'margin-top:20px;' : '') + '">'
       +   '<div class="pinfo">'
       +     '<div class="pav"><img src="' + photo + '" referrerpolicy="no-referrer" onerror="this.outerHTML=\'\u26bd\'" loading="lazy" style="width:100%;height:100%;object-fit:cover;border-radius:50%"/></div>'
       +     '<div>'
