@@ -1034,7 +1034,14 @@ const CDM_TEAM_FLAGS = {
 
 async function syncCDMRosters(stored, photosCache) {
   // Vérifier si on doit recharger les rosters (toutes les 48h)
-  const needSync = true;
+  const lastSync   = stored.cdmRosterSyncAt ? new Date(stored.cdmRosterSyncAt) : null;
+  const hoursSince = lastSync ? (Date.now() - lastSync.getTime()) / 3600000 : 999;
+  const needSync   = hoursSince >= 48;
+
+  if (!needSync) {
+    console.log(`\n⏭️  Rosters CDM OK (dernière sync: ${Math.round(hoursSince)}h)`);
+    return { photosCache, cdmPlayers: (stored.players || []).filter(p => p.leagueId === 6) };
+  }
 
   // Ne pas marquer de joueurs "absent" avant le début de la CDM (11 juin 2026)
   const cdmStartDate = new Date('2026-06-11');
@@ -1499,10 +1506,9 @@ async function main() {
   const cdmSync = await syncCDMRosters(stored, photosCache);
   let updatedPhotos = await fetchMissingPhotos(players, cdmSync.photosCache);
 
-  // Fusionner joueurs CDM dans la liste (les joueurs clubs ont déjà leurs stats via rebuildPlayers)
-  const clubIds = new Set(players.map(p => String(p.id)));
-  const cdmOnly = (cdmSync.cdmPlayers || []).filter(p => !clubIds.has(String(p.id)));
-  players.push(...cdmOnly);
+  // Ajouter tous les joueurs CDM (leagueId:6) même si leur ID existe côté club
+  // Un joueur peut avoir une entrée club ET une entrée CDM avec le même ID ESPN
+  players.push(...(cdmSync.cdmPlayers || []));
 
   if (JSON.stringify(updatedPhotos) !== JSON.stringify(photosCache)) {
     fs.writeFileSync('photos.json', JSON.stringify(updatedPhotos, null, 2));
