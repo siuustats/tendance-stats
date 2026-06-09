@@ -392,35 +392,6 @@ footer span { color:var(--g); }
 .navbar-link.green{color:rgba(0,229,160,0.7);}
 .navbar-link.green:hover{color:#00e5a0;background:rgba(0,229,160,0.08);}
 
-
-/* ── MEILLEURS 3EMES ── */
-.group-table tr.third-qualified td { background:rgba(94,129,244,0.04); }
-.group-table tr.third-qualified td:nth-child(2) { border-left:2px solid #5e81f4; }
-.third-badge { display:inline-flex;align-items:center;font-size:9px;font-weight:700;letter-spacing:0.5px;color:#5e81f4;background:rgba(94,129,244,0.12);border:1px solid rgba(94,129,244,0.25);border-radius:3px;padding:1px 5px;margin-left:5px;vertical-align:middle; }
-
-/* ── TABS GROUPES / BRACKET ── */
-.view-tabs { display:flex;gap:8px;margin-bottom:20px; }
-.view-tab { font-size:12px;font-weight:600;padding:7px 18px;border-radius:8px;border:1px solid var(--border2);color:var(--m2);background:transparent;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif; }
-.view-tab.active { background:linear-gradient(135deg,#d4a843,#b8902a);color:#080608;border-color:transparent; }
-.view-tab:hover:not(.active) { border-color:rgba(212,168,67,0.3);color:var(--g); }
-
-/* ── BRACKET ── */
-.bracket-wrap { overflow-x:auto;padding-bottom:16px; }
-.bracket { display:flex;gap:0;min-width:900px; }
-.bracket-round { display:flex;flex-direction:column;flex:1;min-width:160px; }
-.bracket-round-title { font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2px;color:var(--g);text-align:center;padding:8px 0 16px;border-bottom:1px solid var(--border);margin-bottom:8px; }
-.bracket-col { display:flex;flex-direction:column;justify-content:space-around;flex:1;padding:4px 8px;gap:8px; }
-.bracket-match { background:var(--s1);border:1px solid var(--border);border-radius:10px;overflow:hidden;position:relative;transition:border-color .2s; }
-.bracket-match:hover { border-color:rgba(212,168,67,0.3); }
-.bracket-team { display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:11px;font-weight:600; }
-.bracket-team:first-child { border-bottom:1px solid var(--border); }
-.bracket-team.winner { color:var(--g);background:rgba(212,168,67,0.06); }
-.bracket-team.tbd { color:var(--m);font-style:italic;font-weight:400; }
-.bracket-flag { width:18px;height:12px;object-fit:cover;border-radius:2px;flex-shrink:0; }
-.bracket-score { margin-left:auto;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--g); }
-.bracket-match-num { position:absolute;top:2px;right:4px;font-size:8px;color:var(--m);font-family:'DM Mono',monospace; }
-.bracket-connector { display:flex;align-items:center;justify-content:center;padding:0 4px; }
-
 /* ── CLASSEMENT GROUPES ── */
 .groups-wrapper { display:grid; grid-template-columns:repeat(2,1fr); gap:20px; }
 .group-block { background:var(--s1); border:1px solid var(--border); border-radius:14px; overflow:hidden; }
@@ -558,23 +529,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   </div><!-- /content -->
 
-  <!-- NATIONS / GROUPES + BRACKET -->
+  <!-- NATIONS / GROUPES -->
   <div style="padding-top:40px;position:relative;z-index:1">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-      <div class="sh" style="margin-bottom:0"><div class="st">🏆 Phase de compétition</div><div class="sb">CDM 2026</div></div>
-      <div class="view-tabs">
-        <button class="view-tab active" id="tabGroupes" onclick="showView('groupes')">Groupes</button>
-        <button class="view-tab" id="tabBracket" onclick="showView('bracket')">Phase finale</button>
-      </div>
-    </div>
-    <div id="viewGroupes">
-      <div id="groupsGrid"></div>
-    </div>
-    <div id="viewBracket" style="display:none">
-      <div class="bracket-wrap">
-        <div class="bracket" id="bracketGrid"></div>
-      </div>
-    </div>
+    <div class="sh"><div class="st">🏆 Classement des groupes</div><div class="sb">CDM 2026</div></div>
+    <div id="groupsGrid"></div>
   </div>
 
 </div><!-- /wrap -->
@@ -642,113 +600,21 @@ setInterval(updateCountdown, 1000);
 let allPlayers = [];
 let currentPageIndex = 1;
 const PAGE_SIZE = 20;
-
-const CDM_TEAMS = [
-  {id:'203',  name:'Mexique',          flag:'mx'},
-  {id:'467',  name:'Afrique du Sud',   flag:'za'},
-  {id:'451',  name:'Corée du Sud',     flag:'kr'},
-  {id:'450',  name:'Tchéquie',         flag:'cz'},
-  {id:'206',  name:'Canada',           flag:'ca'},
-  {id:'452',  name:'Bosnie-Herzégovine',flag:'ba'},
-  {id:'4398', name:'Qatar',            flag:'qa'},
-  {id:'475',  name:'Suisse',           flag:'ch'},
-  {id:'205',  name:'Brésil',           flag:'br'},
-  {id:'2869', name:'Maroc',            flag:'ma'},
-  {id:'2654', name:'Haïti',            flag:'ht'},
-  {id:'580',  name:'Écosse',           flag:'gb-sct'},
-  {id:'660',  name:'États-Unis',       flag:'us'},
-  {id:'210',  name:'Paraguay',         flag:'py'},
-  {id:'628',  name:'Australie',        flag:'au'},
-  {id:'465',  name:'Turquie',          flag:'tr'},
-  {id:'481',  name:'Allemagne',        flag:'de'},
-  {id:'11678',name:'Curaçao',          flag:'cw'},
-  {id:'4789', name:"Côte d'Ivoire",    flag:'ci'},
-  {id:'209',  name:'Équateur',         flag:'ec'},
-  {id:'449',  name:'Pays-Bas',         flag:'nl'},
-  {id:'627',  name:'Japon',            flag:'jp'},
-  {id:'466',  name:'Suède',            flag:'se'},
-  {id:'659',  name:'Tunisie',          flag:'tn'},
-  {id:'459',  name:'Belgique',         flag:'be'},
-  {id:'2620', name:'Égypte',           flag:'eg'},
-  {id:'469',  name:'Iran',             flag:'ir'},
-  {id:'2666', name:'Nouvelle-Zélande', flag:'nz'},
-  {id:'164',  name:'Espagne',          flag:'es'},
-  {id:'2597', name:'Cap-Vert',         flag:'cv'},
-  {id:'655',  name:'Arabie Saoudite',  flag:'sa'},
-  {id:'212',  name:'Uruguay',          flag:'uy'},
-  {id:'478',  name:'France',           flag:'fr'},
-  {id:'654',  name:'Sénégal',          flag:'sn'},
-  {id:'4375', name:'Irak',             flag:'iq'},
-  {id:'464',  name:'Norvège',          flag:'no'},
-  {id:'202',  name:'Argentine',        flag:'ar'},
-  {id:'624',  name:'Algérie',          flag:'dz'},
-  {id:'474',  name:'Autriche',         flag:'at'},
-  {id:'2917', name:'Jordanie',         flag:'jo'},
-  {id:'482',  name:'Portugal',         flag:'pt'},
-  {id:'2850', name:'RD Congo',         flag:'cd'},
-  {id:'2570', name:'Ouzbékistan',      flag:'uz'},
-  {id:'208',  name:'Colombie',         flag:'co'},
-  {id:'448',  name:'Angleterre',       flag:'gb-eng'},
-  {id:'477',  name:'Croatie',          flag:'hr'},
-  {id:'4469', name:'Ghana',            flag:'gh'},
-  {id:'2659', name:'Panama',           flag:'pa'},
-];
-
-async function loadCDMRosters(photosMap) {
-  const players = [];
-  const nameToPhoto = {};
-  // Index photos par nom pour fallback
-  Object.entries(photosMap).forEach(([id, url]) => { /* on utilisera juste photosMap[id] */ });
-
-  let fetched = 0;
-  const promises = CDM_TEAMS.map(async (team) => {
-    try {
-      const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams/${team.id}/roster`;
-      const res = await fetch(url);
-      if (!res.ok) return;
-      const data = await res.json();
-      const athletes = data.athletes || [];
-      fetched++;
-      for (const a of athletes) {
-        const id   = String(a.athlete?.id || a.id || '');
-        const name = a.athlete?.displayName || a.displayName || a.fullName || '';
-        if (!id || !name) continue;
-        const photo = photosMap[id] || photosMap[String(id)] || '';
-        players.push({
-          id,
-          name,
-          teamName:    team.name,
-          leagueId:    6,
-          leagueName:  'Coupe du Monde',
-          leagueFlag:  team.flag,
-          leagueCls:   'cdm',
-          leagueLabel: 'CDM',
-          photo,
-          totalGoals:   0,
-          totalAssists: 0,
-          totalGames:   0,
-          avg:          0,
-          signal:       0,
-          trendScore:   0,
-          recent_goals: 0,
-          recent_assists:0,
-          hot:          false,
-          last5:        [],
-        });
-      }
-    } catch(e) { /* silencieux */ }
-  });
-
-  await Promise.all(promises);
-
-  // Dédupliquer par ID
-  const seen = new Set();
-  return players.filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; });
-}
-
-// ── FLAG MAP (depuis CDM_TEAMS déjà défini) ──────────────────────────────────
-const FLAG_MAP = {};
-CDM_TEAMS.forEach(function(n){ FLAG_MAP[n.name] = n.flag; });
+// ── FLAG MAP ────────────────────────────────────────────────────────────────
+const FLAG_MAP = {
+  "Mexique":"mx","Afrique du Sud":"za","Corée du Sud":"kr","Tchéquie":"cz",
+  "Canada":"ca","Bosnie-Herzégovine":"ba","Qatar":"qa","Suisse":"ch",
+  "Brésil":"br","Maroc":"ma","Haïti":"ht","Écosse":"gb-sct",
+  "États-Unis":"us","Paraguay":"py","Australie":"au","Turquie":"tr",
+  "Allemagne":"de","Curaçao":"cw","Côte d'Ivoire":"ci","Équateur":"ec",
+  "Pays-Bas":"nl","Japon":"jp","Suède":"se","Tunisie":"tn",
+  "Belgique":"be","Égypte":"eg","Iran":"ir","Nouvelle-Zélande":"nz",
+  "Espagne":"es","Cap-Vert":"cv","Arabie Saoudite":"sa","Uruguay":"uy",
+  "France":"fr","Sénégal":"sn","Irak":"iq","Norvège":"no",
+  "Argentine":"ar","Algérie":"dz","Autriche":"at","Jordanie":"jo",
+  "Portugal":"pt","RD Congo":"cd","Ouzbékistan":"uz","Colombie":"co",
+  "Angleterre":"gb-eng","Croatie":"hr","Ghana":"gh","Panama":"pa"
+};
 
 // ── CLASSEMENT GROUPES ────────────────────────────────────────────────────────
 
@@ -789,14 +655,9 @@ async function init() {
       ...p, photo: photosMap[p.id] || photosMap[String(p.id)] || p.photo || ''
     }));
 
-    // Charger les rosters ESPN pour avoir tous les joueurs CDM avec leurs photos
-    const rosterPlayers = await loadCDMRosters(photosMap);
-
-    // Fusionner : priorité aux joueurs de data.json (qui ont les vraies stats)
-    // Les joueurs du roster sans stats dans data.json ont 0 partout
-    const dataIds = new Set(cdmFromData.map(p => String(p.id)));
-    const rosterOnly = rosterPlayers.filter(p => !dataIds.has(String(p.id)));
-    allPlayers = [...cdmFromData, ...rosterOnly];
+    // Les rosters CDM sont déjà dans data.json via syncCDMRosters (fetch-stats.js)
+    // Pas d'appels ESPN côté client — lecture directe de data.json
+    allPlayers = cdmFromData;
 
     window._fixtures = data.fixtures || [];
     window._matches  = (data.matches || []).filter(m => m.leagueId === 6);
@@ -1354,9 +1215,9 @@ function buildStandings(matches) {
   return s;
 }
 
+
 // Retourne un Set des noms des 8 meilleurs 3emes (seulement si tous les groupes ont fini)
 function getBest3rds(st) {
-  // Verifier que tous les groupes ont joue 3 matchs chacun (12 matchs par groupe = 6 matchs)
   const thirds = [];
   GROUPS.forEach(function(g) {
     const ranked = g.nations.map(function(n){ return Object.assign({name:n,group:g.name.slice(-1)}, st[n]); })
@@ -1368,7 +1229,7 @@ function getBest3rds(st) {
       });
     if (ranked[2] && ranked[2].mj >= 3) thirds.push(ranked[2]);
   });
-  if (thirds.length < 12) return new Set(); // groupes pas tous termines
+  if (thirds.length < 12) return new Set();
   thirds.sort(function(a,b){
     if (b.pts!==a.pts) return b.pts-a.pts;
     if ((b.bp-b.bc)!==(a.bp-a.bc)) return (b.bp-b.bc)-(a.bp-a.bc);
@@ -1388,65 +1249,6 @@ function sortGroup(nations, st) {
     });
 }
 
-function renderGroups(matches) {
-  const grid = document.getElementById('groupsGrid');
-  if (!grid) return;
-  const st = buildStandings(matches);
-  const best3rds = getBest3rds(st);
-  const started = (matches||[]).some(function(m){ return m.leagueId===6 && m.homeGoals!==undefined; });
-  grid.innerHTML = '';
-  const wrapper = document.createElement('div');
-  wrapper.className = 'groups-wrapper';
-
-  GROUPS.forEach(function(g) {
-    const ranked = sortGroup(g.nations, st);
-
-    const block = document.createElement('div');
-    block.className = 'group-block';
-    let html = '<div class="group-header"><span class="group-header-name">'+g.name+'</span></div>';
-    html += '<table class="group-table"><thead><tr><th></th><th>Nation</th>';
-    if (started) html += '<th class="hide-mob">MJ</th><th class="hide-mob">V</th><th class="hide-mob">N</th><th class="hide-mob">D</th><th>BP</th><th>BC</th><th>Diff</th>';
-    html += '<th>Pts</th></tr></thead><tbody>';
-
-    ranked.forEach(function(t, i) {
-      const flag = FLAG_MAP[t.name]||'';
-      const flagImg = flag ? '<img src="https://flagcdn.com/w20/'+flag+'.png" class="group-flag" alt="">' : '';
-      const id = NATION_IDS[t.name];
-      const click = id ? ' onclick="window.location.href=&quot;squad.html?team='+id+'&quot;" style="cursor:pointer"' : '';
-      const isThirdQ = i===2 && best3rds.has(t.name);
-      const qcls = i<2 ? ' qualified' : (isThirdQ ? ' third-qualified' : '');
-      const diff = t.bp-t.bc;
-      const diffCls = diff>0?'group-diff-pos':diff<0?'group-diff-neg':'group-diff-zero';
-      const diffStr = diff>0?'+'+diff:String(diff);
-      const thirdBadge = isThirdQ ? '<span class="third-badge">Q3</span>' : '';
-      html += '<tr class="'+qcls+'"'+click+'>';
-      html += '<td class="group-rank">'+(i+1)+'</td>';
-      html += '<td><div class="group-nation">'+flagImg+'<span class="group-nation-name">'+t.name+'</span>'+thirdBadge+'</div></td>';
-      if (started) {
-        html += '<td class="group-num hide-mob">'+t.mj+'</td>';
-        html += '<td class="group-num hide-mob">'+t.v+'</td>';
-        html += '<td class="group-num hide-mob">'+t.n+'</td>';
-        html += '<td class="group-num hide-mob">'+t.d+'</td>';
-        html += '<td class="group-num">'+t.bp+'</td>';
-        html += '<td class="group-num">'+t.bc+'</td>';
-        html += '<td class="'+diffCls+'">'+diffStr+'</td>';
-      }
-      html += '<td class="group-pts">'+t.pts+'</td>';
-      html += '</tr>';
-    });
-
-    html += '</tbody></table>';
-    block.innerHTML = html;
-    wrapper.appendChild(block);
-  });
-
-  grid.appendChild(wrapper);
-
-  // Mettre a jour le bracket avec les memes donnees
-  renderBracket(st, matches);
-}
-
-// ── SWITCH VUE ────────────────────────────────────────────────────────────────
 function showView(v) {
   document.getElementById('viewGroupes').style.display = v==='groupes' ? '' : 'none';
   document.getElementById('viewBracket').style.display = v==='bracket' ? '' : 'none';
@@ -1454,8 +1256,6 @@ function showView(v) {
   document.getElementById('tabBracket').classList.toggle('active', v==='bracket');
 }
 
-// ── BRACKET PHASE FINALE ──────────────────────────────────────────────────────
-// Matchs officiels Round of 32 (FIFA regulations)
 const R32_MATCHES = [
   { num:73, h:{type:'runner',group:'A'}, a:{type:'runner',group:'B'} },
   { num:74, h:{type:'winner',group:'E'}, a:{type:'best3',groups:'A/B/C/D/F'} },
@@ -1481,20 +1281,15 @@ function getTeamFromStandings(slot, st) {
   const ranked = sortGroup(GROUPS[gi].nations, st);
   if (slot.type === 'winner') return ranked[0];
   if (slot.type === 'runner') return ranked[1];
-  return null; // best3 : calcule separement
+  return null;
 }
 
 function renderBracket(st, matches) {
   const grid = document.getElementById('bracketGrid');
   if (!grid) return;
-  const best3rds = getBest3rds(st);
-  const best3arr = Array.from(best3rds);
 
-  // Construire les labels des equipes pour chaque slot
-  function teamLabel(slot, matchIdx) {
+  function teamLabel(slot) {
     if (slot.type === 'best3') {
-      // Si on connait les 8 meilleurs 3emes, essayer de les placer
-      // Sinon afficher le label generique
       return { name: 'Meill. 3ème ('+slot.groups+')', tbd: true };
     }
     const t = getTeamFromStandings(slot, st);
@@ -1506,55 +1301,105 @@ function renderBracket(st, matches) {
     return { name: t.name, flag: FLAG_MAP[t.name]||'', tbd: false };
   }
 
-  // Grouper les 16 matchs en 2 rangees de 8 pour lisibilite
-  // Format : Round of 32 (16 matchs) | R16 (8) | QF (4) | SF (2) | F (1)
   const rounds = [
     { title: 'Round of 32', matches: R32_MATCHES },
-    { title: 'Huitiemes', matches: Array(8).fill(null) },
+    { title: 'Huitièmes', matches: Array(8).fill(null) },
     { title: 'Quarts', matches: Array(4).fill(null) },
     { title: 'Demies', matches: Array(2).fill(null) },
     { title: 'Finale', matches: Array(1).fill(null) },
   ];
 
   grid.innerHTML = '';
-
   rounds.forEach(function(round) {
     const col = document.createElement('div');
     col.className = 'bracket-round';
-
     const title = document.createElement('div');
     title.className = 'bracket-round-title';
     title.textContent = round.title;
     col.appendChild(title);
-
     const matchCol = document.createElement('div');
     matchCol.className = 'bracket-col';
-
-    round.matches.forEach(function(m, idx) {
+    round.matches.forEach(function(m) {
       const matchDiv = document.createElement('div');
       matchDiv.className = 'bracket-match';
-
       if (!m) {
-        // Rounds futurs : cases vides
-        matchDiv.innerHTML =
-          '<div class="bracket-team tbd"><span>à déterminer</span></div>' +
-          '<div class="bracket-team tbd"><span>à déterminer</span></div>';
+        matchDiv.innerHTML = '<div class="bracket-team tbd"><span>à déterminer</span></div><div class="bracket-team tbd"><span>à déterminer</span></div>';
       } else {
-        const tH = teamLabel(m.h, idx);
-        const tA = teamLabel(m.a, idx);
+        const tH = teamLabel(m.h);
+        const tA = teamLabel(m.a);
         const flagH = tH.flag ? '<img src="https://flagcdn.com/w20/'+tH.flag+'.png" class="bracket-flag">' : '';
         const flagA = tA.flag ? '<img src="https://flagcdn.com/w20/'+tA.flag+'.png" class="bracket-flag">' : '';
         matchDiv.innerHTML =
-          '<div class="bracket-match-num">M'+m.num+'</div>' +
-          '<div class="bracket-team'+(tH.tbd?' tbd':'')+'">'+flagH+'<span>'+tH.name+'</span></div>' +
+          '<div class="bracket-match-num">M'+m.num+'</div>'+
+          '<div class="bracket-team'+(tH.tbd?' tbd':'')+'">'+flagH+'<span>'+tH.name+'</span></div>'+
           '<div class="bracket-team'+(tA.tbd?' tbd':'')+'">'+flagA+'<span>'+tA.name+'</span></div>';
       }
       matchCol.appendChild(matchDiv);
     });
-
     col.appendChild(matchCol);
     grid.appendChild(col);
   });
+}
+
+function renderGroups(matches) {
+  const grid = document.getElementById('groupsGrid');
+  if (!grid) return;
+  const st = buildStandings(matches);
+  const started = (matches||[]).some(function(m){ return m.leagueId===6 && m.homeGoals!==undefined; });
+  grid.innerHTML = '';
+  const wrapper = document.createElement('div');
+  wrapper.className = 'groups-wrapper';
+
+  GROUPS.forEach(function(g) {
+    const ranked = g.nations.map(function(n){ return Object.assign({name:n}, st[n]); })
+      .sort(function(a,b){
+        if (b.pts!==a.pts) return b.pts-a.pts;
+        if ((b.bp-b.bc)!==(a.bp-a.bc)) return (b.bp-b.bc)-(a.bp-a.bc);
+        if (b.bp!==a.bp) return b.bp-a.bp;
+        return a.name.localeCompare(b.name);
+      });
+
+    const block = document.createElement('div');
+    block.className = 'group-block';
+    let html = '<div class="group-header"><span class="group-header-name">'+g.name+'</span></div>';
+    html += '<table class="group-table"><thead><tr><th></th><th>Nation</th>';
+    if (started) html += '<th class="hide-mob">MJ</th><th class="hide-mob">V</th><th class="hide-mob">N</th><th class="hide-mob">D</th><th>BP</th><th>BC</th><th>Diff</th>';
+    html += '<th>Pts</th></tr></thead><tbody>';
+
+    ranked.forEach(function(t, i) {
+      const flag = FLAG_MAP[t.name]||'';
+      const flagImg = flag ? '<img src="https://flagcdn.com/w20/'+flag+'.png" class="group-flag" alt="">' : '';
+      const id = NATION_IDS[t.name];
+      const click = id ? ' onclick="window.location.href=&quot;squad.html?team='+id+'&quot;" style="cursor:pointer"' : '';
+      const qcls = i<2 ? ' qualified' : '';
+      const diff = t.bp-t.bc;
+      const diffCls = diff>0?'group-diff-pos':diff<0?'group-diff-neg':'group-diff-zero';
+      const diffStr = diff>0?'+'+diff:String(diff);
+      html += '<tr class="'+qcls+'"'+click+'>';
+      html += '<td class="group-rank">'+(i+1)+'</td>';
+      html += '<td><div class="group-nation">'+flagImg+'<span class="group-nation-name">'+t.name+'</span></div></td>';
+      if (started) {
+        html += '<td class="group-num hide-mob">'+t.mj+'</td>';
+        html += '<td class="group-num hide-mob">'+t.v+'</td>';
+        html += '<td class="group-num hide-mob">'+t.n+'</td>';
+        html += '<td class="group-num hide-mob">'+t.d+'</td>';
+        html += '<td class="group-num">'+t.bp+'</td>';
+        html += '<td class="group-num">'+t.bc+'</td>';
+        html += '<td class="'+diffCls+'">'+diffStr+'</td>';
+      }
+      html += '<td class="group-pts">'+t.pts+'</td>';
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    block.innerHTML = html;
+    wrapper.appendChild(block);
+  });
+
+  grid.appendChild(wrapper);
+
+  // Mettre à jour le bracket
+  renderBracket(st, matches);
 }
 
 init();
