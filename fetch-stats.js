@@ -1034,14 +1034,7 @@ const CDM_TEAM_FLAGS = {
 
 async function syncCDMRosters(stored, photosCache) {
   // Vérifier si on doit recharger les rosters (toutes les 48h)
-  const lastSync   = stored.cdmRosterSyncAt ? new Date(stored.cdmRosterSyncAt) : null;
-  const hoursSince = lastSync ? (Date.now() - lastSync.getTime()) / 3600000 : 999;
-  const needSync   = hoursSince >= 48;
-
-  if (!needSync) {
-    console.log(`\n⏭️  Rosters CDM OK (dernière sync: ${Math.round(hoursSince)}h)`);
-    return { photosCache, cdmPlayers: (stored.players || []).filter(p => p.leagueId === 6) };
-  }
+  const needSync = true;
 
   // Ne pas marquer de joueurs "absent" avant le début de la CDM (11 juin 2026)
   const cdmStartDate = new Date('2026-06-11');
