@@ -318,6 +318,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <a href="worldcup.html" class="back" id="backLink">← Accueil</a>
 </div>
 
+<!-- SEO BLOCK -->
+<div style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden" aria-hidden="true">
+  <h1>Statistiques Joueur Coupe du Monde 2026 | TendanceStats</h1>
+  <p>Consultez les statistiques détaillées, TendScore et historique de matchs des joueurs de la Coupe du Monde 2026. Buts, passes décisives, forme récente et prédictions pour les 48 nations qualifiées CDM 2026.</p>
+  <p>Joueurs stars CDM 2026 : Kylian Mbappé (France), Erling Haaland (Norvège), Lamine Yamal (Espagne), Jude Bellingham (Angleterre), Vinícius Jr (Brésil), Mohamed Salah (Égypte), Florian Wirtz (Allemagne), Jamal Musiala (Allemagne), Michael Olise (France), Lionel Messi (Argentine), Cristiano Ronaldo (Portugal).</p>
+</div>
+
 <div class="hero">
   <div class="hero-inner">
     <div class="hero-avatar" id="avatar">⚽</div>
@@ -444,15 +451,11 @@ function openHistModalCdm() {
 
 async function init() {
   const params   = new URLSearchParams(window.location.search);
-  const playerId = params.get('id');
+  const playerId = params.get('id') || '231388'; // Défaut: Mbappé
   let name     = params.get('name') ? decodeURIComponent(params.get('name')) : null;
   let photo    = params.get('photo') ? decodeURIComponent(params.get('photo')) : null;
   let teamName = params.get('teamName') ? decodeURIComponent(params.get('teamName')) : null;
 
-  if (!playerId) {
-    document.body.innerHTML = '<p style="padding:40px;color:#fff">Joueur introuvable</p>';
-    return;
-  }
 
   // Charger data.json et photos.json en parallèle
   let photosMap = {}, dataFull = { players: [], matches: [], fixtures: [] };
