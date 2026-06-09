@@ -103,20 +103,22 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
 
 @media(max-width:768px){
   .content { padding:16px 8px; }
-  .filters { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding-bottom:4px; }
+  .filters { flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:8px; }
   .filters::-webkit-scrollbar { display:none; }
   .filter-btn { flex-shrink:0; white-space:nowrap; font-size:11px; padding:4px 10px; }
   .match-header { padding:8px 10px; }
   .match-league { font-size:9px; padding:1px 5px; }
   .match-vs { font-size:12px; }
   .match-date { font-size:10px; }
+  .day-filters { flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:4px; }
+  .day-filters::-webkit-scrollbar { display:none; }
   .pred-row { gap:6px; padding:8px 10px; }
   .pred-avatar { width:32px; height:32px; font-size:14px; }
   .pred-info { max-width:none; }
   .pred-name { font-size:12px; }
   .pred-team { font-size:10px; }
   .pred-right { gap:6px; }
-  .pred-bar-wrap { width:90px; min-width:70px; }
+  .pred-bar-wrap { width:70px; min-width:50px; }
   .pred-label { font-size:9px; }
   .pred-stats { width:48px; font-size:11px; }
   .pred-track { height:5px; }
@@ -550,7 +552,7 @@ init();
   </div>
   <div style="color:#3a3f4a;">© 2026 TendanceStats. Tous droits réservés.</div>
 </div>
-<a href="worldcup.html" style="position:fixed;bottom:24px;right:20px;z-index:300;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#d4a843,#b8902a);color:#080608;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;padding:10px 16px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(212,168,67,0.4);transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 6px 28px rgba(212,168,67,0.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(212,168,67,0.4)'">🏆 CDM 2026</a>
+<a href="worldcup.html" style="position:fixed;bottom:24px;right:20px;z-index:300;overflow:hidden;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#d4a843,#b8902a);color:#080608;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;padding:10px 16px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(212,168,67,0.4);transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 6px 28px rgba(212,168,67,0.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(212,168,67,0.4)'">🏆 CDM 2026</a>
 <script>
 function toggleMenu() {
   var btn = document.getElementById('hamburger');
