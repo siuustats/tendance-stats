@@ -141,6 +141,23 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
 .navbar-live { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:#ff4d6d; letter-spacing:1px; font-family:'DM Mono',monospace; }
 @media(max-width:768px){ .navbar-links { gap:2px; } }
 @media(max-width:520px){ .navbar-links { display:none; } }
+/* ── HAMBURGER ── */
+.hamburger { display:none; flex-direction:column; justify-content:center; gap:5px; width:36px; height:36px; cursor:pointer; background:rgba(255,255,255,0.05); border-radius:8px; padding:7px; border:none; }
+.hamburger span { display:block; height:2px; background:rgba(255,255,255,0.7); border-radius:2px; transition:all .25s; }
+.hamburger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity:0; }
+.hamburger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+.mobile-menu { display:none; position:fixed; top:54px; left:0; right:0; background:rgba(8,6,8,0.98); backdrop-filter:blur(20px); border-bottom:1px solid rgba(255,255,255,0.08); padding:12px 16px 16px; z-index:199; flex-direction:column; gap:4px; }
+.mobile-menu.open { display:flex; }
+.mobile-menu a { font-size:13px; font-weight:600; padding:10px 14px; border-radius:8px; text-decoration:none; transition:all .2s; color:rgba(255,255,255,0.6); }
+.mobile-menu a:hover { background:rgba(255,255,255,0.06); color:#fff; }
+.mobile-menu a.active { background:linear-gradient(135deg,#d4a843,#b8902a); color:#080608; }
+.mobile-menu a.gold { color:#d4a843; }
+.mobile-menu a.gold:hover { background:rgba(212,168,67,0.12); }
+.mobile-menu a.green-link { color:rgba(0,229,160,0.7); }
+.mobile-menu a.green-link:hover { color:#00e5a0; }
+.mobile-menu-sep { height:1px; background:rgba(255,255,255,0.06); margin:4px 0; }
+@media(max-width:520px){ .hamburger { display:flex; } }
 
 .navbar-link.green{color:rgba(0,229,160,0.7);}
 .navbar-link.green:hover{color:#00e5a0;background:rgba(0,229,160,0.08);}
@@ -178,8 +195,9 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
     <div class="navbar-sep"></div>
     <a href="index.html" class="navbar-link green">⚽ Saison</a>
   </div>
-  <div class="navbar-right"><div class="navbar-live"><div class="dot"></div>LIVE</div></div>
+  <div class="navbar-right"><div class="navbar-live"><div class="dot"></div>LIVE</div><button class="hamburger" id="hamburger" onclick="toggleMenu()" aria-label="Menu"><span></span><span></span><span></span></button></div>
 </nav>
+<div class="mobile-menu" id="mobileMenu"><a href="worldcup.html" class="gold">Accueil</a><a href="predictions-cdm.html" class="gold active">Prédictions</a><a href="classement-cdm.html" class="gold">Classement</a><a href="squad.html" class="gold">Effectifs</a><div class="mobile-menu-sep"></div><a href="index.html" class="green-link">⚽ Saison</a></div>
 <div class="hero">
   <h1><span style="-webkit-text-fill-color:initial;font-size:0.8em;vertical-align:middle;line-height:1">🔮</span> Prédictions CDM</h1>
   <p>Joueurs susceptibles de marquer ou passer lors des prochains matchs de la Coupe du Monde 2026, calculés à partir de leur forme et de celle de leurs équipes.</p>
@@ -549,6 +567,22 @@ init();
   <div style="color:#3a3f4a;">© 2026 TendanceStats. Tous droits réservés.</div>
 </div>
 
+<script>
+function toggleMenu() {
+  var btn = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  btn.classList.toggle('open');
+  menu.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var btn = document.getElementById('hamburger');
+  var menu = document.getElementById('mobileMenu');
+  if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+    btn.classList.remove('open');
+    menu.classList.remove('open');
+  }
+});
+</script>
 <script src="cookies.js"></script>
 </body>
 </html>
