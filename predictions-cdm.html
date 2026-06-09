@@ -100,7 +100,7 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
 
 @media(max-width:768px){
   .content { padding:16px 8px; }
-  .filters { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding-bottom:4px; }
+  .filters { flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:8px; }
   .filters::-webkit-scrollbar { display:none; }
   .filter-btn { flex-shrink:0; white-space:nowrap; font-size:11px; padding:4px 10px; }
   .match-header { padding:8px 10px; }
@@ -113,7 +113,7 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
   .pred-name { font-size:12px; }
   .pred-team { font-size:10px; }
   .pred-right { gap:6px; }
-  .pred-bar-wrap { width:90px; min-width:70px; }
+  .pred-bar-wrap { width:70px; min-width:50px; }
   .pred-label { font-size:9px; }
   .pred-stats { width:48px; font-size:11px; }
   .pred-track { height:5px; }
