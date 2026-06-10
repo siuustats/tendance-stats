@@ -806,9 +806,17 @@ function calcPredScore(player, fixtures, allP) {
     if (oppPlayers.length > 0) {
       const oppWins  = oppPlayers[0]?.last5?.filter(m => m.teamWon === true).length || 0;
       const oppTotal = oppPlayers[0]?.last5?.length || 1;
-      oppScore = Math.round((1 - oppWins / oppTotal) * 100);
+      // Calculer les buts encaissés par l adversaire depuis les matchs CDM
+      const cdmMatches = (window._matches || []).filter(m =>
+        m.homeTeam === opponent || m.awayTeam === opponent
+      );
+      const goalsConceded = cdmMatches.reduce((sum, m) => {
+        if (m.homeGoals === undefined) return sum;
+        return sum + (m.homeTeam === opponent ? (m.awayGoals||0) : (m.homeGoals||0));
+      }, 0);
+      oppScore = Math.round((1 - oppWins / oppTotal) * 100) + Math.min(10, goalsConceded * 2);
     }
-    finalScore = Math.round(playerScore * 0.70 + teamScore * 0.15 + oppScore * 0.15);
+    finalScore = Math.round(playerScore * 0.60 + teamScore * 0.15 + oppScore * 0.25);
   } else {
     finalScore = Math.round(playerScore);
   }
