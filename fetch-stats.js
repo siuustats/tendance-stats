@@ -1518,6 +1518,51 @@ async function main() {
   // Injecter les photos dans les joueurs
   for (const p of players) {
     if (!p.photo && updatedPhotos[p.id]) p.photo = updatedPhotos[p.id];
+
+  // ── ENRICHISSEMENT STARS CDM AVEC STATS CLUB ─────────────────────────────
+  // Matching par nom : joueurs CDM sans stats (totalGames=0) → stats club
+  const normalize = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, ' ').trim();
+  const clubPlayers = players.filter(p => p.leagueId !== 6);
+  const clubByName = {};
+  clubPlayers.forEach(p => { clubByName[normalize(p.name)] = p; });
+
+  const nationCount = {};
+  players
+    .filter(p => p.leagueId === 6 && (p.totalGames || 0) === 0)
+    .forEach(cdmP => {
+      const normName = normalize(cdmP.name);
+      const clubP = clubByName[normName] || clubPlayers.find(cp => {
+        const cn = normalize(cp.name);
+        return cn === normName || cn.includes(normName) || normName.includes(cn);
+      });
+      if (!clubP || (clubP.signal || clubP.trendScore || 0) <= 20) return;
+      if (!nationCount[cdmP.teamName]) nationCount[cdmP.teamName] = 0;
+      if (nationCount[cdmP.teamName] >= 3) return;
+
+      // Vérifier si ce joueur est le meilleur signal pour cette nation
+      // (on trie ensuite)
+      cdmP._isStar      = true;
+      cdmP._clubSignal  = clubP.signal || clubP.trendScore || 0;
+      cdmP._clubGoals   = (clubP.last5 || []).slice(0, 5).reduce((s, m) => s + (m.goals || 0), 0);
+      cdmP._clubAssists = (clubP.last5 || []).slice(0, 5).reduce((s, m) => s + (m.assists || 0), 0);
+      cdmP._clubLast5   = clubP.last5 || [];
+      cdmP._clubPhoto   = clubP.photo || cdmP.photo || '';
+      nationCount[cdmP.teamName]++;
+    });
+
+  // Trier par signal et ne garder que les 3 meilleurs par nation
+  const finalNationCount = {};
+  players
+    .filter(p => p._isStar)
+    .sort((a, b) => (b._clubSignal || 0) - (a._clubSignal || 0))
+    .forEach(p => {
+      if (!finalNationCount[p.teamName]) finalNationCount[p.teamName] = 0;
+      if (finalNationCount[p.teamName] >= 3) { p._isStar = false; return; }
+      finalNationCount[p.teamName]++;
+    });
+
+  const starCount = players.filter(p => p._isStar).length;
+  console.log(\`⭐ \${starCount} joueurs stars enrichis avec stats club\`);
   }
 
   // Collecter les prochains matchs — exclure ceux déjà joués (présents dans stored.matches)
@@ -1525,6 +1570,125 @@ async function main() {
   const nowISO = new Date().toISOString();
   const allFixtures = await fetchFixtures();
   const fixtures = allFixtures.filter(f => !playedIds.has(f.id) && f.date > nowISO);
+
+  // ── ARCHIVAGE HISTORIQUE PRÉDICTIONS CDM ───────────────────────────────────
+  // Avant d'écraser les prédictions, archiver celles qui ont un match joué depuis
+  const prevPredHistory = stored.predHistory || [];
+  const cdmMatchesPlayed = trimmed.filter(m => m.leagueId === 6 && m.homeGoals !== undefined);
+
+  // Récupérer les prédictions actuelles depuis stored.players
+  const storedCdmPlayers = (stored.players || []).filter(p => p.leagueId === 6 && p.predScore > 0 && p.predOpponent);
+
+  // Grouper par date de match pour créer les entrées d'historique
+  const newHistoryEntries = {};
+  storedCdmPlayers.forEach(p => {
+    if (!p.predDate) return;
+    const matchDate = p.predDate.slice(0, 10);
+    // Vérifier si ce match a été joué
+    const matchPlayed = cdmMatchesPlayed.some(m =>
+      (m.homeTeam === p.teamName || m.awayTeam === p.teamName) &&
+      (m.homeTeam === p.predOpponent || m.awayTeam === p.predOpponent)
+    );
+    if (!matchPlayed) return; // pas encore joué, pas d'archivage
+
+    if (!newHistoryEntries[matchDate]) newHistoryEntries[matchDate] = [];
+
+    // Vérifier si le joueur a marqué/passé dans ce match
+    const match = cdmMatchesPlayed.find(m =>
+      (m.homeTeam === p.teamName || m.awayTeam === p.teamName) &&
+      (m.homeTeam === p.predOpponent || m.awayTeam === p.predOpponent)
+    );
+    const validated = match
+      ? (match.players || []).some(mp => String(mp.id) === String(p.id) && ((mp.goals || 0) + (mp.assists || 0)) > 0)
+      : false;
+
+    newHistoryEntries[matchDate].push({
+      id:          p.id,
+      name:        p.name,
+      teamName:    p.teamName,
+      photo:       p.photo || '',
+      predScore:   p.predScore,
+      predOpponent: p.predOpponent,
+      validated,   // true si le joueur a marqué/passé
+      goals:       match ? ((match.players || []).find(mp => String(mp.id) === String(p.id))?.goals || 0) : 0,
+      assists:     match ? ((match.players || []).find(mp => String(mp.id) === String(p.id))?.assists || 0) : 0,
+    });
+  });
+
+  // Fusionner avec l'historique existant, garder seulement 3 derniers jours
+  let predHistory = [...prevPredHistory];
+  Object.entries(newHistoryEntries).forEach(([date, entries]) => {
+    if (entries.length === 0) return;
+    const existingIdx = predHistory.findIndex(h => h.date === date);
+    if (existingIdx >= 0) {
+      predHistory[existingIdx] = { date, predictions: entries };
+    } else {
+      predHistory.push({ date, predictions: entries });
+    }
+  });
+  // Garder seulement les 3 derniers jours
+  predHistory = predHistory
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 3);
+
+  const newEntryCount = Object.values(newHistoryEntries).reduce((s, e) => s + e.length, 0);
+  if (newEntryCount > 0) console.log(\`📚 Historique prédictions : \${newEntryCount} prédictions archivées\`);
+
+  // ── CALCUL DES PRÉDICTIONS CDM ──────────────────────────────────────────────
+  const cdmMatches = trimmed.filter(m => m.leagueId === 6);
+  const cdmPlayers = players.filter(p => p.leagueId === 6);
+
+  // Calculer les buts encaissés par équipe CDM
+  const goalsConcededMap = {};
+  cdmMatches.forEach(m => {
+    if (m.homeGoals === undefined) return;
+    goalsConcededMap[m.homeTeam] = (goalsConcededMap[m.homeTeam] || 0) + (m.awayGoals || 0);
+    goalsConcededMap[m.awayTeam] = (goalsConcededMap[m.awayTeam] || 0) + (m.homeGoals || 0);
+  });
+
+  // Index joueurs CDM par équipe pour oppScore
+  const cdmByTeam = {};
+  cdmPlayers.forEach(p => {
+    if (!cdmByTeam[p.teamName]) cdmByTeam[p.teamName] = [];
+    cdmByTeam[p.teamName].push(p);
+  });
+
+  cdmPlayers.forEach(p => {
+    const nextMatch = fixtures.find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
+    if (!nextMatch) { p.predScore = 0; p.predOpponent = null; p.predDate = null; return; }
+
+    const opponent = nextMatch.homeTeam === p.teamName ? nextMatch.awayTeam : nextMatch.homeTeam;
+
+    // playerScore
+    const gaCdm = (p.totalGoals || 0) + (p.totalAssists || 0);
+    const ga5   = (p.recent_goals || 0) + (p.recent_assists || 0);
+    const ts    = p.trendScore || p.signal || 0;
+    const base  = gaCdm > 0
+      ? Math.min(100, (gaCdm * 12) + (ts * 0.6))
+      : Math.min(100, (ga5 * 15) + (ts * 0.7));
+
+    // teamScore
+    const wins  = (p.last5 || []).filter(m => m.teamWon === true).length;
+    const total = (p.last5 || []).length || 1;
+    const teamScore = Math.round((wins / total) * 100);
+
+    // oppScore
+    const oppTeamPlayers = cdmByTeam[opponent] || [];
+    let oppScore = 50;
+    if (oppTeamPlayers.length > 0) {
+      const oppWins  = (oppTeamPlayers[0].last5 || []).filter(m => m.teamWon === true).length;
+      const oppTotal = (oppTeamPlayers[0].last5 || []).length || 1;
+      const gc = goalsConcededMap[opponent] || 0;
+      oppScore = Math.round((1 - oppWins / oppTotal) * 100) + Math.min(10, gc * 2);
+    }
+
+    const finalScore = Math.round(base * 0.60 + teamScore * 0.15 + oppScore * 0.25);
+    p.predScore    = Math.min(98, finalScore);
+    p.predOpponent = opponent;
+    p.predDate     = nextMatch.date || null;
+  });
+
+  console.log(`🔮 Prédictions CDM calculées pour ${cdmPlayers.filter(p => p.predScore > 0).length} joueurs`);
 
   fs.writeFileSync(DATA_FILE, JSON.stringify({
     updatedAt:          new Date().toISOString(),
@@ -1536,6 +1700,7 @@ async function main() {
     matches:            trimmed,
     players,
     fixtures,
+    predHistory,
   }));
 
   // Générer les pages joueurs statiques pour le SEO
