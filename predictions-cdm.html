@@ -365,76 +365,115 @@ function getRole(g, a) {
   return { tag:'⚡ DÉCISIF', bg:'rgba(255,159,67,0.12)', color:'var(--o)' };
 }
 
+// ── FIXTURES J1 HARDCODÉES ───────────────────────────────────────────────────
+const J1_FIXTURES = [
+  { homeTeam:'Mexique',         awayTeam:'Afrique du Sud',  date:'2026-06-11T19:00:00Z' },
+  { homeTeam:'Corée du Sud',    awayTeam:'Tchéquie',        date:'2026-06-12T02:00:00Z' },
+  { homeTeam:'Canada',          awayTeam:'Bosnie-Herzégovine', date:'2026-06-12T19:00:00Z' },
+  { homeTeam:'États-Unis',      awayTeam:'Paraguay',        date:'2026-06-13T01:00:00Z' },
+  { homeTeam:'Qatar',           awayTeam:'Suisse',          date:'2026-06-13T19:00:00Z' },
+  { homeTeam:'Brésil',          awayTeam:'Maroc',           date:'2026-06-13T22:00:00Z' },
+  { homeTeam:'Haïti',           awayTeam:'Écosse',          date:'2026-06-14T01:00:00Z' },
+  { homeTeam:'Australie',       awayTeam:'Turquie',         date:'2026-06-14T04:00:00Z' },
+  { homeTeam:'Allemagne',       awayTeam:'Curaçao',         date:'2026-06-14T17:00:00Z' },
+  { homeTeam:'Pays-Bas',        awayTeam:'Japon',           date:'2026-06-14T20:00:00Z' },
+  { homeTeam:'Équateur',        awayTeam:"Côte d'Ivoire",   date:'2026-06-14T23:00:00Z' },
+  { homeTeam:'Suède',           awayTeam:'Tunisie',         date:'2026-06-15T02:00:00Z' },
+  { homeTeam:'Espagne',         awayTeam:'Cap-Vert',        date:'2026-06-15T16:00:00Z' },
+  { homeTeam:'Belgique',        awayTeam:'Égypte',          date:'2026-06-15T19:00:00Z' },
+  { homeTeam:'Arabie Saoudite', awayTeam:'Uruguay',         date:'2026-06-15T22:00:00Z' },
+  { homeTeam:'Iran',            awayTeam:'Nouvelle-Zélande',date:'2026-06-16T01:00:00Z' },
+  { homeTeam:'Portugal',        awayTeam:'RD Congo',        date:'2026-06-16T17:00:00Z' },
+  { homeTeam:'France',          awayTeam:'Sénégal',         date:'2026-06-16T19:00:00Z' },
+  { homeTeam:'Irak',            awayTeam:'Norvège',         date:'2026-06-16T22:00:00Z' },
+  { homeTeam:'Argentine',       awayTeam:'Algérie',         date:'2026-06-17T01:00:00Z' },
+  { homeTeam:'Autriche',        awayTeam:'Jordanie',        date:'2026-06-17T04:00:00Z' },
+  { homeTeam:'Angleterre',      awayTeam:'Croatie',         date:'2026-06-17T20:00:00Z' },
+  { homeTeam:'Ghana',           awayTeam:'Panama',          date:'2026-06-17T23:00:00Z' },
+  { homeTeam:'Ouzbékistan',     awayTeam:'Colombie',        date:'2026-06-18T02:00:00Z' },
+];
+
 function render() {
   const container = document.getElementById('predictions-container');
-  const cdmStarted = new Date() >= new Date('2026-06-11T19:00:00Z');
+  // Bascule progressive : dès que des joueurs CDM ont de vraies stats
+  const cdmStarted = allPlayers.filter(p => p.leagueId === 6 && (p.totalGoals||0)+(p.totalAssists||0) > 0).length > 0;
 
   if (!cdmStarted) {
     const target = new Date('2026-06-11T19:00:00Z');
     const days = Math.floor((target - new Date()) / 86400000);
 
-    // Utiliser uniquement les joueurs CDM inscrits (RANKING_PLAYERS avec espnId)
-    // Exclure joueurs absents (blessés/retirés)
-    let cdmPlayers = allCdmPlayers.filter(p => p.cdmStatus !== 'absent');
+    // Filtrer les fixtures J1 selon le groupe actif
+    let fixtures = J1_FIXTURES;
     if (currentFilter !== 'all') {
-      cdmPlayers = cdmPlayers.filter(p => TEAM_TO_GROUP[p.teamName] === currentFilter);
+      fixtures = J1_FIXTURES.filter(f =>
+        TEAM_TO_GROUP[f.homeTeam] === currentFilter || TEAM_TO_GROUP[f.awayTeam] === currentFilter
+      );
     }
 
-    const sorted = [...cdmPlayers]
-      .sort((a,b) => (b.signal||b.trendScore||0) - (a.signal||a.trendScore||0))
-      .slice(0, 12);
+    // Construire les matchs avec les stars
+    const matchesHtml = fixtures.map(f => {
+      const dateStr = new Date(f.date).toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+      const groupA = TEAM_TO_GROUP[f.homeTeam] || '';
 
-    const playersHtml = sorted.length ? sorted.map(p => {
-      const score = Math.min(98, Math.round((p.signal||50) * 0.8));
-      const predLabel = getPredLabel(score);
-      if (!predLabel) return '';
-      const goals   = p.totalGoals || 0;
-      const assists = p.totalAssists || 0;
-      const group   = TEAM_TO_GROUP[p.teamName] || '?';
-      const pid     = p.espnId || p.id;
-      return `<div class="pred-row" onclick="window.location.href='player-cdm.html?id=${pid}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}&photo=${encodeURIComponent(p.photo||'')}'"">
-        <div class="pred-avatar">
-          ${p.photo ? `<img src="${p.photo}" onerror="this.outerHTML='⚽'" alt="${p.name}">` : '⚽'}
-        </div>
-        <div class="pred-info">
-          <div class="pred-name" style="display:flex;align-items:center;gap:6px">${p.name} <span style="font-size:9px;background:${getRole(goals,assists).bg};color:${getRole(goals,assists).color};border-radius:4px;padding:1px 6px;font-weight:700">${getRole(goals,assists).tag}</span>${getAbsenceBadge(p.last5?.[0]?.played, p.last5?.[0]?.absenceReason)}</div>
-          <div class="pred-team">${p.teamName} · <span style="color:var(--g)">Groupe ${group}</span></div>
-        </div>
-        <div class="pred-right">
-          <div class="pred-bar-wrap">
-            <div style="height:6px;background:#1e2130;border-radius:3px;overflow:hidden;margin-bottom:4px"><div style="width:${score}%;height:6px;background:linear-gradient(90deg,${predLabel.color},${predLabel.colorDim});border-radius:3px"></div></div>
-            <div class="pred-label" style="color:${predLabel.color}">${predLabel.label}</div>
-          </div>
-          <div class="pred-stats">
-            <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1">⚽${goals}</div>
-            <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1">🎯${assists}</div>
-            <div style="visibility:hidden;font-size:9px;line-height:1">CDM</div>
-            <div class="pred-sub" style="line-height:1;margin-top:2px">CDM</div>
-          </div>
-        </div>
-      </div>`;
-    }).filter(Boolean).join('') : '<div class="empty">Aucun joueur trouvé pour ce groupe.</div>';
+      // Stars des deux équipes
+      const starsForMatch = allCdmPlayers.filter(p =>
+        p._isStar && (p.teamName === f.homeTeam || p.teamName === f.awayTeam)
+      ).sort((a,b) => (b._clubSignal||0) - (a._clubSignal||0)).slice(0, 3);
 
-    container.innerHTML = `
+      let playersHtml = '';
+      if (starsForMatch.length > 0) {
+        playersHtml = starsForMatch.map(p => {
+          const g5 = p._clubGoals || 0;
+          const a5 = p._clubAssists || 0;
+          const photo = p._clubPhoto || p.photo || '';
+          const ga5 = g5 + a5;
+          const playerScore = Math.min(98, Math.round((ga5 * 15) + ((p._clubSignal||0) * 0.7)));
+          const score = Math.max(20, playerScore);
+          const predLabel = getPredLabel(score) || { label:'📈 EN FORME', color:'#00e5a0', colorDim:'#00e5a088' };
+          return \`<div class="pred-row" style="border:1px solid rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.06) 0%,var(--s1) 60%);position:relative;overflow:hidden;" onclick="window.location.href='player-cdm.html?id=\${p.id}&name=\${encodeURIComponent(p.name)}&teamName=\${encodeURIComponent(p.teamName||'')}'"">
+            <div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 8px;">STATS EN CLUB</div>
+            <div class="pred-avatar" style="margin-top:14px;">
+              \${photo ? \`<img src="\${photo}" onerror="this.outerHTML='⚽'" alt="\${p.name}">\` : '⚽'}
+            </div>
+            <div class="pred-info" style="margin-top:14px;">
+              <div class="pred-name" style="display:flex;align-items:center;gap:6px">\${p.name} <span style="font-size:9px;background:\${getRole(g5,a5).bg};color:\${getRole(g5,a5).color};border-radius:4px;padding:1px 6px;font-weight:700">\${getRole(g5,a5).tag}</span></div>
+              <div class="pred-team">\${p.teamName} <span style="font-size:9px;color:rgba(0,229,160,0.7);font-style:italic">stats en club</span></div>
+            </div>
+            <div class="pred-right" style="margin-top:14px;">
+              <div class="pred-bar-wrap">
+                <div style="height:6px;background:#1e2130;border-radius:3px;overflow:hidden;margin-bottom:4px"><div style="width:\${score}%;height:6px;background:linear-gradient(90deg,\${predLabel.color},\${predLabel.colorDim});border-radius:3px"></div></div>
+                <div class="pred-label" style="color:\${predLabel.color}">\${predLabel.label}</div>
+              </div>
+              <div class="pred-stats">
+                <div style="font-size:13px;font-weight:700;color:\${predLabel.color};line-height:1">⚽\${g5}</div>
+                <div style="font-size:13px;font-weight:700;color:\${predLabel.color};line-height:1">🎯\${a5}</div>
+                <div style="visibility:hidden;font-size:9px;line-height:1">5J</div>
+                <div class="pred-sub" style="line-height:1;margin-top:2px">5J</div>
+              </div>
+            </div>
+          </div>\`;
+        }).join('');
+      } else {
+        playersHtml = \`<div style="padding:16px;text-align:center;font-size:12px;color:var(--m);font-style:italic">⏳ Prédictions disponibles dès le coup d'envoi</div>\`;
+      }
+
+      return \`<div class="match-section">
+        <div class="match-header">
+          \${groupA ? \`<span class="match-badge">Groupe \${groupA}</span>\` : ''}
+          <span class="match-teams">\${f.homeTeam} <span style="color:var(--m);font-size:14px">vs</span> \${f.awayTeam}</span>
+          <span class="match-date">\${dateStr}</span>
+        </div>
+        <div class="players-list">\${playersHtml}</div>
+      </div>\`;
+    }).join('');
+
+    container.innerHTML = \`
       <div class="waiting-card">
-        <h2>🏆 CDM 2026 — Dans ${days} jours</h2>
+        <h2>🏆 CDM 2026 — Dans \${days} jour\${days > 1 ? 's' : ''}</h2>
         <p>Les prédictions CDM seront basées sur les vraies stats de la compétition dès le coup d'envoi le 11 juin 2026.<br>En attendant, voici les joueurs les plus attendus par sélection nationale.</p>
         <div class="countdown-mini" id="cdm-countdown"></div>
       </div>
-      <div style="margin-bottom:20px">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--g);margin-bottom:4px">⭐ Joueurs à surveiller</div>
-        <div style="font-size:13px;color:var(--m2)">Classement des joueurs CDM 2026 inscrits</div>
-      </div>
-      <div class="match-section">
-        <div class="players-list">
-          <div style="padding:24px;text-align:center;font-size:13px;color:var(--m);font-style:italic">
-            ⏳ Les classements apparaîtront dès le coup d'envoi le 11 juin 2026.
-          </div>
-        </div>
-      </div>`;
-
-    // Animer les barres
-
+      \${matchesHtml}\`;
 
     updateCountdown();
     setInterval(updateCountdown, 1000);
@@ -471,7 +510,7 @@ function render() {
   const starIds = new Set(CDM_STAR_IDS.map(s => s.id));
   const starsToAdd = allCdmPlayers.filter(p =>
     p._isStar &&
-    (p.totalGoals||0) + (p.totalAssists||0) === 0 // pas encore de stats CDM
+    (p.totalGames||0) === 0 // n'a pas encore joué en CDM (J1 non jouée)
   );
   for (const p of starsToAdd) {
     const { score: rawScore, opponent, matchDate } = calcPredScore(p, allFixtures, allPlayers);
