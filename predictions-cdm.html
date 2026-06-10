@@ -417,10 +417,10 @@ function render() {
           const playerScore = Math.min(98, Math.round((ga5 * 15) + ((p._clubSignal||0) * 0.7)));
           const score = Math.max(20, playerScore);
           const predLabel = getPredLabel(score) || { label:'📈 EN FORME', color:'#00e5a0', colorDim:'#00e5a088' };
-          return \`<div class="pred-row" style="border:1px solid rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.06) 0%,var(--s1) 60%);position:relative;overflow:hidden;" onclick="window.location.href='player-cdm.html?id=\${p.id}&name=\${encodeURIComponent(p.name)}&teamName=\${encodeURIComponent(p.teamName||'')}'"">
+          return `<div class="pred-row" style="border:1px solid rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.06) 0%,var(--s1) 60%);position:relative;overflow:hidden;" onclick="window.location.href='player-cdm.html?id=\${p.id}&name=\${encodeURIComponent(p.name)}&teamName=\${encodeURIComponent(p.teamName||'')}'"">
             <div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 8px;">STATS EN CLUB</div>
             <div class="pred-avatar" style="margin-top:14px;">
-              \${photo ? \`<img src="\${photo}" onerror="this.outerHTML='⚽'" alt="\${p.name}">\` : '⚽'}
+              \${photo ? `<img src="\${photo}" onerror="this.outerHTML='⚽'" alt="\${p.name}">` : '⚽'}
             </div>
             <div class="pred-info" style="margin-top:14px;">
               <div class="pred-name" style="display:flex;align-items:center;gap:6px">\${p.name} <span style="font-size:9px;background:\${getRole(g5,a5).bg};color:\${getRole(g5,a5).color};border-radius:4px;padding:1px 6px;font-weight:700">\${getRole(g5,a5).tag}</span></div>
@@ -438,29 +438,29 @@ function render() {
                 <div class="pred-sub" style="line-height:1;margin-top:2px">5J</div>
               </div>
             </div>
-          </div>\`;
+          </div>`;
         }).join('');
       } else {
-        playersHtml = \`<div style="padding:16px;text-align:center;font-size:12px;color:var(--m);font-style:italic">⏳ Prédictions disponibles dès le coup d'envoi</div>\`;
+        playersHtml = `<div style="padding:16px;text-align:center;font-size:12px;color:var(--m);font-style:italic">⏳ Prédictions disponibles dès le coup d'envoi</div>`;
       }
 
-      return \`<div class="match-section">
+      return `<div class="match-section">
         <div class="match-header">
-          \${groupA ? \`<span class="match-badge">Groupe \${groupA}</span>\` : ''}
+          \${groupA ? `<span class="match-badge">Groupe \${groupA}</span>` : ''}
           <span class="match-teams">\${f.homeTeam} <span style="color:var(--m);font-size:14px">vs</span> \${f.awayTeam}</span>
           <span class="match-date">\${dateStr}</span>
         </div>
         <div class="players-list">\${playersHtml}</div>
-      </div>\`;
+      </div>`;
     }).join('');
 
-    container.innerHTML = \`
+    container.innerHTML = `
       <div class="waiting-card">
         <h2>🏆 CDM 2026 — Dans \${days} jour\${days > 1 ? 's' : ''}</h2>
         <p>Les prédictions CDM seront basées sur les vraies stats de la compétition dès le coup d'envoi le 11 juin 2026.<br>En attendant, voici les joueurs les plus attendus par sélection nationale.</p>
         <div class="countdown-mini" id="cdm-countdown"></div>
       </div>
-      \${matchesHtml}\`;
+      \${matchesHtml}`;
 
     updateCountdown();
     setInterval(updateCountdown, 1000);
