@@ -453,11 +453,12 @@ function render() {
                 <div style="height:6px;background:#1e2130;border-radius:3px;overflow:hidden;margin-bottom:4px"><div style="width:${score}%;height:6px;background:linear-gradient(90deg,${predLabel.color},${predLabel.colorDim});border-radius:3px"></div></div>
                 <div class="pred-label" style="color:${predLabel.color}">${predLabel.label}</div>
               </div>
-              <div class="pred-stats">
-                <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1";display:flex;align-items:center;gap:2px>⚽${g5}</div>
-                <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1";display:flex;align-items:center;gap:2px>🎯${a5}</div>
-                <div style="visibility:hidden;font-size:9px;line-height:1">5J</div>
-                <div class="pred-sub" style="line-height:1;margin-top:2px">5J</div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+                <div style="display:flex;gap:8px">
+                  <span style="font-size:12px;font-weight:700;color:var(--g)">⚽ ${g5}</span>
+                  <span style="font-size:12px;font-weight:700;color:#5e81f4">🎯 ${a5}</span>
+                </div>
+                <div style="font-size:9px;color:var(--m)">5J</div>
               </div>
             </div>
           </div>`;
@@ -505,11 +506,12 @@ function render() {
                 <div style="height:6px;background:#1e2130;border-radius:3px;overflow:hidden;margin-bottom:4px"><div style="width:${score2}%;height:6px;background:linear-gradient(90deg,${predLabel2.color},${predLabel2.colorDim});border-radius:3px"></div></div>
                 <div class="pred-label" style="color:${predLabel2.color}">${predLabel2.label}</div>
               </div>
-              <div class="pred-stats">
-                <div style="font-size:13px;font-weight:700;color:${predLabel2.color};line-height:1";display:flex;align-items:center;gap:2px>⚽${g5}</div>
-                <div style="font-size:13px;font-weight:700;color:${predLabel2.color};line-height:1";display:flex;align-items:center;gap:2px>🎯${a5}</div>
-                <div style="visibility:hidden;font-size:9px;line-height:1">5J</div>
-                <div class="pred-sub" style="line-height:1;margin-top:2px">5J</div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+                <div style="display:flex;gap:8px">
+                  <span style="font-size:12px;font-weight:700;color:var(--g)">⚽ ${g5}</span>
+                  <span style="font-size:12px;font-weight:700;color:#5e81f4">🎯 ${a5}</span>
+                </div>
+                <div style="font-size:9px;color:var(--m)">5J</div>
               </div>
             </div>
           </div>`;
@@ -694,12 +696,13 @@ function render() {
             </div>
             <div class="pred-label" style="color:${predLabel.color}">${predLabel.label}</div>
           </div>
-          <div class="pred-stats">
-            <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1";display:flex;align-items:center;gap:2px>⚽${g5}</div>
-            <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1";display:flex;align-items:center;gap:2px>🎯${a5}</div>
-            <div style="visibility:hidden;font-size:9px;line-height:1">${gaLabel}</div>
-            <div class="pred-sub" style="line-height:1;margin-top:2px">${gaLabel}</div>
-          </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+                <div style="display:flex;gap:8px">
+                  <span style="font-size:12px;font-weight:700;color:var(--g)">⚽ ${g5}</span>
+                  <span style="font-size:12px;font-weight:700;color:#5e81f4">🎯 ${a5}</span>
+                </div>
+                <div style="font-size:9px;color:var(--m)">${gaLabel}</div>
+              </div>
         </div>
       </div>`;
     }).join('');
