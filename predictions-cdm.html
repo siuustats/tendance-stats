@@ -214,6 +214,18 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
 <div class="content">
 
   <div class="filter-section">
+    <div class="filter-label">Filtrer par date</div>
+    <div class="filters" id="dateFilters" style="margin-bottom:12px">
+      <button class="filter-btn date-filter-btn on" onclick="setDateFilter('all',this)">Tous</button>
+      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-11',this)">11 juin</button>
+      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-12',this)">12 juin</button>
+      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-13',this)">13 juin</button>
+      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-14',this)">14 juin</button>
+      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-15',this)">15 juin</button>
+      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-16',this)">16 juin</button>
+      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-17',this)">17 juin</button>
+      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-18',this)">18 juin</button>
+    </div>
     <div class="filter-label">Filtrer par groupe</div>
     <div class="filters" id="filters">
       <button class="filter-btn on" onclick="setFilter('all',this)">Tous</button>
@@ -264,7 +276,7 @@ for (const [group, teams] of Object.entries(CDM_GROUPS)) {
 
 
 
-let allPlayers = [], allFixtures = [], allCdmPlayers = [], currentFilter = 'all';
+let allPlayers = [], allFixtures = [], allCdmPlayers = [], currentFilter = 'all', currentDateFilter = 'all';
 
 // Compte à rebours
 function updateCountdown() {
@@ -343,6 +355,13 @@ function setFilter(group, btn) {
   render();
 }
 
+function setDateFilter(date, btn) {
+  currentDateFilter = date;
+  document.querySelectorAll('.date-filter-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  render();
+}
+
 function getRole(g, a) {
   const diff = g - a;
   if (a === 0 && g > 0)  return { tag:'⚽ BUTEUR',  bg:'rgba(212,168,67,0.12)',  color:'var(--g)' };
@@ -389,12 +408,15 @@ function render() {
     const target = new Date('2026-06-11T19:00:00Z');
     const days = Math.floor((target - new Date()) / 86400000);
 
-    // Filtrer les fixtures J1 selon le groupe actif
+    // Filtrer les fixtures J1 selon le groupe et la date
     let fixtures = J1_FIXTURES;
     if (currentFilter !== 'all') {
-      fixtures = J1_FIXTURES.filter(f =>
+      fixtures = fixtures.filter(f =>
         TEAM_TO_GROUP[f.homeTeam] === currentFilter || TEAM_TO_GROUP[f.awayTeam] === currentFilter
       );
+    }
+    if (currentDateFilter !== 'all') {
+      fixtures = fixtures.filter(f => f.date.startsWith(currentDateFilter));
     }
 
     // Construire les matchs avec les stars
@@ -418,7 +440,7 @@ function render() {
           const score = Math.max(20, playerScore);
           const predLabel = getPredLabel(score) || { label:'📈 EN FORME', color:'#00e5a0', colorDim:'#00e5a088' };
           return `<div class="pred-row" style="border:1px solid rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.06) 0%,var(--s1) 60%);position:relative;overflow:hidden;" onclick="window.location.href='player-cdm.html?id=${p.id}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}'"">
-            <div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:8px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 10px;">STATS EN CLUB</div>
+            <div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:7.5px;font-weight:700;letter-spacing:6px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 10px;text-align:center;">STATS EN CLUB</div>
             <div class="pred-avatar" style="margin-top:14px;">
               ${photo ? `<img src="${photo}" onerror="this.outerHTML='⚽'" alt="${p.name}">` : '⚽'}
             </div>
@@ -469,6 +491,9 @@ function render() {
 
   // Après le 11 juin — vraies prédictions CDM
   // Exclure joueurs absents des prédictions après CDM
+  let fixtures = currentDateFilter !== 'all'
+    ? allFixtures.filter(f => f.date && f.date.startsWith(currentDateFilter))
+    : allFixtures;
   let players = allPlayers.filter(p => p.leagueId === 6 && p.cdmStatus !== 'absent');
   if (currentFilter !== 'all') {
     players = players.filter(p => TEAM_TO_GROUP[p.teamName] === currentFilter);
@@ -476,7 +501,7 @@ function render() {
 
   // Construire tous les matchs depuis les fixtures
   const fixtureMap = {};
-  for (const f of allFixtures) {
+  for (const f of fixtures) {
     const key = [f.homeTeam, f.awayTeam].sort().join('__') + '__' + f.date;
     if (!fixtureMap[key]) {
       fixtureMap[key] = { homeTeam: f.homeTeam, awayTeam: f.awayTeam, date: f.date, players: [] };
@@ -485,7 +510,7 @@ function render() {
 
   // Joueurs avec vraies stats CDM
   for (const p of players) {
-    const { score, opponent, matchDate } = calcPredScore(p, allFixtures, allPlayers);
+    const { score, opponent, matchDate } = calcPredScore(p, fixtures, allPlayers);
     if (!opponent) continue;
     const predLabel = getPredLabel(score);
     if (!predLabel) continue;
@@ -542,7 +567,7 @@ function render() {
       const a5 = isStar ? (p._clubAssists||0)  : (p.recent_assists||0);
       const photo = isStar ? (p._clubPhoto||p.photo||'') : (p.photo||'');
       const starStyle = isStar ? 'border:1px solid rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.06) 0%,var(--s1) 60%);position:relative;overflow:hidden;' : '';
-      const starBadge = isStar ? `<div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:8px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 10px;">STATS EN CLUB</div>` : '';
+      const starBadge = isStar ? `<div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:7.5px;font-weight:700;letter-spacing:6px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 10px;text-align:center;">STATS EN CLUB</div>` : '';
       const subLabel = isStar ? `${p.teamName} <span style="font-size:9px;color:rgba(0,229,160,0.7);font-style:italic">stats en club</span>` : p.teamName;
       const gaLabel  = isStar ? '5J' : '/5J';
       return `<div class="pred-row" style="${starStyle}" onclick="window.location.href='player-cdm.html?id=${p.id}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}'"">
@@ -608,6 +633,7 @@ async function init() {
     }));
     const todayStr = new Date().toISOString().slice(0, 10);
     allFixtures = (data.fixtures || []).filter(f => f.date && f.date.slice(0, 10) >= todayStr);
+    // Le filtre date post-CDM sera géré dans render()
 
     // Joueurs CDM = joueurs avec leagueId === 6
     allCdmPlayers = allPlayers
