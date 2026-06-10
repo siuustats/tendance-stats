@@ -35,14 +35,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; }
 
 .header { position:sticky; top:0; z-index:100; background:rgba(8,6,8,0.92); backdrop-filter:blur(12px); border-bottom:1px solid var(--border); padding:0 24px; height:56px; display:flex; align-items:center; justify-content:space-between; }
-.logo { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--g); text-decoration:none; letter-spacing:2px; }
+.logo { font-family:Bebas Neue,sans-serif; font-size:22px; color:var(--g); text-decoration:none; letter-spacing:2px; }
 .logo span { color:var(--text); }
 .nav { display:flex; align-items:center; gap:12px; }
 .nav a { font-size:13px; color:var(--m2); text-decoration:none; padding:6px 12px; border-radius:6px; transition:all .2s; }
 .nav a:hover { color:var(--text); background:var(--s3); }
 
 .hero { background:linear-gradient(180deg,rgba(212,168,67,0.06) 0%,transparent 100%); border-bottom:1px solid var(--border); padding:48px 24px 36px; text-align:center; }
-.hero h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(36px,7vw,64px); letter-spacing:2px; background:linear-gradient(135deg,#f0c060,#d4a843); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:12px; }
+.hero h1 { font-family:Bebas Neue,sans-serif; font-size:clamp(36px,7vw,64px); letter-spacing:2px; background:linear-gradient(135deg,#f0c060,#d4a843); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:12px; }
 .hero p { font-size:14px; color:var(--m2); max-width:560px; margin:0 auto; line-height:1.7; }
 .hero-badge { display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--g); background:var(--g-dim); border:1px solid var(--g-border); border-radius:20px; padding:4px 12px; margin-top:16px; }
 
@@ -58,7 +58,7 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
 
 .match-section { margin-bottom:40px; }
 .match-header { display:flex; align-items:center; gap:12px; padding:14px 18px; background:var(--s2); border:1px solid var(--border); border-radius:12px 12px 0 0; border-bottom:none; }
-.match-teams { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; }
+.match-teams { font-family:Bebas Neue,sans-serif; font-size:20px; letter-spacing:1px; }
 .match-date { font-size:11px; color:var(--m); font-family:'DM Mono',monospace; margin-left:auto; }
 .match-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px; background:var(--g-dim); color:var(--g); border:1px solid var(--g-border); }
 
@@ -82,11 +82,11 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
 
 /* Attente CDM */
 .waiting-card { background:var(--s2); border:1px solid var(--g-border); border-radius:12px; padding:24px 16px; text-align:center; margin-bottom:32px; overflow:hidden; word-break:break-word; }
-.waiting-card h2 { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--g); letter-spacing:2px; margin-bottom:12px; }
+.waiting-card h2 { font-family:Bebas Neue,sans-serif; font-size:28px; color:var(--g); letter-spacing:2px; margin-bottom:12px; }
 .waiting-card p { font-size:13px; color:var(--m2); line-height:1.7; overflow-wrap:break-word; word-wrap:break-word; }
 .countdown-mini { display:flex; justify-content:center; gap:16px; margin-top:20px; }
 .cd-item { text-align:center; }
-.cd-val { font-family:'Bebas Neue',sans-serif; font-size:36px; color:var(--g); line-height:1; }
+.cd-val { font-family:Bebas Neue,sans-serif; font-size:36px; color:var(--g); line-height:1; }
 .cd-lbl { font-size:10px; color:var(--m); text-transform:uppercase; letter-spacing:1px; }
 
 .empty { text-align:center; padding:48px; color:var(--m); font-size:14px; }
@@ -125,7 +125,7 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
 
 /* ── NAVBAR ── */
 .navbar { position:sticky; top:0; z-index:200; background:rgba(8,10,15,0.92); backdrop-filter:blur(16px); border-bottom:1px solid rgba(212,168,67,0.1); padding:0 24px; height:54px; display:flex; align-items:center; justify-content:space-between; }
-.navbar-logo { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:#d4a843; text-decoration:none; flex-shrink:0; text-shadow:0 0 20px rgba(212,168,67,0.3); }
+.navbar-logo { font-family:Bebas Neue,sans-serif; font-size:22px; letter-spacing:3px; color:#d4a843; text-decoration:none; flex-shrink:0; text-shadow:0 0 20px rgba(212,168,67,0.3); }
 .navbar-links { display:flex; align-items:center; gap:3px; background:rgba(212,168,67,0.06); border-radius:10px; padding:4px; }
 .navbar-link { font-size:12px; font-weight:600; padding:6px 14px; border-radius:7px; color:rgba(255,255,255,0.45); letter-spacing:0.3px; text-decoration:none; transition:all .2s; white-space:nowrap; }
 .navbar-link:hover { color:rgba(255,255,255,0.8); background:rgba(255,255,255,0.06); }
@@ -562,7 +562,7 @@ function render() {
           const color = p.validated ? '#00e5a0' : 'rgba(255,255,255,0.3)';
           const icon = p.validated ? '✅' : '❌';
           return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">'
-            + (p.photo ? '<img src="'+p.photo+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.outerHTML='⚽'">' : '<span style="width:28px;text-align:center">⚽</span>')
+            + (p.photo ? '<img src="'+p.photo+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.style.display=\'none\'">' : '<span style="width:28px;text-align:center">⚽</span>')
             + '<span style="flex:1;font-size:12px;color:var(--text)">'+p.name+'</span>'
             + '<span style="font-size:10px;color:var(--m2)">'+p.teamName+' vs '+p.predOpponent+'</span>'
             + '<span style="font-size:11px;font-weight:700;color:'+color+'">'+icon+'</span>'
@@ -570,7 +570,7 @@ function render() {
         }).join('');
         return '<div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">'
           + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
-          + '<div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--text)">'+dateLabel+'</div>'
+          + '<div style="font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:1px;color:var(--text)">'+dateLabel+'</div>'
           + '<div style="font-size:12px;font-weight:700;color:'+(pct>=60?'#00e5a0':'var(--m2)')+'">'+(validated)+'/'+total+' validées</div>'
           + '</div>'
           + playersHtml
@@ -579,7 +579,7 @@ function render() {
 
       const histSection = document.createElement('div');
       histSection.style.cssText = 'margin-top:32px';
-      histSection.innerHTML = '<div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--g);margin-bottom:4px">📊 Historique des prédictions</div>'
+      histSection.innerHTML = '<div style="font-family:Bebas Neue,sans-serif;font-size:22px;letter-spacing:2px;color:var(--g);margin-bottom:4px">📊 Historique des prédictions</div>'
         + '<div style="font-size:12px;color:var(--m2);margin-bottom:16px">Résultats des 3 dernières journées</div>'
         + histHtml;
       container.appendChild(histSection);
