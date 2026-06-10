@@ -284,9 +284,12 @@ function updateCountdown() {
 }
 
 function calcPredScore(player, fixtures, players) {
-  const ga5 = (player.recent_goals||0) + (player.recent_assists||0);
-  const ts  = player.trendScore || 0;
-  const playerScore = Math.min(100, (ga5 * 15) + (ts * 0.7));
+  const gaCdm = (player.totalGoals||0) + (player.totalAssists||0);
+  const ga5   = (player.recent_goals||0) + (player.recent_assists||0);
+  const ts    = player.trendScore || 0;
+  const playerScore = gaCdm > 0
+    ? Math.min(100, (gaCdm * 12) + (ts * 0.6))
+    : Math.min(100, (ga5 * 15) + (ts * 0.7));
 
   const nextMatch = fixtures.find(f =>
     f.homeTeam === player.teamName || f.awayTeam === player.teamName
@@ -307,11 +310,19 @@ function calcPredScore(player, fixtures, players) {
     if (oppPlayers.length > 0) {
       const oppWins  = oppPlayers[0]?.last5?.filter(m => m.teamWon === true).length || 0;
       const oppTotal = oppPlayers[0]?.last5?.length || 1;
-      oppScore = Math.round((1 - oppWins / oppTotal) * 100);
+      // Buts encaissés par l adversaire sur les matchs CDM
+      const cdmMatches = (window._matches || []).filter(m =>
+        m.homeTeam === opponent || m.awayTeam === opponent
+      );
+      const goalsConceded = cdmMatches.reduce((sum, m) => {
+        if (m.homeGoals === undefined) return sum;
+        return sum + (m.homeTeam === opponent ? (m.awayGoals||0) : (m.homeGoals||0));
+      }, 0);
+      oppScore = Math.round((1 - oppWins / oppTotal) * 100) + Math.min(10, goalsConceded * 2);
     }
   }
 
-  const score = Math.min(98, Math.round(playerScore * 0.70 + teamScore * 0.15 + oppScore * 0.15));
+  const score = Math.min(98, Math.round(playerScore * 0.60 + teamScore * 0.15 + oppScore * 0.25));
   return { score, opponent, matchDate };
 }
 
@@ -332,8 +343,10 @@ function setFilter(group, btn) {
 
 function getRole(g, a) {
   const diff = g - a;
-  if (diff > 2)  return { tag:'⚽ BUTEUR',  bg:'rgba(212,168,67,0.12)',  color:'var(--g)' };
-  if (diff < -2) return { tag:'🎯 PASSEUR', bg:'rgba(94,129,244,0.12)',  color:'var(--b)' };
+  if (a === 0 && g > 0)  return { tag:'⚽ BUTEUR',  bg:'rgba(212,168,67,0.12)',  color:'var(--g)' };
+  if (g === 0 && a > 0)  return { tag:'🎯 PASSEUR', bg:'rgba(94,129,244,0.12)',  color:'var(--b)' };
+  if (diff >= 2)         return { tag:'⚽ BUTEUR',  bg:'rgba(212,168,67,0.12)',  color:'var(--g)' };
+  if (diff <= -2)        return { tag:'🎯 PASSEUR', bg:'rgba(94,129,244,0.12)',  color:'var(--b)' };
   return { tag:'⚡ DÉCISIF', bg:'rgba(255,159,67,0.12)', color:'var(--o)' };
 }
 
