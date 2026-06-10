@@ -262,20 +262,7 @@ for (const [group, teams] of Object.entries(CDM_GROUPS)) {
   for (const team of teams) TEAM_TO_GROUP[team] = group;
 }
 
-const CDM_STAR_IDS = [
-  {id:'231388', name:'Kylian Mbappé',   nation:'France',     clubTeam:'Real Madrid'},
-  {id:'253989', name:'Erling Haaland',  nation:'Norvège',    clubTeam:'Manchester City'},
-  {id:'362150', name:'Lamine Yamal',    nation:'Espagne',    clubTeam:'Barcelona'},
-  {id:'286831', name:'Michael Olise',   nation:'France',     clubTeam:'Bayern Munich'},
-  {id:'291281', name:'Jude Bellingham', nation:'Angleterre', clubTeam:'Real Madrid'},
-  {id:'173896', name:'Mohamed Salah',   nation:'Égypte',     clubTeam:'Liverpool'},
-  {id:'303748', name:'Florian Wirtz',   nation:'Allemagne',  clubTeam:'Liverpool'},
-  {id:'303821', name:'Jamal Musiala',   nation:'Allemagne',  clubTeam:'Bayern Munich'},
-  {id:'231182', name:'Kai Havertz',     nation:'Allemagne',  clubTeam:'Arsenal'},
-  {id:'229744', name:'Ousmane Dembélé', nation:'France',     clubTeam:'Paris Saint-Germain'},
-  {id:'298008', name:'Rayan Cherki',    nation:'France',     clubTeam:'Manchester City'},
-  {id:'249524', name:'Cody Gakpo',      nation:'Pays-Bas',   clubTeam:'Liverpool'},
-];
+
 
 let allPlayers = [], allFixtures = [], allCdmPlayers = [], currentFilter = 'all';
 
@@ -507,7 +494,6 @@ function render() {
   }
 
   // Stars sans stats CDM réelles → ajouter avec stats club
-  const starIds = new Set(CDM_STAR_IDS.map(s => s.id));
   const starsToAdd = allCdmPlayers.filter(p =>
     p._isStar &&
     (p.totalGames||0) === 0 // n'a pas encore joué en CDM (J1 non jouée)
@@ -631,21 +617,39 @@ async function init() {
         photo: photos[p.espnId] || photos[String(p.espnId)] || photos[p.id] || p.photo || ''
       }));
 
-    // Enrichir les stars CDM avec leurs stats club
-    const clubMap = {};
-    allPlayers.filter(p => p.leagueId !== 6).forEach(p => { clubMap[String(p.id)] = p; });
-    CDM_STAR_IDS.forEach(star => {
-      const cdmP = allCdmPlayers.find(p => String(p.id) === star.id);
-      const clubP = clubMap[star.id];
-      if (cdmP && clubP) {
+    // Enrichir automatiquement les meilleurs joueurs club par nation CDM
+    const normalize = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').trim();
+    const clubPlayers = allPlayers.filter(p => p.leagueId !== 6);
+    // Index par nom normalisé
+    const clubByName = {};
+    clubPlayers.forEach(p => { clubByName[normalize(p.name)] = p; });
+
+    // 1. Enrichir tous les joueurs CDM avec leurs stats club
+    allCdmPlayers.filter(cdmP => (cdmP.totalGames||0) === 0).forEach(cdmP => {
+      const normName = normalize(cdmP.name);
+      const clubP = clubByName[normName] || clubPlayers.find(p => {
+        const cn = normalize(p.name);
+        return cn === normName || cn.includes(normName) || normName.includes(cn);
+      });
+      if (clubP && (clubP.trendScore||clubP.signal||0) > 20) {
         cdmP._clubGoals   = (clubP.last5||[]).slice(0,5).reduce((s,m)=>s+(m.goals||0),0);
         cdmP._clubAssists = (clubP.last5||[]).slice(0,5).reduce((s,m)=>s+(m.assists||0),0);
-        cdmP._clubSignal  = clubP.signal || 0;
+        cdmP._clubSignal  = clubP.signal || clubP.trendScore || 0;
         cdmP._clubLast5   = clubP.last5  || [];
         cdmP._clubPhoto   = clubP.photo  || cdmP.photo || '';
         cdmP._isStar      = true;
       }
     });
+    // 2. Garder seulement les 3 meilleurs par nation (tri par _clubSignal)
+    const nationCount = {};
+    allCdmPlayers
+      .filter(p => p._isStar)
+      .sort((a,b) => (b._clubSignal||0) - (a._clubSignal||0))
+      .forEach(p => {
+        if (!nationCount[p.teamName]) nationCount[p.teamName] = 0;
+        if (nationCount[p.teamName] >= 3) { p._isStar = false; return; }
+        nationCount[p.teamName]++;
+      });
 
     render();
   } catch(e) {
