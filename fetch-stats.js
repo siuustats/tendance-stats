@@ -1518,7 +1518,8 @@ async function main() {
   // Injecter les photos dans les joueurs
   for (const p of players) {
     if (!p.photo && updatedPhotos[p.id]) p.photo = updatedPhotos[p.id];
-
+    if (!p.photo && updatedPhotos[p.id]) p.photo = updatedPhotos[p.id];
+  }
   // ── ENRICHISSEMENT STARS CDM AVEC STATS CLUB ─────────────────────────────
   // Matching par nom : joueurs CDM sans stats (totalGames=0) → stats club
   const normalize = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, ' ').trim();
@@ -1563,7 +1564,6 @@ async function main() {
 
   const starCount = players.filter(p => p._isStar).length;
   console.log(`⭐ ${starCount} joueurs stars enrichis avec stats club`);
-  }
 
   // Collecter les prochains matchs — exclure ceux déjà joués (présents dans stored.matches)
   const playedIds = new Set(trimmed.map(m => m.fixtureId));
