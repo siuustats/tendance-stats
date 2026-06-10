@@ -276,7 +276,7 @@ for (const [group, teams] of Object.entries(CDM_GROUPS)) {
 
 
 
-let allPlayers = [], allFixtures = [], allCdmPlayers = [], currentFilter = 'all', currentDateFilter = 'all';
+let allPlayers = [], allFixtures = [], allCdmPlayers = [], predHistory = [], currentFilter = 'all', currentDateFilter = 'all';
 
 // Compte à rebours
 function updateCountdown() {
@@ -551,6 +551,40 @@ function render() {
       observer.observe(sentinel);
     }
 
+    // Afficher l'historique des prédictions si disponible
+    if (predHistory.length > 0) {
+      const histHtml = predHistory.map(day => {
+        const dateLabel = new Date(day.date + 'T12:00:00Z').toLocaleDateString('fr-FR', {weekday:'long', day:'2-digit', month:'long'});
+        const validated = day.predictions.filter(p => p.validated).length;
+        const total = day.predictions.length;
+        const pct = total > 0 ? Math.round(validated/total*100) : 0;
+        const playersHtml = day.predictions.slice(0,6).map(p => {
+          const color = p.validated ? '#00e5a0' : 'rgba(255,255,255,0.3)';
+          const icon = p.validated ? '✅' : '❌';
+          return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">'
+            + (p.photo ? '<img src="'+p.photo+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0" onerror="this.outerHTML='⚽'">' : '<span style="width:28px;text-align:center">⚽</span>')
+            + '<span style="flex:1;font-size:12px;color:var(--text)">'+p.name+'</span>'
+            + '<span style="font-size:10px;color:var(--m2)">'+p.teamName+' vs '+p.predOpponent+'</span>'
+            + '<span style="font-size:11px;font-weight:700;color:'+color+'">'+icon+'</span>'
+            + '</div>';
+        }).join('');
+        return '<div style="background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px">'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+          + '<div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--text)">'+dateLabel+'</div>'
+          + '<div style="font-size:12px;font-weight:700;color:'+(pct>=60?'#00e5a0':'var(--m2)')+'">'+(validated)+'/'+total+' validées</div>'
+          + '</div>'
+          + playersHtml
+          + '</div>';
+      }).join('');
+
+      const histSection = document.createElement('div');
+      histSection.style.cssText = 'margin-top:32px';
+      histSection.innerHTML = '<div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:var(--g);margin-bottom:4px">📊 Historique des prédictions</div>'
+        + '<div style="font-size:12px;color:var(--m2);margin-bottom:16px">Résultats des 3 dernières journées</div>'
+        + histHtml;
+      container.appendChild(histSection);
+    }
+
     updateCountdown();
     setInterval(updateCountdown, 1000);
     return;
@@ -577,7 +611,11 @@ function render() {
 
   // Joueurs avec vraies stats CDM
   for (const p of players) {
-    const { score, opponent, matchDate } = calcPredScore(p, fixtures, allPlayers);
+    // Utiliser predScore stocké par fetch-stats si disponible, sinon calculer
+    const hasPredStored = p.predScore > 0 && p.predOpponent;
+    const score    = hasPredStored ? p.predScore    : calcPredScore(p, fixtures, allPlayers).score;
+    const opponent = hasPredStored ? p.predOpponent : calcPredScore(p, fixtures, allPlayers).opponent;
+    const matchDate = hasPredStored ? p.predDate    : calcPredScore(p, fixtures, allPlayers).matchDate;
     if (!opponent) continue;
     const predLabel = getPredLabel(score);
     if (!predLabel) continue;
@@ -591,7 +629,9 @@ function render() {
     (p.totalGames||0) === 0 // n'a pas encore joué en CDM (J1 non jouée)
   );
   for (const p of starsToAdd) {
-    const { score: rawScore, opponent, matchDate } = calcPredScore(p, allFixtures, allPlayers);
+    const { score: rawScore, opponent, matchDate } = p.predScore > 0 && p.predOpponent
+      ? { score: p.predScore, opponent: p.predOpponent, matchDate: p.predDate }
+      : calcPredScore(p, allFixtures, allPlayers);
     if (!opponent) continue;
     // Recalculer avec stats club
     const ga5 = (p._clubGoals||0) + (p._clubAssists||0);
@@ -717,6 +757,7 @@ async function init() {
     const todayStr = new Date().toISOString().slice(0, 10);
     allFixtures = (data.fixtures || []).filter(f => f.date && f.date.slice(0, 10) >= todayStr);
     // Le filtre date post-CDM sera géré dans render()
+    predHistory = data.predHistory || [];
 
     // Joueurs CDM = joueurs avec leagueId === 6
     allCdmPlayers = allPlayers
@@ -726,39 +767,9 @@ async function init() {
         photo: photos[p.espnId] || photos[String(p.espnId)] || photos[p.id] || p.photo || ''
       }));
 
-    // Enrichir automatiquement les meilleurs joueurs club par nation CDM
-    const normalize = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').trim();
-    const clubPlayers = allPlayers.filter(p => p.leagueId !== 6);
-    // Index par nom normalisé
-    const clubByName = {};
-    clubPlayers.forEach(p => { clubByName[normalize(p.name)] = p; });
+    // Stars CDM enrichies par fetch-stats.js — _isStar déjà dans data.json
 
-    // 1. Enrichir tous les joueurs CDM avec leurs stats club
-    allCdmPlayers.filter(cdmP => (cdmP.totalGames||0) === 0).forEach(cdmP => {
-      const normName = normalize(cdmP.name);
-      const clubP = clubByName[normName] || clubPlayers.find(p => {
-        const cn = normalize(p.name);
-        return cn === normName || cn.includes(normName) || normName.includes(cn);
-      });
-      if (clubP && (clubP.trendScore||clubP.signal||0) > 20) {
-        cdmP._clubGoals   = (clubP.last5||[]).slice(0,5).reduce((s,m)=>s+(m.goals||0),0);
-        cdmP._clubAssists = (clubP.last5||[]).slice(0,5).reduce((s,m)=>s+(m.assists||0),0);
-        cdmP._clubSignal  = clubP.signal || clubP.trendScore || 0;
-        cdmP._clubLast5   = clubP.last5  || [];
-        cdmP._clubPhoto   = clubP.photo  || cdmP.photo || '';
-        cdmP._isStar      = true;
-      }
-    });
-    // 2. Garder seulement les 3 meilleurs par nation (tri par _clubSignal)
-    const nationCount = {};
-    allCdmPlayers
-      .filter(p => p._isStar)
-      .sort((a,b) => (b._clubSignal||0) - (a._clubSignal||0))
-      .forEach(p => {
-        if (!nationCount[p.teamName]) nationCount[p.teamName] = 0;
-        if (nationCount[p.teamName] >= 3) { p._isStar = false; return; }
-        nationCount[p.teamName]++;
-      });
+
 
     render();
   } catch(e) {
