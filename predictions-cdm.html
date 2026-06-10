@@ -418,13 +418,13 @@ function render() {
           const score = Math.max(20, playerScore);
           const predLabel = getPredLabel(score) || { label:'📈 EN FORME', color:'#00e5a0', colorDim:'#00e5a088' };
           return `<div class="pred-row" style="border:1px solid rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.06) 0%,var(--s1) 60%);position:relative;overflow:hidden;" onclick="window.location.href='player-cdm.html?id=${p.id}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}'"">
-            <div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 8px;">STATS EN CLUB</div>
+            <div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:5px 10px;">STATS EN CLUB</div>
             <div class="pred-avatar" style="margin-top:14px;">
               ${photo ? `<img src="${photo}" onerror="this.outerHTML='⚽'" alt="${p.name}">` : '⚽'}
             </div>
             <div class="pred-info" style="margin-top:14px;">
               <div class="pred-name" style="display:flex;align-items:center;gap:6px">${p.name} <span style="font-size:9px;background:${getRole(g5,a5).bg};color:${getRole(g5,a5).color};border-radius:4px;padding:1px 6px;font-weight:700">${getRole(g5,a5).tag}</span></div>
-              <div class="pred-team">${p.teamName} <span style="font-size:9px;color:rgba(0,229,160,0.7);font-style:italic">stats en club</span></div>
+              <div class="pred-team">${p.teamName}</div>
             </div>
             <div class="pred-right" style="margin-top:14px;">
               <div class="pred-bar-wrap">
@@ -542,7 +542,7 @@ function render() {
       const a5 = isStar ? (p._clubAssists||0)  : (p.recent_assists||0);
       const photo = isStar ? (p._clubPhoto||p.photo||'') : (p.photo||'');
       const starStyle = isStar ? 'border:1px solid rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.06) 0%,var(--s1) 60%);position:relative;overflow:hidden;' : '';
-      const starBadge = isStar ? `<div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 8px;">STATS EN CLUB</div>` : '';
+      const starBadge = isStar ? `<div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:5px 10px;">STATS EN CLUB</div>` : '';
       const subLabel = isStar ? `${p.teamName} <span style="font-size:9px;color:rgba(0,229,160,0.7);font-style:italic">stats en club</span>` : p.teamName;
       const gaLabel  = isStar ? '5J' : '/5J';
       return `<div class="pred-row" style="${starStyle}" onclick="window.location.href='player-cdm.html?id=${p.id}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}'"">
