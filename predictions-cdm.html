@@ -262,6 +262,21 @@ for (const [group, teams] of Object.entries(CDM_GROUPS)) {
   for (const team of teams) TEAM_TO_GROUP[team] = group;
 }
 
+const CDM_STAR_IDS = [
+  {id:'231388', name:'Kylian Mbappé',   nation:'France',     clubTeam:'Real Madrid'},
+  {id:'253989', name:'Erling Haaland',  nation:'Norvège',    clubTeam:'Manchester City'},
+  {id:'362150', name:'Lamine Yamal',    nation:'Espagne',    clubTeam:'Barcelona'},
+  {id:'286831', name:'Michael Olise',   nation:'France',     clubTeam:'Bayern Munich'},
+  {id:'291281', name:'Jude Bellingham', nation:'Angleterre', clubTeam:'Real Madrid'},
+  {id:'173896', name:'Mohamed Salah',   nation:'Égypte',     clubTeam:'Liverpool'},
+  {id:'303748', name:'Florian Wirtz',   nation:'Allemagne',  clubTeam:'Liverpool'},
+  {id:'303821', name:'Jamal Musiala',   nation:'Allemagne',  clubTeam:'Bayern Munich'},
+  {id:'231182', name:'Kai Havertz',     nation:'Allemagne',  clubTeam:'Arsenal'},
+  {id:'229744', name:'Ousmane Dembélé', nation:'France',     clubTeam:'Paris Saint-Germain'},
+  {id:'298008', name:'Rayan Cherki',    nation:'France',     clubTeam:'Manchester City'},
+  {id:'249524', name:'Cody Gakpo',      nation:'Pays-Bas',   clubTeam:'Liverpool'},
+];
+
 let allPlayers = [], allFixtures = [], allCdmPlayers = [], currentFilter = 'all';
 
 // Compte à rebours
@@ -442,13 +457,44 @@ function render() {
     }
   }
 
+  // Joueurs avec vraies stats CDM
   for (const p of players) {
     const { score, opponent, matchDate } = calcPredScore(p, allFixtures, allPlayers);
     if (!opponent) continue;
     const predLabel = getPredLabel(score);
     if (!predLabel) continue;
     const key = [p.teamName, opponent].sort().join('__') + '__' + matchDate;
-    if (fixtureMap[key]) fixtureMap[key].players.push({ player: p, score, predLabel });
+    if (fixtureMap[key]) fixtureMap[key].players.push({ player: p, score, predLabel, isStar: false });
+  }
+
+  // Stars sans stats CDM réelles → ajouter avec stats club
+  const starIds = new Set(CDM_STAR_IDS.map(s => s.id));
+  const starsToAdd = allCdmPlayers.filter(p =>
+    p._isStar &&
+    (p.totalGoals||0) + (p.totalAssists||0) === 0 // pas encore de stats CDM
+  );
+  for (const p of starsToAdd) {
+    const { score: rawScore, opponent, matchDate } = calcPredScore(p, allFixtures, allPlayers);
+    if (!opponent) continue;
+    // Recalculer avec stats club
+    const ga5 = (p._clubGoals||0) + (p._clubAssists||0);
+    const ts  = p._clubSignal || 0;
+    const playerScore = Math.min(100, (ga5 * 15) + (ts * 0.7));
+    const oppPlayers  = allPlayers.filter(op => op.teamName === opponent);
+    let oppScore = 50;
+    if (oppPlayers.length > 0) {
+      const oppWins  = oppPlayers[0]?.last5?.filter(m => m.teamWon === true).length || 0;
+      const oppTotal = oppPlayers[0]?.last5?.length || 1;
+      oppScore = Math.round((1 - oppWins / oppTotal) * 100);
+    }
+    const wins = (p._clubLast5||[]).filter(m => m.teamWon === true).length;
+    const total = (p._clubLast5||[]).length || 1;
+    const teamScore = Math.round((wins / total) * 100);
+    const score = Math.min(98, Math.round(playerScore * 0.60 + teamScore * 0.15 + oppScore * 0.25));
+    const predLabel = getPredLabel(score);
+    if (!predLabel) continue;
+    const key = [p.teamName, opponent].sort().join('__') + '__' + matchDate;
+    if (fixtureMap[key]) fixtureMap[key].players.push({ player: p, score, predLabel, isStar: true });
   }
 
   const matches = Object.values(fixtureMap)
@@ -466,18 +512,24 @@ function render() {
       : '—';
     const groupA = TEAM_TO_GROUP[match.homeTeam] || '';
 
-    const playersHtml = match.players.map(({ player: p, score, predLabel }) => {
-      const g5 = p.recent_goals || 0;
-      const a5 = p.recent_assists || 0;
-      return `<div class="pred-row" onclick="window.location.href='player-cdm.html?id=${p.id}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}'"">
-        <div class="pred-avatar">
-          ${p.photo ? `<img src="${p.photo}" onerror="this.outerHTML='⚽'" alt="${p.name}">` : '⚽'}
+    const playersHtml = match.players.map(({ player: p, score, predLabel, isStar }) => {
+      const g5 = isStar ? (p._clubGoals||0)   : (p.recent_goals||0);
+      const a5 = isStar ? (p._clubAssists||0)  : (p.recent_assists||0);
+      const photo = isStar ? (p._clubPhoto||p.photo||'') : (p.photo||'');
+      const starStyle = isStar ? 'border:1px solid rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.06) 0%,var(--s1) 60%);position:relative;overflow:hidden;' : '';
+      const starBadge = isStar ? `<div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 8px;">STATS EN CLUB</div>` : '';
+      const subLabel = isStar ? `${p.teamName} <span style="font-size:9px;color:rgba(0,229,160,0.7);font-style:italic">stats en club</span>` : p.teamName;
+      const gaLabel  = isStar ? '5J' : '/5J';
+      return `<div class="pred-row" style="${starStyle}" onclick="window.location.href='player-cdm.html?id=${p.id}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}'"">
+        ${starBadge}
+        <div class="pred-avatar" style="${isStar ? 'margin-top:14px;' : ''}">
+          ${photo ? `<img src="${photo}" onerror="this.outerHTML='⚽'" alt="${p.name}">` : '⚽'}
         </div>
-        <div class="pred-info">
-          <div class="pred-name" style="display:flex;align-items:center;gap:6px">${p.name} <span style="font-size:9px;background:${getRole(g5,a5).bg};color:${getRole(g5,a5).color};border-radius:4px;padding:1px 6px;font-weight:700">${getRole(g5,a5).tag}</span>${getAbsenceBadge(p.last5?.[0]?.played, p.last5?.[0]?.absenceReason)}</div>
-          <div class="pred-team">${p.teamName}</div>
+        <div class="pred-info" style="${isStar ? 'margin-top:14px;' : ''}">
+          <div class="pred-name" style="display:flex;align-items:center;gap:6px">${p.name} <span style="font-size:9px;background:${getRole(g5,a5).bg};color:${getRole(g5,a5).color};border-radius:4px;padding:1px 6px;font-weight:700">${getRole(g5,a5).tag}</span>${isStar ? '' : getAbsenceBadge(p.last5?.[0]?.played, p.last5?.[0]?.absenceReason)}</div>
+          <div class="pred-team">${subLabel}</div>
         </div>
-        <div class="pred-right">
+        <div class="pred-right" style="${isStar ? 'margin-top:14px;' : ''}">
           <div class="pred-bar-wrap">
             <div class="pred-bar-bg">
               <div style="width:${score}%;height:6px;background:linear-gradient(90deg,${predLabel.color},${predLabel.colorDim});border-radius:3px"></div>
@@ -487,8 +539,8 @@ function render() {
           <div class="pred-stats">
             <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1">⚽${g5}</div>
             <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1">🎯${a5}</div>
-            <div style="visibility:hidden;font-size:9px;line-height:1">/5J</div>
-            <div class="pred-sub" style="line-height:1;margin-top:2px">/5J</div>
+            <div style="visibility:hidden;font-size:9px;line-height:1">${gaLabel}</div>
+            <div class="pred-sub" style="line-height:1;margin-top:2px">${gaLabel}</div>
           </div>
         </div>
       </div>`;
@@ -539,6 +591,22 @@ async function init() {
         ...p,
         photo: photos[p.espnId] || photos[String(p.espnId)] || photos[p.id] || p.photo || ''
       }));
+
+    // Enrichir les stars CDM avec leurs stats club
+    const clubMap = {};
+    allPlayers.filter(p => p.leagueId !== 6).forEach(p => { clubMap[String(p.id)] = p; });
+    CDM_STAR_IDS.forEach(star => {
+      const cdmP = allCdmPlayers.find(p => String(p.id) === star.id);
+      const clubP = clubMap[star.id];
+      if (cdmP && clubP) {
+        cdmP._clubGoals   = (clubP.last5||[]).slice(0,5).reduce((s,m)=>s+(m.goals||0),0);
+        cdmP._clubAssists = (clubP.last5||[]).slice(0,5).reduce((s,m)=>s+(m.assists||0),0);
+        cdmP._clubSignal  = clubP.signal || 0;
+        cdmP._clubLast5   = clubP.last5  || [];
+        cdmP._clubPhoto   = clubP.photo  || cdmP.photo || '';
+        cdmP._isStar      = true;
+      }
+    });
 
     render();
   } catch(e) {
