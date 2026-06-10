@@ -690,6 +690,36 @@ async function init() {
     // Pas d'appels ESPN côté client — lecture directe de data.json
     allPlayers = cdmFromData;
 
+    // Pré-calculer les stars CDM une seule fois dans init()
+    const cdmStartedInit = new Date() >= new Date('2026-06-11T17:00:00Z');
+    if (!cdmStartedInit) {
+      const normalizeN = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').trim();
+      const clubByNameInit = {};
+      window._clubPlayers.forEach(p => { clubByNameInit[normalizeN(p.name)] = p; });
+      allPlayers.filter(cdmP => (cdmP.totalGames||0) === 0).forEach(cdmP => {
+        const normName = normalizeN(cdmP.name);
+        const clubP = clubByNameInit[normName] || window._clubPlayers.find(p => {
+          const cn = normalizeN(p.name);
+          return cn === normName || cn.includes(normName) || normName.includes(cn);
+        });
+        if (clubP && (clubP.signal||clubP.trendScore||0) > 20) {
+          cdmP._clubGoals   = (clubP.last5||[]).slice(0,5).reduce((s,m)=>s+(m.goals||0),0);
+          cdmP._clubAssists = (clubP.last5||[]).slice(0,5).reduce((s,m)=>s+(m.assists||0),0);
+          cdmP._clubGames   = clubP.totalGames || 0;
+          cdmP._clubSignal  = clubP.signal || clubP.trendScore || 0;
+          cdmP._clubLast5   = clubP.last5 || [];
+          cdmP._clubPhoto   = clubP.photo || cdmP.photo || '';
+          cdmP._isStar      = true;
+        }
+      });
+      const nationCountInit = {};
+      allPlayers.filter(p => p._isStar).sort((a,b) => (b._clubSignal||0) - (a._clubSignal||0)).forEach(p => {
+        if (!nationCountInit[p.teamName]) nationCountInit[p.teamName] = 0;
+        if (nationCountInit[p.teamName] >= 3) { p._isStar = false; return; }
+        nationCountInit[p.teamName]++;
+      });
+    }
+
     window._fixtures = data.fixtures || [];
     window._matches  = (data.matches || []).filter(m => m.leagueId === 6);
     renderGroups(data.matches || []);
@@ -743,41 +773,6 @@ function render() {
     if (bpB !== bpA) return bpB - bpA;
     return (b.signal||0) - (a.signal||0);
   });
-
-  // Enrichir automatiquement les meilleurs joueurs club par nation CDM
-  if (!cdmStarted) {
-    const normalize = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').trim();
-    const clubPlayers = window._clubPlayers || [];
-    const clubByName = {};
-    clubPlayers.forEach(p => { clubByName[normalize(p.name)] = p; });
-    // 1. Enrichir tous les joueurs CDM avec leurs stats club
-    list.filter(cdmP => (cdmP.totalGames||0) === 0).forEach(cdmP => {
-      const normName = normalize(cdmP.name);
-      const clubP = clubByName[normName] || clubPlayers.find(p => {
-        const cn = normalize(p.name);
-        return cn === normName || cn.includes(normName) || normName.includes(cn);
-      });
-      if (clubP && (clubP.signal||clubP.trendScore||0) > 20) {
-        cdmP._clubGoals   = (clubP.last5||[]).slice(0,5).reduce((s,m)=>s+(m.goals||0),0);
-        cdmP._clubAssists = (clubP.last5||[]).slice(0,5).reduce((s,m)=>s+(m.assists||0),0);
-        cdmP._clubGames   = clubP.totalGames || 0;
-        cdmP._clubSignal  = clubP.signal || clubP.trendScore || 0;
-        cdmP._clubLast5   = clubP.last5 || [];
-        cdmP._clubPhoto   = clubP.photo || cdmP.photo || '';
-        cdmP._isStar      = true;
-      }
-    });
-    // 2. Garder seulement les 3 meilleurs par nation (trier par _clubSignal puis couper)
-    const nationCount = {};
-    list
-      .filter(p => p._isStar)
-      .sort((a,b) => (b._clubSignal||0) - (a._clubSignal||0))
-      .forEach(p => {
-        if (!nationCount[p.teamName]) nationCount[p.teamName] = 0;
-        if (nationCount[p.teamName] >= 3) { p._isStar = false; return; }
-        nationCount[p.teamName]++;
-      });
-  }
 
   renderAlerts(list, window._fixtures || [], cdmStarted);
   renderGrid(list, cdmStarted);
