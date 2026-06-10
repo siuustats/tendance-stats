@@ -1562,7 +1562,7 @@ async function main() {
     });
 
   const starCount = players.filter(p => p._isStar).length;
-  console.log(\`⭐ \${starCount} joueurs stars enrichis avec stats club\`);
+  console.log(`⭐ ${starCount} joueurs stars enrichis avec stats club`);
   }
 
   // Collecter les prochains matchs — exclure ceux déjà joués (présents dans stored.matches)
