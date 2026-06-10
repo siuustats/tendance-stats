@@ -926,7 +926,7 @@ function renderGrid(list, cdmStarted) {
   const cdmStarIds = new Set(CDM_STAR_IDS.map(s => s.id));
   const starsWithoutCdmStats = CDM_STAR_IDS
     .map(s => activeList.find(p => String(p.id) === s.id))
-    .filter(p => p && !((p.totalGoals||0) + (p.totalAssists||0) > 0))
+    .filter(p => p && (p.totalGames||0) === 0) // n'a pas encore joué en CDM
     .sort((a, b) => {
       const bpA = (a._clubGoals||0) + (a._clubAssists||0);
       const bpB = (b._clubGoals||0) + (b._clubAssists||0);
@@ -944,7 +944,7 @@ function renderGrid(list, cdmStarted) {
   c.innerHTML = '';
   hot.forEach((p, i) => {
     // isStar = star sans stats CDM réelles → afficher stats club
-    const hasCdmStats = (p.totalGoals||0) + (p.totalAssists||0) > 0;
+    const hasCdmStats = (p.totalGames||0) > 0; // a joué au moins 1 match CDM
     const isStar = !hasCdmStats && p._isStar;
     const last5    = isStar ? (p._clubLast5 || []).slice(0,5) : (p.last5 || []).slice(0,5);
     const recent_g = last5.reduce((s,m) => s+(m.goals||0), 0);
