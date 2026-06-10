@@ -834,6 +834,34 @@ function getPredLabel(score) {
   return null;
 }
 
+// ── FIXTURES J1 HARDCODÉES ───────────────────────────────────────────────────
+const J1_FIXTURES = [
+  { homeTeam:'Mexique',         awayTeam:'Afrique du Sud',  date:'2026-06-11T19:00:00Z' },
+  { homeTeam:'Corée du Sud',    awayTeam:'Tchéquie',        date:'2026-06-12T02:00:00Z' },
+  { homeTeam:'Canada',          awayTeam:'Bosnie-Herzégovine', date:'2026-06-12T19:00:00Z' },
+  { homeTeam:'États-Unis',      awayTeam:'Paraguay',        date:'2026-06-13T01:00:00Z' },
+  { homeTeam:'Qatar',           awayTeam:'Suisse',          date:'2026-06-13T19:00:00Z' },
+  { homeTeam:'Brésil',          awayTeam:'Maroc',           date:'2026-06-13T22:00:00Z' },
+  { homeTeam:'Haïti',           awayTeam:'Écosse',          date:'2026-06-14T01:00:00Z' },
+  { homeTeam:'Australie',       awayTeam:'Turquie',         date:'2026-06-14T04:00:00Z' },
+  { homeTeam:'Allemagne',       awayTeam:'Curaçao',         date:'2026-06-14T17:00:00Z' },
+  { homeTeam:'Pays-Bas',        awayTeam:'Japon',           date:'2026-06-14T20:00:00Z' },
+  { homeTeam:'Équateur',        awayTeam:"Côte d'Ivoire",   date:'2026-06-14T23:00:00Z' },
+  { homeTeam:'Suède',           awayTeam:'Tunisie',         date:'2026-06-15T02:00:00Z' },
+  { homeTeam:'Espagne',         awayTeam:'Cap-Vert',        date:'2026-06-15T16:00:00Z' },
+  { homeTeam:'Belgique',        awayTeam:'Égypte',          date:'2026-06-15T19:00:00Z' },
+  { homeTeam:'Arabie Saoudite', awayTeam:'Uruguay',         date:'2026-06-15T22:00:00Z' },
+  { homeTeam:'Iran',            awayTeam:'Nouvelle-Zélande',date:'2026-06-16T01:00:00Z' },
+  { homeTeam:'Portugal',        awayTeam:'RD Congo',        date:'2026-06-16T17:00:00Z' },
+  { homeTeam:'France',          awayTeam:'Sénégal',         date:'2026-06-16T19:00:00Z' },
+  { homeTeam:'Irak',            awayTeam:'Norvège',         date:'2026-06-16T22:00:00Z' },
+  { homeTeam:'Argentine',       awayTeam:'Algérie',         date:'2026-06-17T01:00:00Z' },
+  { homeTeam:'Autriche',        awayTeam:'Jordanie',        date:'2026-06-17T04:00:00Z' },
+  { homeTeam:'Angleterre',      awayTeam:'Croatie',         date:'2026-06-17T20:00:00Z' },
+  { homeTeam:'Ghana',           awayTeam:'Panama',          date:'2026-06-17T23:00:00Z' },
+  { homeTeam:'Ouzbékistan',     awayTeam:'Colombie',        date:'2026-06-18T02:00:00Z' },
+];
+
 function renderAlerts(list, fixtures) {
   const teamsSeen = new Set();
   const picked = [];
@@ -906,7 +934,53 @@ function renderAlerts(list, fixtures) {
   });
 
   if (c.children.length === 0) {
-    c.innerHTML = '<div style="color:var(--m);font-size:13px;padding:16px">&#9203; Les premières prédictions seront disponibles dès le coup d\'envoi du premier match le <strong style="color:var(--g)">11 juin 2026</strong>. On attend les vrais matchs pour vous donner les meilleures prédictions !</div>';
+    // Fallback : afficher les stars avec leurs prochains matchs J1
+    const starsWithFixture = list.filter(p => p._isStar && (p.totalGames||0) === 0 && J1_FIXTURES.some(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName));
+    const starsPicked = [];
+    const starsSeen = new Set();
+    for (const p of starsWithFixture.sort((a,b) => (b._clubSignal||0) - (a._clubSignal||0))) {
+      if (starsPicked.length >= 4) break;
+      if (!starsSeen.has(p.teamName)) { starsSeen.add(p.teamName); starsPicked.push(p); }
+    }
+    if (starsPicked.length > 0) {
+      starsPicked.forEach((p, i) => {
+        const fixture = J1_FIXTURES.find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
+        const opponent = fixture ? (fixture.homeTeam === p.teamName ? fixture.awayTeam : fixture.homeTeam) : '—';
+        const dateStr = fixture ? new Date(fixture.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : '—';
+        const g5 = p._clubGoals || 0;
+        const a5 = p._clubAssists || 0;
+        const score = Math.min(98, Math.round(((g5+a5)*15 + (p._clubSignal||0)*0.7)*0.60 + 50*0.40));
+        const predLabel = getPredLabel(score) || { label:'📈 EN FORME', color:'#00e5a0', colorDim:'#00e5a088' };
+        const matchBadge = '<span style="font-size:10px;color:var(--m2);margin-left:auto;background:var(--s3);padding:2px 8px;border-radius:4px">vs ' + opponent + ' · ' + dateStr + '</span>';
+        const d = document.createElement('div');
+        d.className = 'alert';
+        d.style.cssText = 'border-left-color:rgba(0,229,160,0.8);border-color:rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.04) 0%,var(--s1) 60%);animation-delay:' + (i*0.08) + 's;cursor:pointer;position:relative;overflow:hidden;';
+        d.onclick = () => { window.location.href = 'player-cdm.html?id=' + p.id + '&name=' + encodeURIComponent(p.name) + '&teamName=' + encodeURIComponent(p.teamName||''); };
+        d.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:7.5px;font-weight:700;letter-spacing:6px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 10px;text-align:center;">STATS EN CLUB</div>'
+          + '<div class="alert-ic" style="margin-top:18px">' + predLabel.label.split(' ')[0] + '</div>'
+          + '<div class="alert-txt" style="flex:1;margin-top:18px">'
+          + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+          + '<strong style="color:var(--text);font-size:14px">' + p.name + '</strong>'
+          + '<span style="font-size:11px;color:var(--m2)">' + (p.teamName||'') + '</span>'
+          + matchBadge
+          + '</div>'
+          + '<div style="display:flex;align-items:center;gap:8px">'
+          + '<div style="flex:1;height:6px;background:var(--s3);border-radius:3px;overflow:hidden">'
+          + '<div style="width:' + score + '%;height:6px;background:linear-gradient(90deg,' + predLabel.color + ',' + predLabel.colorDim + ');border-radius:3px"></div>'
+          + '</div>'
+          + '<span style="font-size:11px;font-weight:700;color:' + predLabel.color + ';white-space:nowrap;min-width:80px">' + predLabel.label + '</span>'
+          + '</div>'
+          + '<div style="font-size:11px;color:var(--m);margin-top:6px;display:flex;gap:12px">'
+          + '<span>⚽ <strong style="color:var(--g)">' + g5 + 'B</strong></span>'
+          + '<span>🎯 <strong style="color:#5e81f4">' + a5 + 'P</strong></span>'
+          + '<span style="font-size:9px;color:rgba(0,229,160,0.6);font-style:italic;margin-left:4px">stats en club</span>'
+          + '</div>'
+          + '</div>';
+        c.appendChild(d);
+      });
+    } else {
+      c.innerHTML = '<div style="color:var(--m);font-size:13px;padding:16px">&#9203; Les premières prédictions seront disponibles dès le coup d'envoi du premier match le <strong style="color:var(--g)">11 juin 2026</strong>. On attend les vrais matchs pour vous donner les meilleures prédictions !</div>';
+    }
   }
 }
 
