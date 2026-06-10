@@ -22,7 +22,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="canonical" href="https://tendancestats.com/predictions-cdm.html">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔮</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg:#080608; --s1:#0e0c10; --s2:#13101a; --s3:#1a1620;
@@ -418,7 +418,7 @@ function render() {
           const score = Math.max(20, playerScore);
           const predLabel = getPredLabel(score) || { label:'📈 EN FORME', color:'#00e5a0', colorDim:'#00e5a088' };
           return `<div class="pred-row" style="border:1px solid rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.06) 0%,var(--s1) 60%);position:relative;overflow:hidden;" onclick="window.location.href='player-cdm.html?id=${p.id}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}'"">
-            <div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:5px 10px;">STATS EN CLUB</div>
+            <div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:8px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 10px;">STATS EN CLUB</div>
             <div class="pred-avatar" style="margin-top:14px;">
               ${photo ? `<img src="${photo}" onerror="this.outerHTML='⚽'" alt="${p.name}">` : '⚽'}
             </div>
@@ -542,7 +542,7 @@ function render() {
       const a5 = isStar ? (p._clubAssists||0)  : (p.recent_assists||0);
       const photo = isStar ? (p._clubPhoto||p.photo||'') : (p.photo||'');
       const starStyle = isStar ? 'border:1px solid rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.06) 0%,var(--s1) 60%);position:relative;overflow:hidden;' : '';
-      const starBadge = isStar ? `<div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:5px 10px;">STATS EN CLUB</div>` : '';
+      const starBadge = isStar ? `<div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:8px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 10px;">STATS EN CLUB</div>` : '';
       const subLabel = isStar ? `${p.teamName} <span style="font-size:9px;color:rgba(0,229,160,0.7);font-style:italic">stats en club</span>` : p.teamName;
       const gaLabel  = isStar ? '5J' : '/5J';
       return `<div class="pred-row" style="${starStyle}" onclick="window.location.href='player-cdm.html?id=${p.id}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}'"">
