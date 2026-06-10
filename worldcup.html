@@ -526,6 +526,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- PRÉDICTIONS -->
     <div class="section-block alt">
       <div class="sh"><div class="st">🔮 Prédictions</div><div class="sb">CDM 2026</div></div>
+      <div id="pred-stars-info" style="display:none;font-size:12px;color:rgba(0,229,160,0.7);background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.15);border-radius:8px;padding:8px 14px;margin-bottom:12px;line-height:1.5;">⭐ Les joueurs avec bordure verte affichent leurs stats en club — ils seront remplacés automatiquement dès leur premier match CDM pour un calcul optimal.</div>
       <div class="alerts" id="alerts"></div>
       <div style="text-align:right;margin-top:-8px;padding-bottom:32px;">
         <a href="predictions-cdm.html" style="font-size:12px;font-weight:600;color:var(--m2);text-decoration:none;padding:6px 14px;border:1px solid var(--border);border-radius:8px;transition:all .2s;display:inline-block" onmouseover="this.style.color='var(--g)';this.style.borderColor='var(--g)';this.style.background='rgba(212,168,67,0.06)'" onmouseout="this.style.color='var(--m2)';this.style.borderColor='var(--border)';this.style.background='transparent'">Voir toutes les prédictions CDM →</a>
@@ -690,35 +691,7 @@ async function init() {
     // Pas d'appels ESPN côté client — lecture directe de data.json
     allPlayers = cdmFromData;
 
-    // Pré-calculer les stars CDM une seule fois dans init()
-    const cdmStartedInit = new Date() >= new Date('2026-06-11T17:00:00Z');
-    if (!cdmStartedInit) {
-      const normalizeN = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').trim();
-      const clubByNameInit = {};
-      window._clubPlayers.forEach(p => { clubByNameInit[normalizeN(p.name)] = p; });
-      allPlayers.filter(cdmP => (cdmP.totalGames||0) === 0).forEach(cdmP => {
-        const normName = normalizeN(cdmP.name);
-        const clubP = clubByNameInit[normName] || window._clubPlayers.find(p => {
-          const cn = normalizeN(p.name);
-          return cn === normName || cn.includes(normName) || normName.includes(cn);
-        });
-        if (clubP && (clubP.signal||clubP.trendScore||0) > 20) {
-          cdmP._clubGoals   = (clubP.last5||[]).slice(0,5).reduce((s,m)=>s+(m.goals||0),0);
-          cdmP._clubAssists = (clubP.last5||[]).slice(0,5).reduce((s,m)=>s+(m.assists||0),0);
-          cdmP._clubGames   = clubP.totalGames || 0;
-          cdmP._clubSignal  = clubP.signal || clubP.trendScore || 0;
-          cdmP._clubLast5   = clubP.last5 || [];
-          cdmP._clubPhoto   = clubP.photo || cdmP.photo || '';
-          cdmP._isStar      = true;
-        }
-      });
-      const nationCountInit = {};
-      allPlayers.filter(p => p._isStar).sort((a,b) => (b._clubSignal||0) - (a._clubSignal||0)).forEach(p => {
-        if (!nationCountInit[p.teamName]) nationCountInit[p.teamName] = 0;
-        if (nationCountInit[p.teamName] >= 3) { p._isStar = false; return; }
-        nationCountInit[p.teamName]++;
-      });
-    }
+    // Stars CDM enrichies par fetch-stats.js (_isStar, _clubGoals, etc. déjà dans data.json)
 
     window._fixtures = data.fixtures || [];
     window._matches  = (data.matches || []).filter(m => m.leagueId === 6);
@@ -865,11 +838,11 @@ function renderAlerts(list, fixtures) {
   const picked = [];
 
   const withScores = [...list].map(p => ({
-    ...p, _predScore: calcPredScore(p, fixtures, list).score
+    ...p, _predScore: p.predScore > 0 ? p.predScore : calcPredScore(p, fixtures, list).score
   })).sort((a,b) => b._predScore - a._predScore);
 
   // Exclure les joueurs absents (blessés/retirés de l'effectif)
-  const withMatch = withScores.filter(p => p.cdmStatus !== 'absent' && calcPredScore(p, fixtures, list).opponent);
+  const withMatch = withScores.filter(p => p.cdmStatus !== 'absent' && (p.predOpponent || calcPredScore(p, fixtures, list).opponent));
 
   // 1 joueur par nation d'abord
   for (const p of withMatch) {
@@ -888,7 +861,8 @@ function renderAlerts(list, fixtures) {
   c.innerHTML = '';
 
   picked.forEach((p, i) => {
-    const { score, opponent, matchDate } = calcPredScore(p, fixtures, list);
+    const stored = (p.predScore > 0 && p.predOpponent) ? { score: p.predScore, opponent: p.predOpponent, matchDate: p.predDate } : null;
+    const { score, opponent, matchDate } = stored || calcPredScore(p, fixtures, list);
     const predLabel = getPredLabel(score);
     if (!predLabel || !opponent) return;
 
@@ -940,6 +914,8 @@ function renderAlerts(list, fixtures) {
       if (starsPicked.length >= 4) break;
       if (!starsSeen.has(p.teamName)) { starsSeen.add(p.teamName); starsPicked.push(p); }
     }
+    const predInfoEl = document.getElementById('pred-stars-info');
+    if (predInfoEl) predInfoEl.style.display = starsPicked.length > 0 ? 'block' : 'none';
     if (starsPicked.length > 0) {
       starsPicked.forEach((p, i) => {
         const fixture = J1_FIXTURES.find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
