@@ -76,7 +76,7 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
 .pred-bar-bg { height:6px; background:var(--s3); border-radius:3px; overflow:hidden; }
 .pred-bar-fill { height:6px; border-radius:3px; }
 .pred-label { font-size:11px; font-weight:700; white-space:nowrap; line-height:1; }
-.pred-stats { flex-shrink:0; width:72px; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr auto; align-items:center; justify-items:center; row-gap:4px; column-gap:4px; }
+.pred-stats { flex-shrink:0; width:72px; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr auto; align-items:center; justify-items:center; row-gap:4px; column-gap:4px; line-height:1.2; }
 .pred-ga { font-family:'DM Mono',monospace; font-size:15px; font-weight:600; }
 .pred-sub { font-size:9px; color:var(--m); text-transform:uppercase; letter-spacing:.5px; margin-top:1px; }
 
@@ -454,8 +454,8 @@ function render() {
                 <div class="pred-label" style="color:${predLabel.color}">${predLabel.label}</div>
               </div>
               <div class="pred-stats">
-                <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1">⚽${g5}</div>
-                <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1">🎯${a5}</div>
+                <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1";display:flex;align-items:center;gap:2px>⚽${g5}</div>
+                <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1";display:flex;align-items:center;gap:2px>🎯${a5}</div>
                 <div style="visibility:hidden;font-size:9px;line-height:1">5J</div>
                 <div class="pred-sub" style="line-height:1;margin-top:2px">5J</div>
               </div>
@@ -506,8 +506,8 @@ function render() {
                 <div class="pred-label" style="color:${predLabel2.color}">${predLabel2.label}</div>
               </div>
               <div class="pred-stats">
-                <div style="font-size:13px;font-weight:700;color:${predLabel2.color};line-height:1">⚽${g5}</div>
-                <div style="font-size:13px;font-weight:700;color:${predLabel2.color};line-height:1">🎯${a5}</div>
+                <div style="font-size:13px;font-weight:700;color:${predLabel2.color};line-height:1";display:flex;align-items:center;gap:2px>⚽${g5}</div>
+                <div style="font-size:13px;font-weight:700;color:${predLabel2.color};line-height:1";display:flex;align-items:center;gap:2px>🎯${a5}</div>
                 <div style="visibility:hidden;font-size:9px;line-height:1">5J</div>
                 <div class="pred-sub" style="line-height:1;margin-top:2px">5J</div>
               </div>
@@ -695,8 +695,8 @@ function render() {
             <div class="pred-label" style="color:${predLabel.color}">${predLabel.label}</div>
           </div>
           <div class="pred-stats">
-            <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1">⚽${g5}</div>
-            <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1">🎯${a5}</div>
+            <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1";display:flex;align-items:center;gap:2px>⚽${g5}</div>
+            <div style="font-size:13px;font-weight:700;color:${predLabel.color};line-height:1";display:flex;align-items:center;gap:2px>🎯${a5}</div>
             <div style="visibility:hidden;font-size:9px;line-height:1">${gaLabel}</div>
             <div class="pred-sub" style="line-height:1;margin-top:2px">${gaLabel}</div>
           </div>
