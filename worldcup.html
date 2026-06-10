@@ -930,7 +930,7 @@ function renderAlerts(list, fixtures) {
         d.className = 'alert';
         d.style.cssText = 'border-left-color:rgba(0,229,160,0.8);border-color:rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.04) 0%,var(--s1) 60%);animation-delay:' + (i*0.08) + 's;cursor:pointer;position:relative;overflow:hidden;';
         d.onclick = () => { window.location.href = 'player-cdm.html?id=' + p.id + '&name=' + encodeURIComponent(p.name) + '&teamName=' + encodeURIComponent(p.teamName||''); };
-        d.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:7.5px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 10px;">STATS EN CLUB</div>'
+        d.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:7.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 10px;">STATS EN CLUB</div>'
           + '<div class="alert-ic" style="margin-top:18px">' + predLabel.label.split(' ')[0] + '</div>'
           + '<div class="alert-txt" style="flex:1;margin-top:18px">'
           + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
