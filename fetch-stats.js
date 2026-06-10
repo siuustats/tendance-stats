@@ -634,7 +634,7 @@ function generatePlayerPages(players, photosCache) {
     // Échapper les caractères qui pourraient casser le template HTML
     const allPlayersJson = JSON.stringify(allPlayersData)
       .replace(/\\/g, '\\\\')
-      .replace(/`/g, '\\`')
+      .replace(/`/g, '\`')
       .replace(/\$/g, '\\$');
 
     const description = `Stats ${playerName} 2026 — ${goals} buts, ${assists} passes, TendScore ${signal} | ${star.nation} · ${teamName} | Tendance & prédictions CDM 2026`;
@@ -1632,7 +1632,7 @@ async function main() {
     .slice(0, 3);
 
   const newEntryCount = Object.values(newHistoryEntries).reduce((s, e) => s + e.length, 0);
-  if (newEntryCount > 0) console.log(\`📚 Historique prédictions : \${newEntryCount} prédictions archivées\`);
+  if (newEntryCount > 0) console.log(`📚 Historique prédictions : \${newEntryCount} prédictions archivées`);
 
   // ── CALCUL DES PRÉDICTIONS CDM ──────────────────────────────────────────────
   const cdmMatches = trimmed.filter(m => m.leagueId === 6);
