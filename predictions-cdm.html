@@ -634,6 +634,34 @@ function render() {
 
 
 
+  // Stars J1 : si un match n'a aucun joueur avec stats CDM, ajouter les stars avec stats club
+  for (const [key, matchData] of Object.entries(fixtureMap)) {
+    if (matchData.players.length > 0) continue; // déjà des joueurs avec stats CDM
+    const starsForMatch = allCdmPlayers.filter(p =>
+      p._isStar &&
+      (p.teamName === matchData.homeTeam || p.teamName === matchData.awayTeam)
+    );
+    for (const p of starsForMatch) {
+      const ga5 = (p._clubGoals||0) + (p._clubAssists||0);
+      const ts  = p._clubSignal || 0;
+      const playerScore = Math.min(100, (ga5 * 15) + (ts * 0.7));
+      const oppName = p.teamName === matchData.homeTeam ? matchData.awayTeam : matchData.homeTeam;
+      const oppPlayers = allPlayers.filter(op => op.teamName === oppName);
+      let oppScore = 50;
+      if (oppPlayers.length > 0) {
+        const oppWins  = oppPlayers[0]?.last5?.filter(m => m.teamWon === true).length || 0;
+        const oppTotal = oppPlayers[0]?.last5?.length || 1;
+        oppScore = Math.round((1 - oppWins / oppTotal) * 100);
+      }
+      const wins = (p._clubLast5||[]).filter(m => m.teamWon === true).length;
+      const total = (p._clubLast5||[]).length || 1;
+      const teamScore = Math.round((wins / total) * 100);
+      const score = Math.min(98, Math.round(playerScore * 0.60 + teamScore * 0.15 + oppScore * 0.25));
+      const predLabel = getPredLabel(score);
+      fixtureMap[key].players.push({ player: p, score, predLabel, isStar: true });
+    }
+  }
+
   const matches = Object.values(fixtureMap)
     .map(m => ({ ...m, players: m.players.sort((a,b) => b.score - a.score).slice(0,3) }))
     .sort((a,b) => new Date(a.date) - new Date(b.date));
