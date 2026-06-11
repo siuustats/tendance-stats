@@ -494,7 +494,14 @@ function generatePlayerPages(players, photosCache) {
   } catch(e) {}
 
   const playerMap = {};
-  for (const p of players) playerMap[String(p.id)] = p;
+  // Premier passage : entrées clubs (leagueId !== 6) — prioritaires
+  for (const p of players) {
+    if (p.leagueId !== 6) playerMap[String(p.id)] = p;
+  }
+  // Second passage : entrées CDM uniquement si pas déjà en clubs
+  for (const p of players) {
+    if (p.leagueId === 6 && !playerMap[String(p.id)]) playerMap[String(p.id)] = p;
+  }
 
   // Badges ligue identiques à index.html
   const LEAGUE_STYLES = {
