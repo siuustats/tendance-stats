@@ -764,8 +764,8 @@ async function init() {
     allPlayers  = (data.players || []).map(p => ({
       ...p, photo: photos[p.id] || photos[String(p.id)] || p.photo || ''
     }));
-    const todayStr = new Date().toISOString().slice(0, 10);
-    allFixtures = (data.fixtures || []).filter(f => f.date && f.date.slice(0, 10) >= todayStr);
+    const todayStr = new Date().toLocaleDateString('fr-FR', {year:'numeric',month:'2-digit',day:'2-digit',timeZone:'Europe/Paris'}).split('/').reverse().join('-');
+    allFixtures = (data.fixtures || []).filter(f => f.date && toLocaleDateStr(f.date) >= todayStr);
     // Le filtre date post-CDM sera géré dans render()
     predHistory = data.predHistory || [];
 
