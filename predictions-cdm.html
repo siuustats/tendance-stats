@@ -632,43 +632,14 @@ function render() {
     if (fixtureMap[key]) fixtureMap[key].players.push({ player: p, score, predLabel, isStar: false });
   }
 
-  // Stars sans stats CDM réelles → ajouter avec stats club
-  const starsToAdd = allCdmPlayers.filter(p =>
-    p._isStar &&
-    (p.totalGames||0) === 0 // n'a pas encore joué en CDM (J1 non jouée)
-  );
-  for (const p of starsToAdd) {
-    const { score: rawScore, opponent, matchDate } = p.predScore > 0 && p.predOpponent
-      ? { score: p.predScore, opponent: p.predOpponent, matchDate: p.predDate }
-      : calcPredScore(p, allFixtures, allPlayers);
-    if (!opponent) continue;
-    // Recalculer avec stats club
-    const ga5 = (p._clubGoals||0) + (p._clubAssists||0);
-    const ts  = p._clubSignal || 0;
-    const playerScore = Math.min(100, (ga5 * 15) + (ts * 0.7));
-    const oppPlayers  = allPlayers.filter(op => op.teamName === opponent);
-    let oppScore = 50;
-    if (oppPlayers.length > 0) {
-      const oppWins  = oppPlayers[0]?.last5?.filter(m => m.teamWon === true).length || 0;
-      const oppTotal = oppPlayers[0]?.last5?.length || 1;
-      oppScore = Math.round((1 - oppWins / oppTotal) * 100);
-    }
-    const wins = (p._clubLast5||[]).filter(m => m.teamWon === true).length;
-    const total = (p._clubLast5||[]).length || 1;
-    const teamScore = Math.round((wins / total) * 100);
-    const score = Math.min(98, Math.round(playerScore * 0.60 + teamScore * 0.15 + oppScore * 0.25));
-    const predLabel = getPredLabel(score);
-    if (!predLabel) continue;
-    const key = [p.teamName, opponent].sort().join('__') + '__' + matchDate;
-    if (fixtureMap[key]) fixtureMap[key].players.push({ player: p, score, predLabel, isStar: true });
-  }
+
 
   const matches = Object.values(fixtureMap)
     .map(m => ({ ...m, players: m.players.sort((a,b) => b.score - a.score).slice(0,3) }))
     .sort((a,b) => new Date(a.date) - new Date(b.date));
 
   if (!matches.length) {
-    container.innerHTML = '<div class="empty">Aucune prédiction disponible pour ce filtre.</div>';
+    container.innerHTML = '<div class="empty">⏳ Les prédictions seront disponibles après les premiers matchs — les données sont en cours de collecte.</div>';
     return;
   }
 
@@ -685,7 +656,7 @@ function render() {
       const photo = isStar ? (p._clubPhoto||p.photo||'') : (p.photo||'');
       const starStyle = isStar ? 'border:1px solid rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.06) 0%,var(--s1) 60%);position:relative;overflow:hidden;' : '';
       const starBadge = isStar ? `<div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:7.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 10px;">STATS EN CLUB</div>` : '';
-      const subLabel = isStar ? `${p.teamName} <span style="font-size:9px;color:rgba(0,229,160,0.7);font-style:italic">stats en club</span>` : p.teamName;
+      const subLabel = p.teamName;
       const gaLabel  = isStar ? '5J' : '/5J';
       return `<div class="pred-row" style="${starStyle}" onclick="window.location.href='player-cdm.html?id=${p.id}&name=${encodeURIComponent(p.name)}&teamName=${encodeURIComponent(p.teamName||'')}'"">
         ${starBadge}
