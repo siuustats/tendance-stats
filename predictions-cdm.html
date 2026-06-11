@@ -629,14 +629,14 @@ function render() {
     const predLabel = getPredLabel(score);
     if (!predLabel) continue;
     const key = [p.teamName, opponent].sort().join('__') + '__' + matchDate;
-    if (fixtureMap[key]) fixtureMap[key].players.push({ player: p, score, predLabel, isStar: false });
+    if (fixtureMap[key]) fixtureMap[key].players.push({ player: p, score, predLabel, isStar: false, hasRealStats: (p.totalGames||0) > 0 });
   }
 
 
 
   // Stars J1 : si un match n'a aucun joueur avec stats CDM, ajouter les stars avec stats club
   for (const [key, matchData] of Object.entries(fixtureMap)) {
-    if (matchData.players.length > 0) continue; // déjà des joueurs avec stats CDM
+    if (matchData.players.some(pl => pl.hasRealStats)) continue; // déjà des joueurs avec vraies stats CDM
     const starsForMatch = allCdmPlayers.filter(p =>
       p._isStar &&
       (p.teamName === matchData.homeTeam || p.teamName === matchData.awayTeam)
