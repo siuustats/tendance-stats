@@ -689,7 +689,16 @@ async function init() {
 
     // Les rosters CDM sont déjà dans data.json via syncCDMRosters (fetch-stats.js)
     // Pas d'appels ESPN côté client — lecture directe de data.json
-    allPlayers = cdmFromData;
+    // Dédupliquer par id — garder l'entrée avec le plus de stats, puis le bon drapeau (pas 'eu')
+    const cdmMap = {};
+    for (const p of cdmFromData) {
+      const existing = cdmMap[p.id];
+      if (!existing) { cdmMap[p.id] = p; continue; }
+      const betterStats = (p.totalGames||0) > (existing.totalGames||0);
+      const betterFlag  = p.leagueFlag !== 'eu' && existing.leagueFlag === 'eu';
+      if (betterStats || betterFlag) cdmMap[p.id] = p;
+    }
+    allPlayers = Object.values(cdmMap);
 
     // Stars CDM enrichies par fetch-stats.js (_isStar, _clubGoals, etc. déjà dans data.json)
 
