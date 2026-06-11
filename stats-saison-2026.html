@@ -511,7 +511,7 @@ async function loadData() {
     applyFilter();
     renderKPIs();
   } catch(e) {
-    document.getElementById('hot-players').innerHTML = '<div class="empty-state">Données temporairement indisponibles.<br><a href="/index.html" style="color:var(--g)">→ Voir la page principale</a></div>';
+    document.getElementById('hot-players').innerHTML = '<div class="empty-state">Données temporairement indisponibles.<br><a href="/club.html" style="color:var(--g)">→ Voir la page principale</a></div>';
     document.getElementById('ranking-body').innerHTML = '<tr><td colspan="7" class="empty-state">Données indisponibles.</td></tr>';
   }
 }
@@ -671,10 +671,10 @@ loadData();
     <strong style="color:#9ca3af">Tendance Stats</strong> &nbsp;·&nbsp;
     Saison 2025/2026 &nbsp;·&nbsp;
     Données : <span style="color:#9ca3af">sources publiques</span> &nbsp;·&nbsp;
-    <a href="index.html" style="color:#6b7280;font-size:11px;text-decoration:none;opacity:0.6;transition:opacity .2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">Retour Accueil →</a>
+    <a href="club.html" style="color:#6b7280;font-size:11px;text-decoration:none;opacity:0.6;transition:opacity .2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">Retour Accueil →</a>
   </div>
   <div style="font-size:11px;color:#2a2f3a;">
-    <a href="index.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px;">Accueil</a>·
+    <a href="club.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px;">Accueil</a>·
     <a href="predictions.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px;">Prédictions</a>·
     <a href="classement.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px;">Classement</a>·
     <a href="stats-saison-2026.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px;">Stats saison 2025/2026</a>
