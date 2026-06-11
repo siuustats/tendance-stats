@@ -842,7 +842,7 @@ function renderAlerts(list, fixtures) {
   })).sort((a,b) => b._predScore - a._predScore);
 
   // Exclure les joueurs absents (blessés/retirés de l'effectif)
-  const withMatch = withScores.filter(p => p.cdmStatus !== 'absent' && (p.predOpponent || calcPredScore(p, fixtures, list).opponent));
+  const withMatch = withScores.filter(p => p.cdmStatus !== 'absent' && (p.totalGames||0) > 0 && (p.predOpponent || calcPredScore(p, fixtures, list).opponent));
 
   // 1 joueur par nation d'abord
   for (const p of withMatch) {
@@ -907,7 +907,7 @@ function renderAlerts(list, fixtures) {
 
   if (c.children.length === 0) {
     // Fallback : afficher les stars avec leurs prochains matchs J1
-    const starsWithFixture = list.filter(p => p._isStar && (p.totalGames||0) === 0 && J1_FIXTURES.some(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName));
+    const starsWithFixture = list.filter(p => p._isStar && (p.totalGames||0) === 0 && fixtures.some(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName));
     const starsPicked = [];
     const starsSeen = new Set();
     for (const p of starsWithFixture.sort((a,b) => (b._clubSignal||0) - (a._clubSignal||0))) {
@@ -918,7 +918,7 @@ function renderAlerts(list, fixtures) {
     if (predInfoEl) predInfoEl.style.display = starsPicked.length > 0 ? 'block' : 'none';
     if (starsPicked.length > 0) {
       starsPicked.forEach((p, i) => {
-        const fixture = J1_FIXTURES.find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
+        const fixture = fixtures.find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
         const opponent = fixture ? (fixture.homeTeam === p.teamName ? fixture.awayTeam : fixture.homeTeam) : '—';
         const dateStr = fixture ? new Date(fixture.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : '—';
         const g5 = p._clubGoals || 0;
