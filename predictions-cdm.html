@@ -765,7 +765,11 @@ async function init() {
       ...p, photo: photos[p.id] || photos[String(p.id)] || p.photo || ''
     }));
     const todayStr = new Date().toLocaleDateString('fr-FR', {year:'numeric',month:'2-digit',day:'2-digit',timeZone:'Europe/Paris'}).split('/').reverse().join('-');
-    allFixtures = (data.fixtures || []).filter(f => f.date && f.leagueId === 6 && toLocaleDateStr(f.date) >= todayStr);
+    const cdmFixtures = (data.fixtures || []).filter(f => f.date && f.leagueId === 6 && toLocaleDateStr(f.date) >= todayStr);
+    // Fallback sur les fixtures J1 hardcodées si data.json n'en contient pas encore
+    allFixtures = cdmFixtures.length > 0
+      ? cdmFixtures
+      : J1_FIXTURES.filter(f => toLocaleDateStr(f.date) >= todayStr);
     // Le filtre date post-CDM sera géré dans render()
     predHistory = data.predHistory || [];
 
