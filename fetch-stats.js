@@ -1104,6 +1104,12 @@ async function syncCDMRosters(stored, photosCache) {
       }
     } else {
       if (p.cdmStatus === 'absent') { delete p.cdmStatus; restored++; }
+      // Mettre à jour leagueFlag si le teamId est connu
+      const teamEntry = Object.entries(rosterMap).find(([id]) => id === String(p.id));
+      if (teamEntry) {
+        const correctFlag = CDM_TEAM_FLAGS[teamEntry[1].teamId] || '';
+        if (correctFlag) p.leagueFlag = correctFlag;
+      }
       toKeep.push(p);
     }
   }
