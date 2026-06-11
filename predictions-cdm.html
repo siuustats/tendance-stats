@@ -355,6 +355,13 @@ function setFilter(group, btn) {
   render();
 }
 
+// Convertit une date UTC en date locale française YYYY-MM-DD pour le filtrage
+function toLocaleDateStr(dateStr) {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("fr-FR", {year:"numeric", month:"2-digit", day:"2-digit", timeZone:"Europe/Paris"})
+    .split("/").reverse().join("-");
+}
+
 function setDateFilter(date, btn) {
   currentDateFilter = date;
   document.querySelectorAll('.date-filter-btn').forEach(b => b.classList.remove('on'));
@@ -389,7 +396,7 @@ const J1_FIXTURES = [
   { homeTeam:'Belgique',        awayTeam:'Égypte',          date:'2026-06-15T19:00:00Z' },
   { homeTeam:'Arabie Saoudite', awayTeam:'Uruguay',         date:'2026-06-15T22:00:00Z' },
   { homeTeam:'Iran',            awayTeam:'Nouvelle-Zélande',date:'2026-06-16T01:00:00Z' },
-  { homeTeam:'Portugal',        awayTeam:'RD Congo',        date:'2026-06-16T17:00:00Z' },
+  { homeTeam:'Portugal',        awayTeam:'RD Congo',        date:'2026-06-17T17:00:00Z' },
   { homeTeam:'France',          awayTeam:'Sénégal',         date:'2026-06-16T19:00:00Z' },
   { homeTeam:'Irak',            awayTeam:'Norvège',         date:'2026-06-16T22:00:00Z' },
   { homeTeam:'Argentine',       awayTeam:'Algérie',         date:'2026-06-17T01:00:00Z' },
@@ -416,12 +423,12 @@ function render() {
       );
     }
     if (currentDateFilter !== 'all') {
-      fixtures = fixtures.filter(f => f.date.startsWith(currentDateFilter));
+      fixtures = fixtures.filter(f => toLocaleDateStr(f.date) === currentDateFilter);
     }
 
     // Construire les matchs avec les stars
     const matchesHtml = fixtures.map(f => {
-      const dateStr = new Date(f.date).toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+      const dateStr = new Date(f.date).toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris'});
       const groupA = TEAM_TO_GROUP[f.homeTeam] || '';
 
       // Stars des deux équipes
@@ -479,7 +486,7 @@ function render() {
 
     // Lazy rendering : afficher les 6 premiers matchs immédiatement
     const allMatchSections = fixtures.map(f => {
-      const dateStr2 = new Date(f.date).toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+      const dateStr2 = new Date(f.date).toLocaleDateString('fr-FR', {weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris'});
       const groupA2 = TEAM_TO_GROUP[f.homeTeam] || '';
       const starsForMatch2 = allCdmPlayers.filter(p =>
         p._isStar && (p.teamName === f.homeTeam || p.teamName === f.awayTeam)
@@ -595,7 +602,7 @@ function render() {
   // Après le 11 juin — vraies prédictions CDM
   // Exclure joueurs absents des prédictions après CDM
   let fixtures = currentDateFilter !== 'all'
-    ? allFixtures.filter(f => f.date && f.date.startsWith(currentDateFilter))
+    ? allFixtures.filter(f => f.date && toLocaleDateStr(f.date) === currentDateFilter)
     : allFixtures;
   let players = allPlayers.filter(p => p.leagueId === 6 && p.cdmStatus !== 'absent');
   if (currentFilter !== 'all') {
@@ -668,7 +675,7 @@ function render() {
   // Lazy rendering post-CDM : 6 premiers matchs immédiatement
   const matchSections = matches.map(match => {
     const dateStr = match.date
-      ? new Date(match.date).toLocaleDateString('fr-FR', {weekday:'short',day:'2-digit',month:'2-digit'})
+      ? new Date(match.date).toLocaleDateString('fr-FR', {weekday:'short',day:'2-digit',month:'2-digit',timeZone:'Europe/Paris'})
       : '—';
     const groupA = TEAM_TO_GROUP[match.homeTeam] || '';
 
