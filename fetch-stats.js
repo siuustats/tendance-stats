@@ -17,6 +17,31 @@ const LEAGUES = [
   { code: 'fifa.world',       id: 6,     name: 'Coupe du Monde',        flag: 'eu', flagAlt: 'CDM', cls: 'cl',  label: 'CDM'  },
 ];
 
+const CDM_TEAM_NAMES = {
+  '203':'Mexique','467':'Afrique du Sud','451':'Corée du Sud','450':'Tchéquie',
+  '206':'Canada','452':'Bosnie-Herzégovine','4398':'Qatar','475':'Suisse',
+  '205':'Brésil','2869':'Maroc','2654':'Haïti','580':'Écosse',
+  '660':'États-Unis','210':'Paraguay','628':'Australie','465':'Turquie',
+  '481':'Allemagne','11678':'Curaçao','4789':"Côte d'Ivoire",'209':'Équateur',
+  '449':'Pays-Bas','627':'Japon','466':'Suède','659':'Tunisie',
+  '459':'Belgique','2620':'Égypte','469':'Iran','2666':'Nouvelle-Zélande',
+  '164':'Espagne','2597':'Cap-Vert','655':'Arabie Saoudite','212':'Uruguay',
+  '478':'France','654':'Sénégal','4375':'Irak','464':'Norvège',
+  '202':'Argentine','624':'Algérie','474':'Autriche','2917':'Jordanie',
+  '482':'Portugal','2850':'RD Congo','2570':'Ouzbékistan','208':'Colombie',
+  '448':'Angleterre','477':'Croatie','4469':'Ghana','2659':'Panama',
+};
+const CDM_TEAM_FLAGS = {
+  '203':'mx','467':'za','451':'kr','450':'cz','206':'ca','452':'ba',
+  '4398':'qa','475':'ch','205':'br','2869':'ma','2654':'ht','580':'gb-sct',
+  '660':'us','210':'py','628':'au','465':'tr','481':'de','11678':'cw',
+  '4789':'ci','209':'ec','449':'nl','627':'jp','466':'se','659':'tn',
+  '459':'be','2620':'eg','469':'ir','2666':'nz','164':'es','2597':'cv',
+  '655':'sa','212':'uy','478':'fr','654':'sn','4375':'iq','464':'no',
+  '202':'ar','624':'dz','474':'at','2917':'jo','482':'pt','2850':'cd',
+  '2570':'uz','208':'co','448':'gb-eng','477':'hr','4469':'gh','2659':'pa',
+};
+
 // ── Calculs ───────────────────────────────────────────────────────────────────
 
 function calcTrendScore(last5, totalGames, totalGoals, totalAssists) {
@@ -113,7 +138,40 @@ async function fetchFixtures() {
   }
 
   for (const league of LEAGUES) {
-    if (league.id === 6) continue; // CDM gérée séparément
+    if (league.id === 6) {
+      // CDM — fixtures récupérées via ESPN fifa.world
+      for (const date of dates) {
+        try {
+          const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${league.code}/scoreboard?dates=${date}`;
+          const res = await fetch(url);
+          if (!res.ok) continue;
+          const data = await res.json();
+          for (const event of (data.events || [])) {
+            const comp     = event.competitions?.[0];
+            const status   = comp?.status?.type?.name || '';
+            if (status === 'STATUS_FINAL') continue; // match terminé
+            const homeComp = comp?.competitors?.find(c => c.homeAway === 'home');
+            const awayComp = comp?.competitors?.find(c => c.homeAway === 'away');
+            const homeId   = homeComp?.team?.id || '';
+            const awayId   = awayComp?.team?.id || '';
+            const homeName = CDM_TEAM_NAMES[homeId] || homeComp?.team?.displayName || '?';
+            const awayName = CDM_TEAM_NAMES[awayId] || awayComp?.team?.displayName || '?';
+            fixtures.push({
+              id:          event.id,
+              date:        event.date,
+              leagueId:    6,
+              leagueLabel: 'CDM',
+              leagueCls:   'cdm',
+              homeTeam:    homeName,
+              awayTeam:    awayName,
+              homeLogo:    homeComp?.team?.logo || '',
+              awayLogo:    awayComp?.team?.logo || '',
+            });
+          }
+        } catch(e) {}
+      }
+      continue;
+    }
     for (const date of dates) {
       try {
         const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/${league.code}/scoreboard?dates=${date}`;
@@ -1014,30 +1072,7 @@ const CDM_TEAM_IDS = [
 ];
 
 // CDM_TEAM_NAMES : ID ESPN → nom de l'équipe nationale
-const CDM_TEAM_NAMES = {
-  '203':'Mexique','467':'Afrique du Sud','451':'Corée du Sud','450':'Tchéquie',
-  '206':'Canada','452':'Bosnie-Herzégovine','4398':'Qatar','475':'Suisse',
-  '205':'Brésil','2869':'Maroc','2654':'Haïti','580':'Écosse',
-  '660':'États-Unis','210':'Paraguay','628':'Australie','465':'Turquie',
-  '481':'Allemagne','11678':'Curaçao','4789':"Côte d'Ivoire",'209':'Équateur',
-  '449':'Pays-Bas','627':'Japon','466':'Suède','659':'Tunisie',
-  '459':'Belgique','2620':'Égypte','469':'Iran','2666':'Nouvelle-Zélande',
-  '164':'Espagne','2597':'Cap-Vert','655':'Arabie Saoudite','212':'Uruguay',
-  '478':'France','654':'Sénégal','4375':'Irak','464':'Norvège',
-  '202':'Argentine','624':'Algérie','474':'Autriche','2917':'Jordanie',
-  '482':'Portugal','2850':'RD Congo','2570':'Ouzbékistan','208':'Colombie',
-  '448':'Angleterre','477':'Croatie','4469':'Ghana','2659':'Panama',
-};
-const CDM_TEAM_FLAGS = {
-  '203':'mx','467':'za','451':'kr','450':'cz','206':'ca','452':'ba',
-  '4398':'qa','475':'ch','205':'br','2869':'ma','2654':'ht','580':'gb-sct',
-  '660':'us','210':'py','628':'au','465':'tr','481':'de','11678':'cw',
-  '4789':'ci','209':'ec','449':'nl','627':'jp','466':'se','659':'tn',
-  '459':'be','2620':'eg','469':'ir','2666':'nz','164':'es','2597':'cv',
-  '655':'sa','212':'uy','478':'fr','654':'sn','4375':'iq','464':'no',
-  '202':'ar','624':'dz','474':'at','2917':'jo','482':'pt','2850':'cd',
-  '2570':'uz','208':'co','448':'gb-eng','477':'hr','4469':'gh','2659':'pa',
-};
+
 
 async function syncCDMRosters(stored, photosCache) {
   // Vérifier si on doit recharger les rosters (toutes les 48h)
