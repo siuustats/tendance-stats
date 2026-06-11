@@ -1585,9 +1585,16 @@ async function main() {
   const clubByName = {};
   clubPlayers.forEach(p => { clubByName[normalize(p.name)] = p; });
 
+  // Équipes qui ont déjà joué au moins 1 match CDM
+  const teamsWithCdmMatches = new Set(
+    trimmed
+      .filter(m => m.leagueId === 6)
+      .flatMap(m => [m.homeTeam, m.awayTeam].filter(Boolean))
+  );
+
   const nationCount = {};
   players
-    .filter(p => p.leagueId === 6 && (p.totalGames || 0) === 0)
+    .filter(p => p.leagueId === 6 && (p.totalGames || 0) === 0 && !(teamsWithCdmMatches.has(p.teamName)))
     .forEach(cdmP => {
       const normName = normalize(cdmP.name);
       const clubP = clubByName[normName] || clubPlayers.find(cp => {
