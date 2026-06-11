@@ -360,7 +360,15 @@ function extractContributions(event, league, photos = {}, assists = {}) {
     const isHome   = teamId === homeId;
     const rawTeamName = isHome ? homeComp?.team?.displayName : awayComp?.team?.displayName;
     const TEAM_FIX = { 'Brighton & Hove Albion': 'Brighton', 'Internazionale': 'Inter Milan' };
-    const teamName = TEAM_FIX[rawTeamName] || rawTeamName;
+    // Pour les matchs CDM, mapper le nom anglais ESPN vers le nom français via CDM_TEAM_NAMES
+    const cdmNameByDisplayName = {};
+    if (league.id === 6) {
+      for (const [id, frName] of Object.entries(CDM_TEAM_NAMES)) {
+        const enName = (homeComp?.team?.id === id ? homeComp : awayComp)?.team?.displayName;
+        if (enName) cdmNameByDisplayName[enName] = frName;
+      }
+    }
+    const teamName = cdmNameByDisplayName[rawTeamName] || TEAM_FIX[rawTeamName] || rawTeamName;
     const teamWon  = isHome ? (homeScore > awayScore ? true : homeScore === awayScore ? null : false) : (awayScore > homeScore ? true : awayScore === homeScore ? null : false);
 
     goalsMap[pid] = (goalsMap[pid] || 0) + 1;
@@ -1215,7 +1223,7 @@ async function fetchMissingPhotos(players, photosCache) {
   // - undefined  → jamais cherché → toujours retenter
   // - ""         → déjà tenté sans succès → retenter 1x/semaine (au cas où l'API était down)
   // - "https://…" → photo en cache → ignorer
-  const oneWeekAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
+  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const retrySet = new Set((photosCache.__retried_at
     ? Object.entries(photosCache.__retried_at)
         .filter(([, ts]) => ts > oneWeekAgo)
@@ -1258,7 +1266,15 @@ async function fetchMissingPhotos(players, photosCache) {
 
   if (!apiOk) {
     console.log('  ❌ API Transfermarkt indisponible — photos ignorées');
-    return photosCache;
+    // Marquer les joueurs comme tentés pour éviter de retenter au prochain cron
+    const now = Date.now();
+    const updated = { ...photosCache };
+    if (!updated.__retried_at) updated.__retried_at = { ...(photosCache.__retried_at || {}) };
+    for (const p of missing) {
+      if (photosCache[p.id] === undefined) updated[String(p.id)] = '';
+      updated.__retried_at[String(p.id)] = now;
+    }
+    return updated;
   }
   console.log('  ✅ API Transfermarkt disponible');
 
