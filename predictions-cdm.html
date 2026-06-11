@@ -620,6 +620,8 @@ function render() {
 
   // Joueurs avec vraies stats CDM
   for (const p of players) {
+    // Ignorer les joueurs sans aucune stat (ni CDM ni club)
+    if ((p.totalGames||0) === 0 && (p.signal||0) === 0) continue;
     // Utiliser predScore stocké par fetch-stats si disponible, sinon calculer
     const hasPredStored = p.predScore > 0 && p.predOpponent;
     const score    = hasPredStored ? p.predScore    : calcPredScore(p, fixtures, allPlayers).score;
@@ -692,7 +694,7 @@ function render() {
           ${photo ? `<img src="${photo}" onerror="this.outerHTML='⚽'" alt="${p.name}">` : '⚽'}
         </div>
         <div class="pred-info" style="${isStar ? 'margin-top:14px;' : ''}">
-          <div class="pred-name" style="display:flex;align-items:center;gap:6px">${p.name} <span style="font-size:9px;background:${getRole(g5,a5).bg};color:${getRole(g5,a5).color};border-radius:4px;padding:1px 6px;font-weight:700">${getRole(g5,a5).tag}</span>${isStar ? '' : getAbsenceBadge(p.last5?.[0]?.played, p.last5?.[0]?.absenceReason)}</div>
+          <div class="pred-name" style="display:flex;align-items:center;gap:6px">${p.name} <span style="font-size:9px;background:${getRole(g5,a5).bg};color:${getRole(g5,a5).color};border-radius:4px;padding:1px 6px;font-weight:700">${getRole(g5,a5).tag}</span></div>
           <div class="pred-team">${subLabel}</div>
         </div>
         <div class="pred-right" style="${isStar ? 'margin-top:14px;' : ''}">
