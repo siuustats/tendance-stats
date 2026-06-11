@@ -1117,6 +1117,14 @@ async function syncCDMRosters(stored, photosCache) {
   }
   console.log(`  ✅ ${fetched}/48 rosters — ${Object.keys(rosterMap).length} joueurs`);
 
+  // Compter les joueurs par équipe — on ne marque absent que si l'équipe a >= 15 joueurs récupérés
+  const rosterCountByTeam = {};
+  for (const [, info] of Object.entries(rosterMap)) {
+    rosterCountByTeam[info.teamId] = (rosterCountByTeam[info.teamId] || 0) + 1;
+  }
+  const reliableTeams = new Set(Object.entries(rosterCountByTeam).filter(([,c]) => c >= 15).map(([t]) => t));
+  console.log(`  ✅ ${reliableTeams.size}/48 équipes avec roster fiable (>= 15 joueurs)`);
+
   // Joueurs CDM actuels dans data.json
   const existingCdm = (stored.players || []).filter(p => p.leagueId === 6);
   const existingIds = new Set(existingCdm.map(p => String(p.id)));
@@ -1131,7 +1139,9 @@ async function syncCDMRosters(stored, photosCache) {
     if (!rosterIds.has(String(p.id))) {
       if (cdmStarted) {
         // CDM commencée → garder avec badge absent
-        if (p.cdmStatus !== 'absent') { p.cdmStatus = 'absent'; marked++; }
+        // Seulement si le roster de cette équipe est fiable (>= 15 joueurs récupérés)
+        const playerTeamId = Object.entries(CDM_TEAM_NAMES).find(([,v]) => v === p.teamName)?.[0];
+        if (reliableTeams.has(playerTeamId) && p.cdmStatus !== 'absent') { p.cdmStatus = 'absent'; marked++; }
         toKeep.push(p);
       } else {
         // Avant CDM → supprimer (ESPN nettoie ses listes)
