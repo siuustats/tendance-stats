@@ -703,15 +703,15 @@ async function init() {
     // Stars CDM enrichies par fetch-stats.js (_isStar, _clubGoals, etc. déjà dans data.json)
 
     // Dédupliquer par id — garder l'entrée avec le plus de stats, puis le bon drapeau
-    const cdmMap = {};
+    const dedupMap = {};
     for (const p of cdmFromData) {
-      const existing = cdmMap[p.id];
-      if (!existing) { cdmMap[p.id] = p; continue; }
+      const existing = dedupMap[p.id];
+      if (!existing) { dedupMap[p.id] = p; continue; }
       const betterStats = (p.totalGames||0) > (existing.totalGames||0);
       const betterFlag  = p.leagueFlag !== 'eu' && existing.leagueFlag === 'eu';
-      if (betterStats || betterFlag) cdmMap[p.id] = p;
+      if (betterStats || betterFlag) dedupMap[p.id] = p;
     }
-    allPlayers = Object.values(cdmMap);
+    allPlayers = Object.values(dedupMap);
 
     window._fixtures = data.fixtures || [];
     window._matches  = (data.matches || []).filter(m => m.leagueId === 6);
