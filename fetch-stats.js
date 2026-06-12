@@ -126,57 +126,6 @@ const TEAM_FIX = {
   'Paris Saint-Germain':    'Paris Saint-Germain',
   'Atletico de Madrid':     'Atletico Madrid',
   'Athletic Club':          'Athletic Bilbao',
-  // Équipes nationales CDM — noms anglais ESPN → noms français
-  'Mexico':                 'Mexique',
-  'South Africa':           'Afrique du Sud',
-  'South Korea':            'Corée du Sud',
-  'Czechia':                'Tchéquie',
-  'Canada':                 'Canada',
-  'Bosnia and Herzegovina': 'Bosnie-Herzégovine',
-  'Qatar':                  'Qatar',
-  'Switzerland':            'Suisse',
-  'Brazil':                 'Brésil',
-  'Morocco':                'Maroc',
-  'Haiti':                  'Haïti',
-  'Scotland':               'Écosse',
-  'USA':                    'États-Unis',
-  'United States':          'États-Unis',
-  'Paraguay':               'Paraguay',
-  'Australia':              'Australie',
-  'Turkey':                 'Turquie',
-  'Germany':                'Allemagne',
-  'Curacao':                'Curaçao',
-  "Ivory Coast":            "Côte d'Ivoire",
-  "Cote d'Ivoire":          "Côte d'Ivoire",
-  'Ecuador':                'Équateur',
-  'Netherlands':            'Pays-Bas',
-  'Japan':                  'Japon',
-  'Sweden':                 'Suède',
-  'Tunisia':                'Tunisie',
-  'Belgium':                'Belgique',
-  'Egypt':                  'Égypte',
-  'Iran':                   'Iran',
-  'New Zealand':            'Nouvelle-Zélande',
-  'Spain':                  'Espagne',
-  'Cape Verde':             'Cap-Vert',
-  'Saudi Arabia':           'Arabie Saoudite',
-  'Uruguay':                'Uruguay',
-  'France':                 'France',
-  'Senegal':                'Sénégal',
-  'Iraq':                   'Irak',
-  'Norway':                 'Norvège',
-  'Argentina':              'Argentine',
-  'Algeria':                'Algérie',
-  'Austria':                'Autriche',
-  'Jordan':                 'Jordanie',
-  'Portugal':               'Portugal',
-  'DR Congo':               'RD Congo',
-  'Uzbekistan':             'Ouzbékistan',
-  'Colombia':               'Colombie',
-  'England':                'Angleterre',
-  'Croatia':                'Croatie',
-  'Ghana':                  'Ghana',
-  'Panama':                 'Panama',
 };
 async function fetchFixtures() {
   const fixtures = [];
@@ -1168,14 +1117,6 @@ async function syncCDMRosters(stored, photosCache) {
   }
   console.log(`  ✅ ${fetched}/48 rosters — ${Object.keys(rosterMap).length} joueurs`);
 
-  // Compter les joueurs par équipe — on ne marque absent que si l'équipe a >= 15 joueurs récupérés
-  const rosterCountByTeam = {};
-  for (const [, info] of Object.entries(rosterMap)) {
-    rosterCountByTeam[info.teamId] = (rosterCountByTeam[info.teamId] || 0) + 1;
-  }
-  const reliableTeams = new Set(Object.entries(rosterCountByTeam).filter(([,c]) => c >= 15).map(([t]) => t));
-  console.log(`  ✅ ${reliableTeams.size}/48 équipes avec roster fiable (>= 15 joueurs)`);
-
   // Joueurs CDM actuels dans data.json
   const existingCdm = (stored.players || []).filter(p => p.leagueId === 6);
   const existingIds = new Set(existingCdm.map(p => String(p.id)));
@@ -1190,9 +1131,7 @@ async function syncCDMRosters(stored, photosCache) {
     if (!rosterIds.has(String(p.id))) {
       if (cdmStarted) {
         // CDM commencée → garder avec badge absent
-        // Seulement si le roster de cette équipe est fiable (>= 15 joueurs récupérés)
-        const playerTeamId = Object.entries(CDM_TEAM_NAMES).find(([,v]) => v === p.teamName)?.[0];
-        if (reliableTeams.has(playerTeamId) && p.cdmStatus !== 'absent') { p.cdmStatus = 'absent'; marked++; }
+        if (p.cdmStatus !== 'absent') { p.cdmStatus = 'absent'; marked++; }
         toKeep.push(p);
       } else {
         // Avant CDM → supprimer (ESPN nettoie ses listes)
@@ -1266,7 +1205,7 @@ async function fetchMissingPhotos(players, photosCache) {
   // - undefined  → jamais cherché → toujours retenter
   // - ""         → déjà tenté sans succès → retenter 1x/semaine (au cas où l'API était down)
   // - "https://…" → photo en cache → ignorer
-  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const oneWeekAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
   const retrySet = new Set((photosCache.__retried_at
     ? Object.entries(photosCache.__retried_at)
         .filter(([, ts]) => ts > oneWeekAgo)
@@ -1309,15 +1248,7 @@ async function fetchMissingPhotos(players, photosCache) {
 
   if (!apiOk) {
     console.log('  ❌ API Transfermarkt indisponible — photos ignorées');
-    // Marquer les joueurs comme tentés pour éviter de retenter au prochain cron
-    const now = Date.now();
-    const updated = { ...photosCache };
-    if (!updated.__retried_at) updated.__retried_at = { ...(photosCache.__retried_at || {}) };
-    for (const p of missing) {
-      if (photosCache[p.id] === undefined) updated[String(p.id)] = '';
-      updated.__retried_at[String(p.id)] = now;
-    }
-    return updated;
+    return photosCache;
   }
   console.log('  ✅ API Transfermarkt disponible');
 
@@ -1644,20 +1575,16 @@ async function main() {
   const clubByName = {};
   clubPlayers.forEach(p => { clubByName[normalize(p.name)] = p; });
 
-  // Équipes qui ont déjà joué au moins 1 match CDM
-  const teamsWithCdmMatches = new Set(
-    trimmed
-      .filter(m => m.leagueId === 6)
-      .flatMap(m => [m.homeTeam, m.awayTeam].filter(Boolean))
-  );
-
   const nationCount = {};
   players
-    .filter(p => p.leagueId === 6 && (p.totalGames || 0) === 0 && !(teamsWithCdmMatches.has(p.teamName)))
+    .filter(p => p.leagueId === 6 && (p.totalGames || 0) === 0)
     .forEach(cdmP => {
       const normName = normalize(cdmP.name);
       const clubP = clubByName[normName] || clubPlayers.find(cp => {
         const cn = normalize(cp.name);
+        // Correspondance exacte uniquement — évite les faux positifs sur noms courts (ex: "Issa")
+        const cdmWords = normName.split(' ').filter(Boolean);
+        if (cdmWords.length < 2) return cn === normName; // nom court = match exact seulement
         return cn === normName || cn.includes(normName) || normName.includes(cn);
       });
       if (!clubP || (clubP.signal || clubP.trendScore || 0) <= 20) return;
