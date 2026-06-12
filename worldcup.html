@@ -937,7 +937,7 @@ function renderAlerts(list, fixtures) {
     c.appendChild(d);
   });
 
-  if (c.children.length === 0 || picked.every(p => (p._predScore||0) < 20)) { c.innerHTML = '';
+  if (c.children.length === 0) {
     // Fallback : afficher les stars avec leurs prochains matchs J1
     const starsWithFixture = list.filter(p => p._isStar && (p.totalGames||0) === 0 && fixtures.some(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName));
     const starsPicked = [];
