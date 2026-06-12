@@ -854,6 +854,8 @@ function renderAlerts(list, fixtures) {
   const now72h = Date.now() + 72 * 60 * 60 * 1000;
   const withMatch = withScores.filter(p => {
     if (p.cdmStatus === 'absent') return false;
+    // Stars : seulement si elles ont un signal club ou des contributions
+    if (p._isStar && (p._clubSignal||0) === 0 && (p._clubGoals||0) + (p._clubAssists||0) === 0) return false;
     if (!((p.totalGames||0) > 0 || p._isStar)) return false;
     // Vérifier que le prochain match est dans 72h
     const nextFixture = fixtures.find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
