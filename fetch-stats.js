@@ -126,6 +126,57 @@ const TEAM_FIX = {
   'Paris Saint-Germain':    'Paris Saint-Germain',
   'Atletico de Madrid':     'Atletico Madrid',
   'Athletic Club':          'Athletic Bilbao',
+  // Équipes nationales CDM — noms anglais ESPN → noms français
+  'Mexico':                 'Mexique',
+  'South Africa':           'Afrique du Sud',
+  'South Korea':            'Corée du Sud',
+  'Czechia':                'Tchéquie',
+  'Canada':                 'Canada',
+  'Bosnia and Herzegovina': 'Bosnie-Herzégovine',
+  'Qatar':                  'Qatar',
+  'Switzerland':            'Suisse',
+  'Brazil':                 'Brésil',
+  'Morocco':                'Maroc',
+  'Haiti':                  'Haïti',
+  'Scotland':               'Écosse',
+  'USA':                    'États-Unis',
+  'United States':          'États-Unis',
+  'Paraguay':               'Paraguay',
+  'Australia':              'Australie',
+  'Turkey':                 'Turquie',
+  'Germany':                'Allemagne',
+  'Curacao':                'Curaçao',
+  "Ivory Coast":            "Côte d'Ivoire",
+  "Cote d'Ivoire":          "Côte d'Ivoire",
+  'Ecuador':                'Équateur',
+  'Netherlands':            'Pays-Bas',
+  'Japan':                  'Japon',
+  'Sweden':                 'Suède',
+  'Tunisia':                'Tunisie',
+  'Belgium':                'Belgique',
+  'Egypt':                  'Égypte',
+  'Iran':                   'Iran',
+  'New Zealand':            'Nouvelle-Zélande',
+  'Spain':                  'Espagne',
+  'Cape Verde':             'Cap-Vert',
+  'Saudi Arabia':           'Arabie Saoudite',
+  'Uruguay':                'Uruguay',
+  'France':                 'France',
+  'Senegal':                'Sénégal',
+  'Iraq':                   'Irak',
+  'Norway':                 'Norvège',
+  'Argentina':              'Argentine',
+  'Algeria':                'Algérie',
+  'Austria':                'Autriche',
+  'Jordan':                 'Jordanie',
+  'Portugal':               'Portugal',
+  'DR Congo':               'RD Congo',
+  'Uzbekistan':             'Ouzbékistan',
+  'Colombia':               'Colombie',
+  'England':                'Angleterre',
+  'Croatia':                'Croatie',
+  'Ghana':                  'Ghana',
+  'Panama':                 'Panama',
 };
 async function fetchFixtures() {
   const fixtures = [];
@@ -360,15 +411,7 @@ function extractContributions(event, league, photos = {}, assists = {}) {
     const isHome   = teamId === homeId;
     const rawTeamName = isHome ? homeComp?.team?.displayName : awayComp?.team?.displayName;
     const TEAM_FIX = { 'Brighton & Hove Albion': 'Brighton', 'Internazionale': 'Inter Milan' };
-    // Pour les matchs CDM, mapper le nom anglais ESPN vers le nom français via CDM_TEAM_NAMES
-    const cdmNameByDisplayName = {};
-    if (league.id === 6) {
-      for (const [id, frName] of Object.entries(CDM_TEAM_NAMES)) {
-        const enName = (homeComp?.team?.id === id ? homeComp : awayComp)?.team?.displayName;
-        if (enName) cdmNameByDisplayName[enName] = frName;
-      }
-    }
-    const teamName = cdmNameByDisplayName[rawTeamName] || TEAM_FIX[rawTeamName] || rawTeamName;
+    const teamName = TEAM_FIX[rawTeamName] || rawTeamName;
     const teamWon  = isHome ? (homeScore > awayScore ? true : homeScore === awayScore ? null : false) : (awayScore > homeScore ? true : awayScore === homeScore ? null : false);
 
     goalsMap[pid] = (goalsMap[pid] || 0) + 1;
