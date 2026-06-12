@@ -851,7 +851,7 @@ function renderAlerts(list, fixtures) {
   })).sort((a,b) => b._predScore - a._predScore);
 
   // Exclure les joueurs absents (blessés/retirés de l'effectif)
-  const withMatch = withScores.filter(p => p.cdmStatus !== 'absent' && (p.totalGames||0) > 0 && (p.predOpponent || calcPredScore(p, fixtures, list).opponent));
+  const withMatch = withScores.filter(p => p.cdmStatus !== 'absent' && ((p.totalGames||0) > 0 || p._isStar) && (p.predOpponent || calcPredScore(p, fixtures, list).opponent));
 
   // 1 joueur par nation d'abord
   for (const p of withMatch) {
@@ -1317,10 +1317,27 @@ function getLogoUrl(name) {
 
 // ── CLASSEMENT GROUPES ────────────────────────────────────────────────────────
 function buildStandings(matches) {
+  // Mapping noms anglais ESPN → noms français pour les anciens matchs
+  const NAME_FIX = {
+    'Mexico':'Mexique','South Africa':'Afrique du Sud','South Korea':'Corée du Sud',
+    'Czechia':'Tchéquie','Bosnia and Herzegovina':'Bosnie-Herzégovine','Switzerland':'Suisse',
+    'Brazil':'Brésil','Morocco':'Maroc','Haiti':'Haïti','Scotland':'Écosse',
+    'USA':'États-Unis','United States':'États-Unis','Australia':'Australie','Turkey':'Turquie',
+    'Germany':'Allemagne','Curacao':'Curaçao','Ivory Coast':"Côte d'Ivoire",'Cote d\'Ivoire':"Côte d'Ivoire",
+    'Ecuador':'Équateur','Netherlands':'Pays-Bas','Japan':'Japon','Sweden':'Suède',
+    'Tunisia':'Tunisie','Belgium':'Belgique','Egypt':'Égypte','Iran':'Iran',
+    'New Zealand':'Nouvelle-Zélande','Spain':'Espagne','Cape Verde':'Cap-Vert',
+    'Saudi Arabia':'Arabie Saoudite','Uruguay':'Uruguay','France':'France',
+    'Senegal':'Sénégal','Iraq':'Irak','Norway':'Norvège','Argentina':'Argentine',
+    'Algeria':'Algérie','Austria':'Autriche','Jordan':'Jordanie','Portugal':'Portugal',
+    'DR Congo':'RD Congo','Uzbekistan':'Ouzbékistan','Colombia':'Colombie',
+    'England':'Angleterre','Croatia':'Croatie','Ghana':'Ghana','Panama':'Panama',
+    'Canada':'Canada','Qatar':'Qatar','Paraguay':'Paraguay','Belgium':'Belgique'
+  };
   const s = {};
   GROUPS.forEach(function(g){ g.nations.forEach(function(n){ s[n]={mj:0,v:0,n:0,d:0,bp:0,bc:0,pts:0}; }); });
   (matches||[]).filter(function(m){ return m.leagueId===6 && m.homeGoals!==undefined; }).forEach(function(m) {
-    const h=m.homeTeam, a=m.awayTeam, hg=m.homeGoals, ag=m.awayGoals;
+    const h=NAME_FIX[m.homeTeam]||m.homeTeam, a=NAME_FIX[m.awayTeam]||m.awayTeam, hg=m.homeGoals, ag=m.awayGoals;
     if (!s[h]||!s[a]) return;
     s[h].mj++; s[a].mj++;
     s[h].bp+=hg; s[h].bc+=ag; s[a].bp+=ag; s[a].bc+=hg;
