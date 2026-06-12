@@ -912,21 +912,55 @@ function renderAlerts(list, fixtures) {
   const c = document.getElementById('alerts');
   c.innerHTML = '';
 
+  // Afficher la mention si des stars sont présentes
+  const predInfoEl = document.getElementById('pred-stars-info');
+  if (predInfoEl) predInfoEl.style.display = picked.some(p => p._isStarCard) ? 'block' : 'none';
+
   picked.forEach((p, i) => {
-    let score, opponent, matchDate, g5, a5;
+    // Rendu star : utiliser exactement le même rendu que le fallback
     if (p._isStarCard) {
-      const fix = sortedFix.find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
-      opponent  = fix ? (fix.homeTeam === p.teamName ? fix.awayTeam : fix.homeTeam) : null;
-      matchDate = fix ? fix.date : null;
-      g5 = p._clubGoals||0; a5 = p._clubAssists||0;
-      score = p._predScore||0;
-    } else {
-      const stored = (p.predScore > 0 && p.predOpponent) ? { score: p.predScore, opponent: p.predOpponent, matchDate: p.predDate } : null;
-      ({ score, opponent, matchDate } = stored || calcPredScore(p, fixtures, list));
-      g5 = p.recent_goals||p.totalGoals||0; a5 = p.recent_assists||p.totalAssists||0;
+      const fixture = sortedFix.find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
+      const opponent = fixture ? (fixture.homeTeam === p.teamName ? fixture.awayTeam : fixture.homeTeam) : '—';
+      const dateStr = fixture ? new Date(fixture.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : '—';
+      const g5 = p._clubGoals || 0;
+      const a5 = p._clubAssists || 0;
+      const score = p._predScore || 0;
+      const predLabel = getPredLabel(score) || { label:'📈 EN FORME', color:'#00e5a0', colorDim:'#00e5a088' };
+      const matchBadge = '<span style="font-size:10px;color:var(--m2);margin-left:auto;background:var(--s3);padding:2px 8px;border-radius:4px">vs ' + opponent + ' · ' + dateStr + '</span>';
+      const d = document.createElement('div');
+      d.className = 'alert';
+      d.style.cssText = 'border-left-color:rgba(0,229,160,0.8);border-color:rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.04) 0%,var(--s1) 60%);animation-delay:' + (i*0.08) + 's;cursor:pointer;position:relative;overflow:hidden;';
+      d.onclick = () => { window.location.href = 'player-cdm.html?id=' + p.id + '&name=' + encodeURIComponent(p.name) + '&teamName=' + encodeURIComponent(p.teamName||''); };
+      d.innerHTML = '<div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:7.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 10px;">STATS EN CLUB</div>'
+        + '<div class="alert-ic" style="margin-top:18px">' + predLabel.label.split(' ')[0] + '</div>'
+        + '<div class="alert-txt" style="flex:1;margin-top:18px">'
+        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+        + '<strong style="color:var(--text);font-size:14px">' + p.name + '</strong>'
+        + '<span style="font-size:11px;color:var(--m2)">' + (p.teamName||'') + '</span>'
+        + matchBadge
+        + '</div>'
+        + '<div style="display:flex;align-items:center;gap:8px">'
+        + '<div style="flex:1;height:6px;background:var(--s3);border-radius:3px;overflow:hidden">'
+        + '<div style="width:' + score + '%;height:6px;background:linear-gradient(90deg,' + predLabel.color + ',' + predLabel.colorDim + ');border-radius:3px"></div>'
+        + '</div>'
+        + '<span style="font-size:11px;font-weight:700;color:' + predLabel.color + ';white-space:nowrap;min-width:80px">' + predLabel.label + '</span>'
+        + '</div>'
+        + '<div style="font-size:11px;color:var(--m);margin-top:6px;display:flex;gap:12px">'
+        + '<span>⚽ <strong style="color:var(--g)">' + g5 + 'B</strong></span>'
+        + '<span>🎯 <strong style="color:#5e81f4">' + a5 + 'P</strong></span>'
+        + '</div>'
+        + '</div>';
+      c.appendChild(d);
+      return;
     }
+
+    // Rendu normal joueurs CDM
+    const stored = (p.predScore > 0 && p.predOpponent) ? { score: p.predScore, opponent: p.predOpponent, matchDate: p.predDate } : null;
+    const { score, opponent, matchDate } = stored || calcPredScore(p, fixtures, list);
     const predLabel = getPredLabel(score);
     if (!predLabel || !opponent) return;
+    const g5 = p.recent_goals||p.totalGoals||0;
+    const a5 = p.recent_assists||p.totalAssists||0;
     const dateStr = matchDate
       ? new Date(matchDate).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'})
       : '—';
@@ -946,7 +980,7 @@ function renderAlerts(list, fixtures) {
       d.style.cssText += ';border-color:rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.04) 0%,var(--s1) 60%);position:relative;overflow:hidden;';
     }
     d.innerHTML = '<div class="alert-ic">' + predLabel.label.split(' ')[0] + '</div>'
-      + '<div class="alert-txt" style="flex:1">'      + (p._isStarCard ? '<div style="position:absolute;top:0;left:0;right:80px;font-family:Orbitron,sans-serif;font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);border-right:1px solid rgba(0,229,160,0.2);border-radius:0 0 8px 0;padding:4px 10px;">STATS EN CLUB</div>' : '')
+      + '<div class="alert-txt" style="flex:1' + (p._isStarCard ? ';margin-top:14px' : '') + '">'      + (p._isStarCard ? '<div style="position:absolute;top:0;left:0;right:80px;font-family:Orbitron,sans-serif;font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);border-right:1px solid rgba(0,229,160,0.2);border-radius:0 0 8px 0;padding:4px 10px;">STATS EN CLUB</div>' : '')
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
       + '<strong style="color:var(--text);font-size:14px">' + p.name + '</strong>'
       + '<span style="font-size:11px;color:var(--m2)">' + (p.teamName||'') + '</span>'
