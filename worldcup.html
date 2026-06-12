@@ -858,7 +858,7 @@ function renderAlerts(list, fixtures) {
     if (p._isStar && (p._clubSignal||0) === 0 && (p._clubGoals||0) + (p._clubAssists||0) === 0) return false;
     if (!((p.totalGames||0) > 0 || p._isStar)) return false;
     // Vérifier que le prochain match est dans 72h
-    const nextFixture = fixtures.find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
+    const nextFixture = [...fixtures].sort((a,b) => new Date(a.date) - new Date(b.date)).find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
     if (!nextFixture) return false;
     return new Date(nextFixture.date).getTime() <= now72h;
   });
@@ -926,7 +926,7 @@ function renderAlerts(list, fixtures) {
 
   if (c.children.length === 0) {
     // Fallback : afficher les stars avec leurs prochains matchs J1
-    const starsWithFixture = list.filter(p => p._isStar && (p.totalGames||0) === 0 && fixtures.some(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName));
+    const starsWithFixture = list.filter(p => p._isStar && (p.totalGames||0) === 0 && ((p._clubSignal||0) > 0 || (p._clubGoals||0) + (p._clubAssists||0) > 0) && fixtures.some(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName));
     const starsPicked = [];
     const starsSeen = new Set();
     for (const p of starsWithFixture.sort((a,b) => (b._clubSignal||0) - (a._clubSignal||0))) {
