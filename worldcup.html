@@ -702,7 +702,7 @@ async function init() {
 
     // Stars CDM enrichies par fetch-stats.js (_isStar, _clubGoals, etc. déjà dans data.json)
 
-    // Dédupliquer par id — garder l'entrée avec le plus de stats, puis le bon drapeau
+    // Dédupliquer par id
     const dedupMap = {};
     for (const p of cdmFromData) {
       const existing = dedupMap[p.id];
@@ -862,13 +862,14 @@ function renderAlerts(list, fixtures) {
   })).sort((a,b) => b._predScore - a._predScore);
 
   // Exclure les joueurs absents (blessés/retirés de l'effectif)
-  // Garder seulement les joueurs avec stats CDM ET dont le prochain match est imminent
-  // Élargir progressivement jusqu'à avoir 4 joueurs
-  const sortedFixtures = [...fixtures].sort((a,b) => new Date(a.date)-new Date(b.date));
+  // Équipes qui ont encore des stars actives (n'ont pas joué J1)
+  const teamsWithStars = new Set(list.filter(p => p._isStar && (p.totalGames||0) === 0).map(p => p.teamName));
+  const sortedFix = [...fixtures].sort((a,b) => new Date(a.date)-new Date(b.date));
   const getWithMatch = (hours) => withScores.filter(p => {
     if (p.cdmStatus === 'absent' || (p.totalGames||0) === 0) return false;
-    const nextFixture = sortedFixtures.find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
-    return nextFixture && new Date(nextFixture.date).getTime() <= Date.now() + hours * 3600000;
+    if (teamsWithStars.has(p.teamName)) return false; // ignorer si stars actives pour cette équipe
+    const nxt = sortedFix.find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
+    return nxt && new Date(nxt.date).getTime() <= Date.now() + hours * 3600000;
   });
   let withMatch = [];
   for (const hours of [48, 72, 120, 168]) {
@@ -1340,18 +1341,18 @@ function getLogoUrl(name) {
 
 // ── CLASSEMENT GROUPES ────────────────────────────────────────────────────────
 function buildStandings(matches) {
-  const NAME_FIX = {
+  const NAME_FIX_ST = {
     'Mexico':'Mexique','South Africa':'Afrique du Sud','South Korea':'Corée du Sud',
     'Czechia':'Tchéquie','Bosnia and Herzegovina':'Bosnie-Herzégovine','Switzerland':'Suisse',
     'Brazil':'Brésil','Morocco':'Maroc','Haiti':'Haïti','Scotland':'Écosse',
     'USA':'États-Unis','United States':'États-Unis','Australia':'Australie','Turkey':'Turquie',
-    'Germany':'Allemagne','Curacao':'Curaçao','Ivory Coast':"Côte d'Ivoire",'Cote d\'Ivoire':"Côte d'Ivoire",
+    'Germany':'Allemagne','Curacao':'Curaçao','Ivory Coast':"Côte d'Ivoire",
     'Ecuador':'Équateur','Netherlands':'Pays-Bas','Japan':'Japon','Sweden':'Suède',
     'Tunisia':'Tunisie','Belgium':'Belgique','Egypt':'Égypte','Iran':'Iran',
     'New Zealand':'Nouvelle-Zélande','Spain':'Espagne','Cape Verde':'Cap-Vert',
-    'Saudi Arabia':'Arabie Saoudite','Uruguay':'Uruguay','France':'France',
-    'Senegal':'Sénégal','Iraq':'Irak','Norway':'Norvège','Argentina':'Argentine',
-    'Algeria':'Algérie','Austria':'Autriche','Jordan':'Jordanie','Portugal':'Portugal',
+    'Saudi Arabia':'Arabie Saoudite','Uruguay':'Uruguay','Senegal':'Sénégal',
+    'Iraq':'Irak','Norway':'Norvège','Argentina':'Argentine','Algeria':'Algérie',
+    'Austria':'Autriche','Jordan':'Jordanie','Portugal':'Portugal',
     'DR Congo':'RD Congo','Uzbekistan':'Ouzbékistan','Colombia':'Colombie',
     'England':'Angleterre','Croatia':'Croatie','Ghana':'Ghana','Panama':'Panama',
     'Canada':'Canada','Qatar':'Qatar','Paraguay':'Paraguay'
@@ -1359,7 +1360,7 @@ function buildStandings(matches) {
   const s = {};
   GROUPS.forEach(function(g){ g.nations.forEach(function(n){ s[n]={mj:0,v:0,n:0,d:0,bp:0,bc:0,pts:0}; }); });
   (matches||[]).filter(function(m){ return m.leagueId===6 && m.homeGoals!==undefined; }).forEach(function(m) {
-    const h=NAME_FIX[m.homeTeam]||m.homeTeam, a=NAME_FIX[m.awayTeam]||m.awayTeam, hg=m.homeGoals, ag=m.awayGoals;
+    const h=NAME_FIX_ST[m.homeTeam]||m.homeTeam, a=NAME_FIX_ST[m.awayTeam]||m.awayTeam, hg=m.homeGoals, ag=m.awayGoals;
     if (!s[h]||!s[a]) return;
     s[h].mj++; s[a].mj++;
     s[h].bp+=hg; s[h].bc+=ag; s[a].bp+=ag; s[a].bc+=hg;
