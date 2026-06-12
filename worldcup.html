@@ -862,13 +862,19 @@ function renderAlerts(list, fixtures) {
   })).sort((a,b) => b._predScore - a._predScore);
 
   // Exclure les joueurs absents (blessés/retirés de l'effectif)
-  // Garder seulement les joueurs avec stats CDM ET dont le prochain match est dans 72h
-  const now72h = Date.now() + 72 * 60 * 60 * 1000;
-  const withMatch = withScores.filter(p => {
+  // Garder seulement les joueurs avec stats CDM ET dont le prochain match est imminent
+  // Élargir progressivement jusqu'à avoir 4 joueurs
+  const sortedFixtures = [...fixtures].sort((a,b) => new Date(a.date)-new Date(b.date));
+  const getWithMatch = (hours) => withScores.filter(p => {
     if (p.cdmStatus === 'absent' || (p.totalGames||0) === 0) return false;
-    const nextFixture = [...fixtures].sort((a,b) => new Date(a.date)-new Date(b.date)).find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
-    return nextFixture && new Date(nextFixture.date).getTime() <= now72h;
+    const nextFixture = sortedFixtures.find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
+    return nextFixture && new Date(nextFixture.date).getTime() <= Date.now() + hours * 3600000;
   });
+  let withMatch = [];
+  for (const hours of [48, 72, 120, 168]) {
+    withMatch = getWithMatch(hours);
+    if (withMatch.length >= 4) break;
+  }
 
   // 1 joueur par nation d'abord
   for (const p of withMatch) {
@@ -931,7 +937,7 @@ function renderAlerts(list, fixtures) {
     c.appendChild(d);
   });
 
-  if (c.children.length === 0) {
+  if (c.children.length === 0 || picked.every(p => (p._predScore||0) < 20)) { c.innerHTML = '';
     // Fallback : afficher les stars avec leurs prochains matchs J1
     const starsWithFixture = list.filter(p => p._isStar && (p.totalGames||0) === 0 && fixtures.some(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName));
     const starsPicked = [];
