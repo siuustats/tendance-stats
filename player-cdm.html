@@ -725,6 +725,27 @@ async function init() {
     </div>
   `;
 
+  // Lien vers page clubs si le joueur a une contrepartie clubs (même ID ESPN)
+  // On vérifie si ce joueur existe aussi dans les stats clubs via data.json
+  // Chercher la contrepartie clubs par ID d'abord, puis par nom normalisé
+  const normalize = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,' ').trim();
+  const cdmPlayerName = normalize(playerName || '');
+  const clubPlayer = ((dataFull && dataFull.players) || []).find(p =>
+    p.leagueId !== 6 && (
+      String(p.id) === String(playerId) ||
+      (cdmPlayerName && normalize(p.name) === cdmPlayerName)
+    )
+  );
+  if (clubPlayer) {
+    const clubLink = document.createElement('a');
+    clubLink.href = 'player.html?id=' + playerId + '&name=' + encodeURIComponent(clubPlayer.name||'') + '&teamName=' + encodeURIComponent(clubPlayer.teamName||'');
+    clubLink.style.cssText = 'display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:11px;font-weight:600;color:var(--m2);background:var(--s2);border:1px solid var(--border);padding:5px 12px;border-radius:6px;text-decoration:none;letter-spacing:.5px;transition:all .2s';
+    clubLink.innerHTML = '⚽ Voir ses stats en club →';
+    clubLink.onmouseover = function() { clubLink.style.color = 'var(--g)'; clubLink.style.borderColor = 'var(--g)'; };
+    clubLink.onmouseout  = function() { clubLink.style.color = 'var(--m2)'; clubLink.style.borderColor = 'var(--border)'; };
+    document.querySelector('.hero-trend')?.after(clubLink);
+  }
+
   // Lien vers page statique SEO si le joueur fait partie des stars
   const STAR_SLUGS = {"231388":"kylian-mbappe","291281":"jude-bellingham","235818":"federico-valverde","362150":"lamine-yamal","250465":"pedri","231050":"raphinha","323702":"gavi","140416":"antoine-griezmann","312146":"nico-williams","173896":"mohamed-salah","253989":"erling-haaland","280555":"bukayo-saka","198825":"ollie-watkins","296395":"cole-palmer","235662":"alexander-isak","250787":"phil-foden","174980":"leandro-trossard","283672":"jeremy-doku","238262":"declan-rice","124091":"bruno-fernandes","231182":"kai-havertz","298008":"rayan-cherki","303748":"florian-wirtz","149981":"granit-xhaka","249524":"cody-gakpo","328238":"bradley-barcola","229744":"ousmane-dembele","345581":"warren-zaire-emery","286831":"michael-olise","240233":"achraf-hakimi","303821":"jamal-musiala","190161":"joshua-kimmich","170257":"niclas-fullkrug","188052":"jonathan-tah","220703":"ramy-bensebaini","217331":"marcus-thuram","204441":"nicolo-barella","134947":"kevin-de-bruyne","235677":"dusan-vlahovic","309273":"rasmus-hojlund","76762":"luka-modric","154446":"alvaro-morata"};
   const starSlug = STAR_SLUGS[String(playerId)];
