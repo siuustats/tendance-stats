@@ -178,7 +178,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
   @media(max-width:768px){
     /* Modal historique complet */
-    .hist-modal-overlay { display:none; visibility:hidden; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; align-items:center; justify-content:center; padding:20px; }
+    .hist-modal-overlay { display:none; visibility:hidden; height:0; overflow:hidden; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; align-items:center; justify-content:center; padding:20px; }
     .hist-modal-overlay.open { display:flex; visibility:visible; }
     .hist-modal { background:var(--s1); border-radius:16px; width:100%; max-width:700px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; }
     .hist-modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); flex-shrink:0; }
@@ -729,7 +729,7 @@ async function init() {
   // On vérifie si ce joueur existe aussi dans les stats clubs via data.json
   // Chercher la contrepartie clubs par ID d'abord, puis par nom normalisé
   const normalize = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/g,' ').trim();
-  const cdmPlayerName = normalize(playerName || '');
+  const cdmPlayerName = normalize(name || '');
   const clubPlayer = ((dataFull && dataFull.players) || []).find(p =>
     p.leagueId !== 6 && (
       String(p.id) === String(playerId) ||
