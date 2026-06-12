@@ -179,7 +179,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   @media(max-width:768px){
     /* Modal historique complet */
     .hist-modal-overlay { display:none; visibility:hidden; height:0; overflow:hidden; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; align-items:center; justify-content:center; padding:20px; }
-    .hist-modal-overlay.open { display:flex; visibility:visible; }
+    .hist-modal-overlay.open { display:flex; visibility:visible; height:100%; }
     .hist-modal { background:var(--s1); border-radius:16px; width:100%; max-width:700px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; }
     .hist-modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); flex-shrink:0; }
     .hist-modal-title { font-size:15px; font-weight:700; }
@@ -286,15 +286,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 </script>
 </head>
 <body>
-<div class="hist-modal-overlay" id="histModalCdm" onclick="if(event.target===this)closeHistModalCdm()">
-  <div class="hist-modal">
-    <div class="hist-modal-header">
-      <span class="hist-modal-title">📋 Historique complet CDM</span>
-      <button class="hist-modal-close" onclick="closeHistModalCdm()">✕</button>
-    </div>
-    <div class="hist-modal-body" id="histModalCdmBody"></div>
-  </div>
-</div>
+<div class="hist-modal-overlay" id="histModalCdm" onclick="if(event.target===this)closeHistModalCdm()"></div>
 <nav class="navbar">
   <a href="worldcup.html" class="navbar-logo cdm-logo">TendanceStats</a>
   <div class="navbar-links cdm-bg">
@@ -421,6 +413,10 @@ function closeHistModalCdm() {
   document.body.style.overflow = '';
 }
 function openHistModalCdm() {
+  const overlay = document.getElementById('histModalCdm');
+  if (!document.getElementById('histModalCdmBody')) {
+    overlay.innerHTML = '<div class="hist-modal"><div class="hist-modal-header"><span class="hist-modal-title">📋 Historique complet CDM</span><button class="hist-modal-close" onclick="closeHistModalCdm()">✕</button></div><div class="hist-modal-body" id="histModalCdmBody"></div></div>';
+  }
   const body = document.getElementById('histModalCdmBody');
   body.innerHTML = '';
   (window._allCdmMatches || []).forEach(({ match, stats }) => {
