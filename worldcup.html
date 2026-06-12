@@ -945,9 +945,8 @@ function renderAlerts(list, fixtures) {
     if (p._isStarCard) {
       d.style.cssText += ';border-color:rgba(0,229,160,0.35);background:linear-gradient(135deg,rgba(0,229,160,0.04) 0%,var(--s1) 60%);position:relative;overflow:hidden;';
     }
-    d.innerHTML = (p._isStarCard ? '<div style="position:absolute;top:0;left:0;right:0;font-family:Orbitron,sans-serif;font-size:7.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);padding:3px 10px;">STATS EN CLUB</div>' : '')
-      + '<div class="alert-ic"' + (p._isStarCard ? ' style="margin-top:18px"' : '') + '>' + predLabel.label.split(' ')[0] + '</div>'
-      + '<div class="alert-txt" style="flex:1">'
+    d.innerHTML = '<div class="alert-ic">' + predLabel.label.split(' ')[0] + '</div>'
+      + '<div class="alert-txt" style="flex:1">'      + (p._isStarCard ? '<div style="position:absolute;top:0;left:0;right:80px;font-family:Orbitron,sans-serif;font-size:7px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#00e5a0;background:rgba(0,229,160,0.12);border-bottom:1px solid rgba(0,229,160,0.25);border-right:1px solid rgba(0,229,160,0.2);border-radius:0 0 8px 0;padding:4px 10px;">STATS EN CLUB</div>' : '')
       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
       + '<strong style="color:var(--text);font-size:14px">' + p.name + '</strong>'
       + '<span style="font-size:11px;color:var(--m2)">' + (p.teamName||'') + '</span>'
