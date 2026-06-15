@@ -42,6 +42,12 @@ const CDM_TEAM_FLAGS = {
   '2570':'uz','208':'co','448':'gb-eng','477':'hr','4469':'gh','2659':'pa',
 };
 
+// Mapping teamName → leagueFlag pour les équipes CDM
+const cdmNameToFlag = {};
+for (const [id, name] of Object.entries(CDM_TEAM_NAMES)) {
+  cdmNameToFlag[name] = CDM_TEAM_FLAGS[id] || 'eu';
+}
+
 // ── Calculs ───────────────────────────────────────────────────────────────────
 
 function calcTrendScore(last5, totalGames, totalGoals, totalAssists) {
@@ -367,8 +373,10 @@ function extractContributions(event, league, photos = {}, assists = {}) {
         id: pid, name, photo: photos[pid] || `https://a.espncdn.com/i/headshots/soccer/players/full/${pid}.png`,
         teamName: teamName || '', teamWon,
         leagueId: league.id, leagueName: league.name,
-        leagueFlag: league.flag, leagueFlagAlt: league.flagAlt,
-        leagueCls: league.cls, leagueLabel: league.label,
+        leagueFlag: league.id === 6 ? (cdmNameToFlag[teamName] || league.flag) : league.flag,
+        leagueFlagAlt: league.flagAlt,
+        leagueCls: league.id === 6 ? 'cdm' : league.cls,
+        leagueLabel: league.label,
       };
     }
 
@@ -472,11 +480,6 @@ function rebuildPlayers(matches) {
   }
 
   // ── Joueurs CDM (leagueId: 6) — entrées distinctes ───────────────
-  // Mapping teamName → flag via CDM_TEAM_NAMES inversé + CDM_TEAM_FLAGS
-  const cdmNameToFlag = {};
-  for (const [id, name] of Object.entries(CDM_TEAM_NAMES)) {
-    cdmNameToFlag[name] = CDM_TEAM_FLAGS[id] || 'eu';
-  }
   for (const [, data] of Object.entries(cdm)) {
     const info = data.info;
     if (!info?.name) continue;
@@ -1496,8 +1499,10 @@ async function main() {
             teamName: fixedTeam,
             teamWon,
             leagueId: league.id, leagueName: league.name,
-            leagueFlag: league.flag, leagueFlagAlt: league.flagAlt,
-            leagueCls: league.cls, leagueLabel: league.label,
+            leagueFlag: league.id === 6 ? (cdmNameToFlag[fixedTeam] || league.flag) : league.flag,
+            leagueFlagAlt: league.flagAlt,
+            leagueCls: league.id === 6 ? 'cdm' : league.cls,
+            leagueLabel: league.label,
             goals: 0, assists: 0, played: tp.played !== false, date: matchDate,
           });
           alreadyCounted.add(tp.id);
