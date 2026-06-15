@@ -472,9 +472,20 @@ function rebuildPlayers(matches) {
   }
 
   // ── Joueurs CDM (leagueId: 6) — entrées distinctes ───────────────
+  // Mapping teamName → flag via CDM_TEAM_NAMES inversé + CDM_TEAM_FLAGS
+  const cdmNameToFlag = {};
+  for (const [id, name] of Object.entries(CDM_TEAM_NAMES)) {
+    cdmNameToFlag[name] = CDM_TEAM_FLAGS[id] || 'eu';
+  }
   for (const [, data] of Object.entries(cdm)) {
     const info = data.info;
     if (!info?.name) continue;
+    // Corriger le flag via CDM_TEAM_FLAGS si disponible
+    const correctFlag = cdmNameToFlag[info.teamName];
+    if (correctFlag) {
+      info.leagueFlag = correctFlag;
+      info.leagueFlagAlt = correctFlag.toUpperCase().replace('-','').slice(0,2);
+    }
     players.push(buildEntry(info, data.matches, info));
   }
 
