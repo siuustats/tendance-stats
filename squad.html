@@ -783,22 +783,22 @@ async function loadSquad(teamId, team, group) {
     const box2 = document.getElementById('r32box2');
     const r16col = document.getElementById('r16col');
     if (!svg || !box1 || !box2) return;
-    const container = svg.parentElement;
-    const cRect = container.getBoundingClientRect();
+    const svgRect = svg.getBoundingClientRect();
     const b1 = box1.getBoundingClientRect();
     const b2 = box2.getBoundingClientRect();
-    const r16 = r16col ? r16col.getBoundingClientRect() : null;
-    const y1 = b1.top - cRect.top + b1.height / 2;
-    const y2 = b2.top - cRect.top + b2.height / 2;
+    const y1 = b1.top + b1.height / 2 - svgRect.top;
+    const y2 = b2.top + b2.height / 2 - svgRect.top;
     const yMid = (y1 + y2) / 2;
-    const totalH = y2 + b2.height / 2;
+    const totalH = Math.max(y2 + 20, 10);
     svg.setAttribute('height', totalH);
     svg.setAttribute('viewBox', '0 0 36 ' + totalH);
-    svg.style.marginTop = (b1.top - cRect.top) + 'px';
     const path = document.getElementById('bracketPath');
     if (path) path.setAttribute('d', 'M0,'+y1.toFixed(1)+' H18 V'+yMid.toFixed(1)+' M0,'+y2.toFixed(1)+' H18 V'+yMid.toFixed(1)+' M18,'+yMid.toFixed(1)+' H36');
-    // Centrer la boîte R16
-    if (r16col) r16col.style.paddingTop = (yMid - (r16 ? r16.height/2 : 20)) + 'px';
+    if (r16col) {
+      const r16Rect = r16col.getBoundingClientRect();
+      const offset = yMid - (r16Rect.height / 2) - (r16Rect.top - svgRect.top);
+      r16col.style.marginTop = Math.max(0, offset) + 'px';
+    }
   });
 
   // Pré-indexer les stats CDM depuis data.json par ID joueur
