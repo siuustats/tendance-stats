@@ -182,6 +182,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     /* ── BOUTON RETOUR ── */
     .back-btn { margin:12px 12px 0; }
   }
+  /* Mini bracket */
+  .mini-bracket{display:flex;align-items:flex-start;gap:0;margin-top:14px}
+  .mini-bracket-col{display:flex;flex-direction:column;min-width:0}
+  .mini-bracket-title{font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;color:#d4a843;text-align:center;padding-bottom:8px;margin-bottom:4px}
+  .mini-bracket-arrow{display:flex;align-items:center;padding:28px 8px 0;color:#3a3f55;font-size:18px}
+  .bracket-match{background:#0d0f15;border:1px solid rgba(212,168,67,0.15);border-radius:10px;overflow:hidden;position:relative;transition:border-color .2s}
+  .bracket-match:hover{border-color:rgba(212,168,67,0.3)}
+  .bracket-team{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:11px;font-weight:600;color:#f0f2f8}
+  .bracket-team:first-child{border-bottom:1px solid rgba(255,255,255,0.06)}
+  .bracket-team.highlight{color:#d4a843;background:rgba(212,168,67,0.08);font-weight:700}
+  .bracket-team.tbd{color:#4b5563;font-style:italic;font-weight:400}
+  .bracket-flag{width:18px;height:12px;object-fit:cover;border-radius:2px;flex-shrink:0}
   </style>
 <script type="application/ld+json">
 {
@@ -459,19 +471,12 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups) {
     statusColor = '#ff5050';
   }
 
-  function bracketTeamRow(t, isMe, sep) {
-    const flagHtml = t.flag ? '<img src="https://flagcdn.com/w20/' + t.flag + '.png" style="width:18px;height:12px;object-fit:cover;border-radius:2px;flex-shrink:0">' : '<span style="width:18px;flex-shrink:0"></span>';
-    const color = isMe ? '#d4a843' : (t.tbd ? '#6b7280' : '#f0f2f8');
-    const bg = isMe ? 'background:rgba(212,168,67,0.08);' : '';
-    const style = 'font-style:' + (t.tbd ? 'italic' : 'normal') + ';font-weight:' + (isMe ? '700' : (t.tbd ? '400' : '500')) + ';';
-    const border = sep ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : '';
-    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;font-size:11px;color:' + color + ';' + style + bg + border + '">' + flagHtml + '<span>' + t.name + '</span></div>';
-  }
-
-  function bracketBox(teamA, isMeA, teamB, isMeB) {
-    return '<div style="background:#0d0f15;border:1px solid rgba(212,168,67,0.2);border-radius:8px;overflow:hidden;min-width:160px;flex:1">'
-      + bracketTeamRow(teamA, isMeA, true)
-      + bracketTeamRow(teamB, isMeB, false)
+  function matchBox(tH, isHme, tA, isAme) {
+    var fH = tH.flag ? '<img src="https://flagcdn.com/w20/'+tH.flag+'.png" class="bracket-flag">' : '';
+    var fA = tA.flag ? '<img src="https://flagcdn.com/w20/'+tA.flag+'.png" class="bracket-flag">' : '';
+    return '<div class="bracket-match" style="min-width:160px">'
+      + '<div class="bracket-team'+(isHme?' highlight':tH.tbd?' tbd':'')+'">'+fH+'<span>'+tH.name+'</span></div>'
+      + '<div class="bracket-team'+(isAme?' highlight':tA.tbd?' tbd':'')+'">'+fA+'<span>'+tA.name+'</span></div>'
       + '</div>';
   }
 
@@ -483,43 +488,26 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups) {
     const myTeam = { name: teamName, flag: FLAG_MAP[teamName] || '', tbd: false };
     const oppTeam = getTeamFromSlot(oppSlot, allGroups || [], st);
 
-    // Trouver le match R32 partenaire pour le R16
     const r32Num = r32Match.num;
     const r16Pair = R16_PAIRS.find(function(p){ return p[0] === r32Num || p[1] === r32Num; });
-    let r16OppBox = '';
+    let r16Match = null;
     if (r16Pair) {
       const partnerNum = r16Pair[0] === r32Num ? r16Pair[1] : r16Pair[0];
-      const partnerMatch = R32_MATCHES.find(function(m){ return m.num === partnerNum; });
-      if (partnerMatch) {
-        const pH = getTeamFromSlot(partnerMatch.h, allGroups || [], st);
-        const pA = getTeamFromSlot(partnerMatch.a, allGroups || [], st);
-        r16OppBox = bracketBox(pH, false, pA, false);
+      const partnerR32 = R32_MATCHES.find(function(m){ return m.num === partnerNum; });
+      if (partnerR32) {
+        const pH = getTeamFromSlot(partnerR32.h, allGroups || [], st);
+        const pA = getTeamFromSlot(partnerR32.a, allGroups || [], st);
+        r16Match = { tH: { name: 'W M'+r32Num, tbd:true }, tA: { name: 'W M'+partnerNum, tbd:true } };
       }
     }
 
-    // Affichage : [16e : moi vs opp] → [8e : vainqueur vs vainqueur partenaire]
-    const myR32Box = bracketBox(isHome ? myTeam : oppTeam, isHome, isHome ? oppTeam : myTeam, !isHome);
-    const arrow = '<div style="color:#6b7280;font-size:16px;align-self:center;flex-shrink:0">→</div>';
-    const r16Box = '<div style="background:#0d0f15;border:1px solid rgba(212,168,67,0.1);border-radius:8px;overflow:hidden;min-width:140px;flex:1">'
-      + '<div style="display:flex;align-items:center;gap:6px;padding:7px 10px;font-size:11px;color:#6b7280;font-style:italic;border-bottom:1px solid rgba(255,255,255,0.06)"><span>Vainqueur 16e</span></div>'
-      + '<div style="display:flex;align-items:center;gap:6px;padding:7px 10px;font-size:11px;color:#6b7280;font-style:italic">'
-      + (r16OppBox ? 'Vainqueur match partenaire' : '\u00e0 d\u00e9terminer') + '</div></div>';
+    const r32Box = isHome ? matchBox(myTeam, true, oppTeam, false) : matchBox(oppTeam, false, myTeam, true);
+    const r16Box = r16Match ? matchBox(r16Match.tH, false, r16Match.tA, false) : matchBox({name:'\u00e0 d\u00e9terminer',tbd:true}, false, {name:'\u00e0 d\u00e9terminer',tbd:true}, false);
 
-    bracketHtml = '<div style="margin-top:16px">'
-      + '<div style="display:flex;align-items:stretch;gap:6px;flex-wrap:wrap">'
-      + '<div style="display:flex;flex-direction:column;gap:4px;min-width:100px;flex-shrink:0"><div style="font-size:9px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;margin-bottom:6px">16\u00e8mes</div>' + myR32Box + '</div>'
-      + arrow
-      + '<div style="display:flex;flex-direction:column;gap:4px;min-width:100px;flex-shrink:0"><div style="font-size:9px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;margin-bottom:6px">8\u00e8mes</div>'
-      + '<div style="background:#0d0f15;border:1px solid rgba(255,255,255,0.06);border-radius:8px;overflow:hidden;min-width:140px;flex:1">'
-      + '<div style="display:flex;align-items:center;gap:6px;padding:7px 10px;font-size:10px;color:#6b7280;font-style:italic;border-bottom:1px solid rgba(255,255,255,0.04)">W 16\u00e8mes (si qualifi\u00e9)</div>'
-      + (r16OppBox
-        ? '<div style="display:flex;align-items:center;gap:6px;padding:7px 10px;font-size:10px;color:#6b7280;font-style:italic">W partenaire</div>'
-        : '<div style="display:flex;align-items:center;gap:6px;padding:7px 10px;font-size:10px;color:#6b7280;font-style:italic">\u00e0 d\u00e9terminer</div>')
-      + '</div></div>'
-      + '</div>'
-      + (r16OppBox
-        ? '<div style="margin-top:8px"><div style="font-size:9px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;margin-bottom:6px">Autre match 16\u00e8mes (m\u00eame 8e)</div>' + r16OppBox + '</div>'
-        : '')
+    bracketHtml = '<div class="mini-bracket">'
+      + '<div class="mini-bracket-col"><div class="mini-bracket-title">16\u00c8MES</div>' + r32Box + '</div>'
+      + '<div class="mini-bracket-arrow">\u203a</div>'
+      + '<div class="mini-bracket-col"><div class="mini-bracket-title">8\u00c8MES</div>' + r16Box + '</div>'
       + '</div>';
 
   } else if (teamRank === 3) {
