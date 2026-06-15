@@ -476,7 +476,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
   const nextMatch = cdmMatches.filter(function(m){
     const h = NAME_FIX_ST[m.homeTeam] || m.homeTeam;
     const a = NAME_FIX_ST[m.awayTeam] || m.awayTeam;
-    return m.homeGoals === undefined && (h === teamName || a === teamName);
+    return (m.homeGoals === undefined || m.homeGoals === null) && (h === teamName || a === teamName);
   }).sort(function(a,b){ return new Date(a.date) - new Date(b.date); })[0];
 
   let nextMatchHtml = '';
@@ -589,7 +589,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
           + '</div>'
         + '</div>'
       + '</div>'
-      + (nextMatchHtml ? nextMatchHtml : '')
+      + (nextMatchHtml ? '' : '')
     + '</div>';
 
   } else if (teamRank === 3) {
@@ -607,6 +607,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
           + '<div style="font-size:13px;font-weight:600;color:' + statusColor + ';line-height:1.3">' + statusMsg + '</div>'
         + '</div>'
         + '<div style="font-size:11px;color:#6b7280">' + pts + ' pt' + (pts > 1 ? 's' : '') + ' \u00b7 ' + (3 - mj) + ' match' + (3 - mj > 1 ? 's' : '') + ' restant' + (3 - mj > 1 ? 's' : '') + '</div>'
+        + nextMatchHtml
       + '</div>'
       + (bracketHtml ? '<div style="margin-left:auto">' + bracketHtml + '</div>' : '')
     + '</div>'
