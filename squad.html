@@ -505,7 +505,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
           var gl = g.name.slice(-1);
           var rk = ri + 1;
           var rkStr = rk === 1 ? '1er' : rk+'e';
-          var col = rk <= 2 ? '#d4a843' : rk === 3 ? '#00e5a0' : '#6b7280';
+          var col = '#6b7280';
           return '<span style="font-size:9px;color:'+col+';margin-left:auto;font-family:\'DM Mono\',monospace;white-space:nowrap">'+rkStr+' Gr.'+gl+'</span>';
         }
       }
@@ -548,46 +548,53 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
       return '<div class="'+cls+'" style="'+border+'">'+f+'<span>'+t.name+'</span>'+rank+'</div>';
     }
 
-    const myBox = '<div class="bracket-match" style="width:160px">'
+    const BOX_W = '200px';
+
+    const myBox = '<div class="bracket-match" style="width:'+BOX_W+'">'
       + teamRow(myT1, myT1me, true)
       + teamRow(myT2, myT2me, false)
       + '</div>';
 
     const partnerBox = partnerMatch
-      ? '<div class="bracket-match" style="width:160px">'
+      ? '<div class="bracket-match" style="width:'+BOX_W+'">'
         + teamRow(partnerMatch.tH, false, true)
         + teamRow(partnerMatch.tA, false, false)
         + '</div>'
-      : '<div class="bracket-match tbd" style="width:160px">'
+      : '<div class="bracket-match tbd" style="width:'+BOX_W+'">'
         + '<div class="bracket-team tbd" style="border-bottom:1px solid rgba(255,255,255,0.06)">\u00e0 d\u00e9terminer</div>'
         + '<div class="bracket-team tbd">\u00e0 d\u00e9terminer</div>'
         + '</div>';
 
     const r16Label1 = 'W M' + r32Num;
     const r16Label2 = partnerNum ? 'W M' + partnerNum : '\u00e0 d\u00e9terminer';
-    const r16Box = '<div class="bracket-match" style="width:160px">'
+    const r16Box = '<div class="bracket-match" style="width:'+BOX_W+'">'
       + '<div class="bracket-team tbd" style="border-bottom:1px solid rgba(255,255,255,0.06)">'+r16Label1+'</div>'
       + '<div class="bracket-team tbd">'+r16Label2+'</div>'
       + '</div>';
 
-    // Layout : col R32 | connecteur SVG | col R16
-    bracketHtml = '<div style="display:flex;align-items:flex-start;gap:0;overflow-x:auto">'
-      + '<div>'
-        + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:10px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:4px">16\u00c8MES</div>'
-        + '<div style="display:flex;flex-direction:column;gap:8px">'
-          + myBox
-          + partnerBox
+    // Hauteur d'une boîte ~37px, gap 8px → total 2 boîtes = 82px, centre = 41px, r16 box = 37px → margin-top = (82-37)/2 = 22px
+    const R32_H = 82; const R16_H = 37; const R16_MT = Math.round((R32_H - R16_H) / 2);
+
+    bracketHtml = '<div>'
+      + '<div style="display:flex;align-items:flex-start;gap:0;overflow-x:auto">'
+        + '<div>'
+          + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:10px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:4px">16\u00c8MES</div>'
+          + '<div style="display:flex;flex-direction:column;gap:8px">'
+            + myBox
+            + partnerBox
+          + '</div>'
+        + '</div>'
+        + '<svg width="36" height="'+R32_H+'" style="flex-shrink:0;overflow:visible;margin-top:22px" viewBox="0 0 36 '+R32_H+'">'
+          + '<path d="M0,19 H18 V41 M0,63 H18 V41 M18,41 H36" stroke="rgba(212,168,67,0.3)" stroke-width="1.5" fill="none"/>'
+        + '</svg>'
+        + '<div>'
+          + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:10px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:4px">8\u00c8MES</div>'
+          + '<div style="margin-top:'+R16_MT+'px">'
+            + r16Box
+          + '</div>'
         + '</div>'
       + '</div>'
-      + '<svg width="36" height="90" style="flex-shrink:0;overflow:visible;margin-top:22px" viewBox="0 0 36 90">'
-        + '<path d="M0,19 H18 V45 M0,71 H18 V45 M18,45 H36" stroke="rgba(212,168,67,0.3)" stroke-width="1.5" fill="none"/>'
-      + '</svg>'
-      + '<div>'
-        + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:10px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:4px">8\u00c8MES</div>'
-        + '<div style="display:flex;align-items:center;height:90px">'
-          + r16Box
-        + '</div>'
-      + '</div>'
+      + (nextMatchHtml ? nextMatchHtml : '')
     + '</div>';
 
   } else if (teamRank === 3) {
@@ -605,7 +612,6 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
           + '<div style="font-size:13px;font-weight:600;color:' + statusColor + ';line-height:1.3">' + statusMsg + '</div>'
         + '</div>'
         + '<div style="font-size:11px;color:#6b7280">' + pts + ' pt' + (pts > 1 ? 's' : '') + ' \u00b7 ' + (3 - mj) + ' match' + (3 - mj > 1 ? 's' : '') + ' restant' + (3 - mj > 1 ? 's' : '') + '</div>'
-        + nextMatchHtml
       + '</div>'
       + (bracketHtml ? '<div style="margin-left:auto">' + bracketHtml + '</div>' : '')
     + '</div>'
