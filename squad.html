@@ -345,7 +345,7 @@ const GROUPS = [
   { name: "Groupe L", ids: ["448","477","4469","2659"] },
 ];
 
-const NAME_FIX_ST = {'Mexico':'Mexique','South Africa':'Afrique du Sud','South Korea':'Corée du Sud','Czechia':'Tchéquie','Bosnia and Herzegovina':'Bosnie-Herzégovine','Bosnia-Herzegovina':'Bosnie-Herzégovine','Switzerland':'Suisse','Brazil':'Brésil','Morocco':'Maroc','Haiti':'Haïti','Scotland':'Écosse','USA':'États-Unis','United States':'États-Unis','Australia':'Australie','Turkey':'Turquie','Germany':'Allemagne','Curacao':'Curaçao','Ivory Coast':"Côte d'Ivoire",'Ecuador':'Équateur','Netherlands':'Pays-Bas','Japan':'Japon','Sweden':'Suède','Tunisia':'Tunisie','Belgium':'Belgique','Egypt':'Égypte','Iran':'Iran','New Zealand':'Nouvelle-Zélande','Spain':'Espagne','Cape Verde':'Cap-Vert','Saudi Arabia':'Arabie Saoudite','Uruguay':'Uruguay','Senegal':'Sénégal','Iraq':'Irak','Norway':'Norvège','Argentina':'Argentine','Algeria':'Algérie','Austria':'Autriche','Jordan':'Jordanie','Portugal':'Portugal','DR Congo':'RD Congo','Uzbekistan':'Ouzbékistan','Colombia':'Colombie','England':'Angleterre','Croatia':'Croatie','Ghana':'Ghana','Panama':'Panama','Canada':'Canada','Qatar':'Qatar','Paraguay':'Paraguay'};
+const NAME_FIX_ST = {'Mexico':'Mexique','South Africa':'Afrique du Sud','South Korea':'Corée du Sud','Czechia':'Tchéquie','Bosnia and Herzegovina':'Bosnie-Herzégovine','Bosnia-Herzegovina':'Bosnie-Herzégovine','Switzerland':'Suisse','Brazil':'Brésil','Morocco':'Maroc','Haiti':'Haïti','Scotland':'Écosse','USA':'États-Unis','United States':'États-Unis','Australia':'Australie','Turkey':'Turquie','Germany':'Allemagne','Curacao':'Curaçao','Ivory Coast':'Côte d’Ivoire','Ecuador':'Équateur','Netherlands':'Pays-Bas','Japan':'Japon','Sweden':'Suède','Tunisia':'Tunisie','Belgium':'Belgique','Egypt':'Égypte','Iran':'Iran','New Zealand':'Nouvelle-Zélande','Spain':'Espagne','Cape Verde':'Cap-Vert','Saudi Arabia':'Arabie Saoudite','Uruguay':'Uruguay','Senegal':'Sénégal','Iraq':'Irak','Norway':'Norvège','Argentina':'Argentine','Algeria':'Algérie','Austria':'Autriche','Jordan':'Jordanie','Portugal':'Portugal','DR Congo':'RD Congo','Uzbekistan':'Ouzbékistan','Colombia':'Colombie','England':'Angleterre','Croatia':'Croatie','Ghana':'Ghana','Panama':'Panama','Canada':'Canada','Qatar':'Qatar','Paraguay':'Paraguay'};
 
 function buildStandings(matches) {
   const s = {};
@@ -373,55 +373,78 @@ function sortGroup(nations, st) {
     });
 }
 
+const R32_MATCHES = [
+  { num:73, h:{type:'runner',group:'A'}, a:{type:'runner',group:'B'} },
+  { num:74, h:{type:'winner',group:'E'}, a:{type:'best3',groups:'A/B/C/D/F'} },
+  { num:75, h:{type:'winner',group:'F'}, a:{type:'runner',group:'C'} },
+  { num:76, h:{type:'winner',group:'C'}, a:{type:'runner',group:'F'} },
+  { num:77, h:{type:'winner',group:'I'}, a:{type:'best3',groups:'C/D/F/G/H'} },
+  { num:78, h:{type:'runner',group:'E'}, a:{type:'runner',group:'I'} },
+  { num:79, h:{type:'winner',group:'A'}, a:{type:'best3',groups:'C/E/F/H/I'} },
+  { num:80, h:{type:'winner',group:'L'}, a:{type:'best3',groups:'E/H/I/J/K'} },
+  { num:81, h:{type:'winner',group:'D'}, a:{type:'best3',groups:'B/E/F/I/J'} },
+  { num:82, h:{type:'winner',group:'G'}, a:{type:'best3',groups:'A/E/H/I/J'} },
+  { num:83, h:{type:'runner',group:'K'}, a:{type:'runner',group:'L'} },
+  { num:84, h:{type:'winner',group:'H'}, a:{type:'runner',group:'J'} },
+  { num:85, h:{type:'winner',group:'B'}, a:{type:'best3',groups:'E/F/G/I/J'} },
+  { num:86, h:{type:'winner',group:'J'}, a:{type:'runner',group:'H'} },
+  { num:87, h:{type:'winner',group:'K'}, a:{type:'best3',groups:'D/E/I/J/L'} },
+  { num:88, h:{type:'runner',group:'D'}, a:{type:'runner',group:'G'} },
+];
+
+function getOpponentLabel(slot) {
+  if (slot.type === 'best3') return 'Meill. 3e (' + slot.groups + ')';
+  return (slot.type === 'winner' ? '1er' : '2e') + ' Gr.' + slot.group;
+}
+
 function renderProjection(groupObj, st, highlightId, teamName) {
   if (!groupObj) return '';
   const ranked = sortGroup(groupObj.ids, st);
   const teamRank = ranked.findIndex(function(t){ return t.id === highlightId; }) + 1;
-  const groupLetter = groupObj.name.slice(-1); // 'A', 'B', etc.
-
-  // Mapping 16ème de finale CDM 2026 (48 équipes, 12 groupes, top 2 + 8 meilleurs 3e)
-  // Top 2 de chaque groupe qualifiés + 8 meilleurs 3e
+  const groupLetter = groupObj.name.slice(-1);
   const teamSt = ranked[teamRank-1] || {};
   const mj = teamSt.mj || 0;
+  const pts = teamSt.pts || 0;
+  const maxPts = pts + (3 - mj) * 3;
 
-  let statusMsg = '';
-  let statusColor = '#9ca3af';
-  let nextOpponent = '';
+  let statusMsg = '', statusColor = '#9ca3af', nextOpponent = '', matchNum = '';
 
   if (mj === 0) {
     statusMsg = 'Pas encore de match joué';
     statusColor = '#6b7280';
-  } else if (teamRank === 1) {
-    statusMsg = '🥇 1er du groupe ' + groupLetter + ' — Qualifié';
+  } else if (teamRank <= 2) {
+    const type = teamRank === 1 ? 'winner' : 'runner';
+    statusMsg = (teamRank === 1 ? '🥇 1er' : '🥈 2e') + ' du groupe ' + groupLetter + ' - Qualifié';
     statusColor = '#d4a843';
-    nextOpponent = "Meilleur 3e ou 2e d'un autre groupe";
-  } else if (teamRank === 2) {
-    statusMsg = '🥈 2e du groupe ' + groupLetter + ' — Qualifié';
-    statusColor = '#d4a843';
-    nextOpponent = "1er d'un autre groupe";
+    // Trouver le match R32 correspondant
+    const r32 = R32_MATCHES.find(function(m) {
+      return (m.h.type === type && m.h.group === groupLetter) ||
+             (m.a.type === type && m.a.group === groupLetter);
+    });
+    if (r32) {
+      const oppSlot = (r32.h.group === groupLetter && r32.h.type === type) ? r32.a : r32.h;
+      nextOpponent = getOpponentLabel(oppSlot);
+      matchNum = 'M' + r32.num;
+    }
   } else if (teamRank === 3) {
-    statusMsg = '3e du groupe ' + groupLetter + ' — Possible si meilleur 3e';
+    statusMsg = '3e du groupe ' + groupLetter + ' - Possible si meilleur 3e';
     statusColor = '#00e5a0';
     nextOpponent = 'Qualification incertaine';
   } else {
-    statusMsg = '4e du groupe ' + groupLetter + ' — Éliminé';
+    statusMsg = '4e du groupe ' + groupLetter + ' - Éliminé';
     statusColor = '#ff5050';
   }
 
-  const pts = teamSt.pts || 0;
-  const ptsLeft = (3 - mj) * 3;
-  const maxPts = pts + ptsLeft;
-
   return `<div style="background:#111318;border:1px solid #1e2130;border-radius:12px;padding:16px;margin-bottom:20px">
     <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:#9ca3af;margin-bottom:12px">🏆 SITUATION ACTUELLE</div>
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-      <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:${statusColor}">${teamRank > 0 ? teamRank+'e' : '—'}</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:${statusColor}">${teamRank}e</div>
       <div>
         <div style="font-size:13px;font-weight:600;color:${statusColor}">${statusMsg}</div>
-        ${nextOpponent ? `<div style="font-size:11px;color:#6b7280;margin-top:2px">16e de finale : vs ${nextOpponent}</div>` : ''}
+        ${nextOpponent ? '<div style="font-size:11px;color:#6b7280;margin-top:3px">' + (matchNum ? matchNum + ' · ' : '') + 'vs ' + nextOpponent + '</div>' : ''}
       </div>
     </div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
       <div style="background:#161820;border-radius:8px;padding:8px 14px;text-align:center">
         <div style="font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:#f0f2f8">${pts}</div>
         <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Pts actuels</div>
@@ -443,8 +466,9 @@ function renderGroupTable(groupObj, st, highlightId) {
   let rows = '';
   ranked.forEach(function(t, i) {
     const isHighlight = t.id === highlightId;
-    const bg = isHighlight ? 'rgba(0,229,160,0.12)' : i < 2 ? 'rgba(212,168,67,0.06)' : i === 2 ? 'rgba(0,229,160,0.04)' : '';
-    const borderLeft = i < 2 ? '3px solid #d4a843' : i === 2 ? '3px solid rgba(0,229,160,0.4)' : '3px solid transparent';
+    const qualBg = i < 2 ? 'rgba(212,168,67,0.06)' : i === 2 ? 'rgba(0,229,160,0.04)' : '';
+    const bg = isHighlight ? (i < 2 ? 'rgba(212,168,67,0.14)' : 'rgba(0,229,160,0.10)') : qualBg;
+    const borderLeft = i < 2 ? '3px solid #d4a843' : i === 2 ? '3px solid rgba(0,229,160,0.5)' : '3px solid transparent';
     const diff = (t.bp||0)-(t.bc||0);
     rows += `<tr style="background:${bg};border-left:${borderLeft};${isHighlight?'font-weight:600;':''}">
       <td style="padding:7px 10px;font-size:12px;color:${i<2?'#d4a843':i===2?'#00e5a0':'#6b7280'};font-weight:700">${i+1}</td>
@@ -504,24 +528,23 @@ function renderMatchHistory(matches, teamName) {
     const assistPlayers = (m.players||[]).filter(function(p){ return (p.assists||0)>0; });
     // Construire lignes but + passe
     const goalLines = goalPlayers.map(function(scorer) {
-      const assister = assistPlayers.find(function(a){ return a.teamName === scorer.teamName; });
-      const line = scorer.name + ' ⚽' + (scorer.goals > 1 ? ' x'+scorer.goals : '');
-      return assister ? line + ' <span style="color:#5e81f4">(← ' + assister.name + ')</span>' : line;
+      const assister = assistPlayers.find(function(a){ return a.id !== scorer.id && a.teamName === scorer.teamName; });
+      let line = scorer.name + ' ⚽';
+      if (scorer.goals > 1) line += ' x' + scorer.goals;
+      if (assister) line += ' ← ' + assister.name + ' 🎯';
+      return line;
     });
 
     const detailId = 'match-detail-' + idx;
     const detailHtml = goalLines.length ? goalLines.join('<br>') : 'Aucun buteur enregistré';
 
-    return `<div style="background:#111318;border:1px solid #1e2130;border-radius:10px;margin-bottom:8px;overflow:hidden">
+    return `<div style="background:#111318;border:1px solid #1e2130;border-radius:10px;margin-bottom:8px;overflow:hidden;cursor:pointer" onclick="var el=document.getElementById('${detailId}');el.style.display=el.style.display==='none'?'block':'none'">
       <div style="padding:12px 16px;display:flex;align-items:center;gap:12px">
         <div style="background:${resultBg};color:${resultColor};font-weight:700;font-size:12px;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${result}</div>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:600;color:#f0f2f8">${home} <span style="color:#6b7280;font-weight:400">vs</span> ${away} <span style="font-family:'DM Mono',monospace;font-size:14px;margin-left:6px">${m.homeGoals}–${m.awayGoals}</span></div>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-          <span style="font-size:11px;color:#6b7280">${date}</span>
-          <button onclick="var el=document.getElementById('${detailId}');el.style.display=el.style.display==='none'?'block':'none'" style="background:rgba(255,255,255,0.05);border:1px solid #1e2130;border-radius:6px;padding:3px 8px;font-size:11px;color:#9ca3af;cursor:pointer">🎯 Buts</button>
-        </div>
+        <span style="font-size:11px;color:#6b7280;flex-shrink:0">${date}</span>
       </div>
       <div id="${detailId}" style="display:none;padding:8px 16px 12px;border-top:1px solid #1e2130;font-size:12px;color:#9ca3af;line-height:2">${detailHtml}</div>
     </div>`;
