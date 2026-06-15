@@ -572,24 +572,19 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
       + '<div class="bracket-team tbd">'+r16Label2+'</div>'
       + '</div>';
 
-    // Hauteur boîte ~37px, gap 8px → 2 boîtes = 82px. Milieux : 18px et 63px. Centre : 41px
-    const R32_H = 96; const R16_H = 44; const R16_MT = Math.round((R32_H - R16_H) / 2);
-
     bracketHtml = '<div>'
-      + '<div style="display:flex;align-items:flex-start;gap:0;overflow-x:auto">'
-        + '<div>'
+      + '<div id="bracketContainer" style="display:flex;align-items:flex-start;gap:0;overflow-x:auto">'
+        + '<div id="r32col">'
           + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:10px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:4px">16\u00c8MES</div>'
           + '<div style="display:flex;flex-direction:column;gap:8px">'
-            + myBox
-            + partnerBox
+            + '<div id="r32box1">' + myBox + '</div>'
+            + '<div id="r32box2">' + partnerBox + '</div>'
           + '</div>'
         + '</div>'
-        + '<svg width="36" height="96" style="flex-shrink:0;overflow:visible;margin-top:22px" viewBox="0 0 36 96">'
-          + '<path d="M0,22 H18 V48 M0,74 H18 V48 M18,48 H36" stroke="rgba(212,168,67,0.35)" stroke-width="1.5" fill="none"/>'
-        + '</svg>'
+        + '<svg id="bracketSvg" width="36" style="flex-shrink:0;overflow:visible" viewBox="0 0 36 100"><path id="bracketPath" d="" stroke="rgba(212,168,67,0.35)" stroke-width="1.5" fill="none"/></svg>'
         + '<div>'
           + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:10px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:4px">8\u00c8MES</div>'
-          + '<div style="margin-top:' + R16_MT + 'px">'
+          + '<div id="r16col">'
             + r16Box
           + '</div>'
         + '</div>'
@@ -627,16 +622,16 @@ function renderGroupTable(groupObj, st, highlightId) {
     const bg = isHighlight ? (i < 2 ? 'rgba(212,168,67,0.10)' : 'rgba(0,229,160,0.10)') : qualBg;
     const borderLeft = i < 2 ? '3px solid #d4a843' : i === 2 ? '3px solid rgba(0,229,160,0.5)' : '3px solid transparent';
     const diff = (t.bp||0)-(t.bc||0);
-    rows += `<tr style="background:${bg};border-left:${borderLeft};${isHighlight?'font-weight:600;':''}">
-      <td style="padding:7px 10px;font-size:12px;color:${i<2?'#d4a843':i===2?'#00e5a0':'#6b7280'};font-weight:700">${i+1}</td>
-      <td style="padding:7px 8px;display:flex;align-items:center;gap:6px"><img src="${t.logo}" style="width:20px;height:20px;object-fit:contain"><span style="font-size:13px;color:#f0f2f8;${isHighlight?'font-weight:700;':''}">${t.name||'?'}</span></td>
+    rows += `<tr style="background:${bg};border-left:${borderLeft}">
+      <td style="padding:7px 10px;font-size:12px;color:${i<2?'#d4a843':i===2?'#00e5a0':'#6b7280'};font-weight:600">${i+1}</td>
+      <td style="padding:7px 8px;display:flex;align-items:center;gap:6px"><img src="${t.logo}" style="width:20px;height:20px;object-fit:contain"><span style="font-size:13px;color:#f0f2f8">${t.name||'?'}</span></td>
       <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:#9ca3af">${t.mj||0}</td>
       <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:#00e5a0">${t.v||0}</td>
       <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:#9ca3af">${t.n||0}</td>
       <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:#ff5050">${t.d||0}</td>
       <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:#9ca3af">${t.bp||0}:${t.bc||0}</td>
       <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:${diff>=0?'#00e5a0':'#ff5050'}">${diff>0?'+':''}${diff}</td>
-      <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:#f0f2f8">${t.pts||0}</td>
+      <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:#f0f2f8">${t.pts||0}</td>
     </tr>`;
   });
   return `<div style="background:#111318;border:1px solid #1e2130;border-radius:12px;overflow:hidden;margin-bottom:20px">
@@ -780,6 +775,31 @@ async function loadSquad(teamId, team, group) {
       </button>
       <div id="rosterContent" style="display:none;margin-top:8px"></div>
     </div>`;
+
+  // Dessiner le SVG bracket dynamiquement après rendu DOM
+  requestAnimationFrame(function() {
+    const svg = document.getElementById('bracketSvg');
+    const box1 = document.getElementById('r32box1');
+    const box2 = document.getElementById('r32box2');
+    const r16col = document.getElementById('r16col');
+    if (!svg || !box1 || !box2) return;
+    const container = svg.parentElement;
+    const cRect = container.getBoundingClientRect();
+    const b1 = box1.getBoundingClientRect();
+    const b2 = box2.getBoundingClientRect();
+    const r16 = r16col ? r16col.getBoundingClientRect() : null;
+    const y1 = b1.top - cRect.top + b1.height / 2;
+    const y2 = b2.top - cRect.top + b2.height / 2;
+    const yMid = (y1 + y2) / 2;
+    const totalH = y2 + b2.height / 2;
+    svg.setAttribute('height', totalH);
+    svg.setAttribute('viewBox', '0 0 36 ' + totalH);
+    svg.style.marginTop = (b1.top - cRect.top) + 'px';
+    const path = document.getElementById('bracketPath');
+    if (path) path.setAttribute('d', 'M0,'+y1.toFixed(1)+' H18 V'+yMid.toFixed(1)+' M0,'+y2.toFixed(1)+' H18 V'+yMid.toFixed(1)+' M18,'+yMid.toFixed(1)+' H36');
+    // Centrer la boîte R16
+    if (r16col) r16col.style.paddingTop = (yMid - (r16 ? r16.height/2 : 20)) + 'px';
+  });
 
   // Pré-indexer les stats CDM depuis data.json par ID joueur
   const cdmStatsMap = {};
