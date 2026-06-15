@@ -573,7 +573,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
       + '</div>';
 
     // Hauteur boîte ~37px, gap 8px → 2 boîtes = 82px. Milieux : 18px et 63px. Centre : 41px
-    const R32_H = 98; const R16_H = 42; const R16_MT = Math.round((R32_H - R16_H) / 2);
+    const R32_H = 96; const R16_H = 44; const R16_MT = Math.round((R32_H - R16_H) / 2);
 
     bracketHtml = '<div>'
       + '<div style="display:flex;align-items:flex-start;gap:0;overflow-x:auto">'
@@ -584,8 +584,8 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
             + partnerBox
           + '</div>'
         + '</div>'
-        + '<svg width="36" height="98" style="flex-shrink:0;overflow:visible;margin-top:22px" viewBox="0 0 36 98">'
-          + '<path d="M0,21 H18 V49 M0,77 H18 V49 M18,49 H36" stroke="rgba(212,168,67,0.35)" stroke-width="1.5" fill="none"/>'
+        + '<svg width="36" height="96" style="flex-shrink:0;overflow:visible;margin-top:22px" viewBox="0 0 36 96">'
+          + '<path d="M0,22 H18 V48 M0,74 H18 V48 M18,48 H36" stroke="rgba(212,168,67,0.35)" stroke-width="1.5" fill="none"/>'
         + '</svg>'
         + '<div>'
           + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:10px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:4px">8\u00c8MES</div>'
@@ -655,7 +655,7 @@ function renderGroupTable(groupObj, st, highlightId) {
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <div style="padding:6px 12px 8px;font-size:10px;color:#4b5563;display:flex;gap:14px">
+    <div style="padding:10px 12px 8px;font-size:10px;color:#4b5563;display:flex;gap:14px;border-top:1px solid #1e2130;margin-top:4px">
       <span style="color:#d4a843">▌ Qualifié direct (top 2)</span><span style="color:#00e5a0">▌ Possible meilleur 3e</span>
     </div>
   </div>`;
