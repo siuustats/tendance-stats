@@ -471,15 +471,6 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups) {
     statusColor = '#ff5050';
   }
 
-  function matchBox(tH, isHme, tA, isAme) {
-    var fH = tH.flag ? '<img src="https://flagcdn.com/w20/'+tH.flag+'.png" class="bracket-flag">' : '';
-    var fA = tA.flag ? '<img src="https://flagcdn.com/w20/'+tA.flag+'.png" class="bracket-flag">' : '';
-    return '<div class="bracket-match" style="min-width:160px">'
-      + '<div class="bracket-team'+(isHme?' highlight':tH.tbd?' tbd':'')+'">'+fH+'<span>'+tH.name+'</span></div>'
-      + '<div class="bracket-team'+(isAme?' highlight':tA.tbd?' tbd':'')+'">'+fA+'<span>'+tA.name+'</span></div>'
-      + '</div>';
-  }
-
   let bracketHtml = '';
 
   if (r32Match && teamRank <= 2) {
@@ -490,25 +481,74 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups) {
 
     const r32Num = r32Match.num;
     const r16Pair = R16_PAIRS.find(function(p){ return p[0] === r32Num || p[1] === r32Num; });
-    let r16Match = null;
+    let partnerMatch = null, partnerNum = null;
     if (r16Pair) {
-      const partnerNum = r16Pair[0] === r32Num ? r16Pair[1] : r16Pair[0];
-      const partnerR32 = R32_MATCHES.find(function(m){ return m.num === partnerNum; });
-      if (partnerR32) {
-        const pH = getTeamFromSlot(partnerR32.h, allGroups || [], st);
-        const pA = getTeamFromSlot(partnerR32.a, allGroups || [], st);
-        r16Match = { tH: { name: 'W M'+r32Num, tbd:true }, tA: { name: 'W M'+partnerNum, tbd:true } };
+      partnerNum = r16Pair[0] === r32Num ? r16Pair[1] : r16Pair[0];
+      const pR32 = R32_MATCHES.find(function(m){ return m.num === partnerNum; });
+      if (pR32) {
+        const pH = getTeamFromSlot(pR32.h, allGroups || [], st);
+        const pA = getTeamFromSlot(pR32.a, allGroups || [], st);
+        partnerMatch = { tH: pH, tA: pA };
       }
     }
 
-    const r32Box = isHome ? matchBox(myTeam, true, oppTeam, false) : matchBox(oppTeam, false, myTeam, true);
-    const r16Box = r16Match ? matchBox(r16Match.tH, false, r16Match.tA, false) : matchBox({name:'\u00e0 d\u00e9terminer',tbd:true}, false, {name:'\u00e0 d\u00e9terminer',tbd:true}, false);
+    // Notre match R32 (équipe sélectionnée en highlight)
+    const myT1 = isHome ? myTeam : oppTeam;
+    const myT1me = isHome;
+    const myT2 = isHome ? oppTeam : myTeam;
+    const myT2me = !isHome;
 
-    bracketHtml = '<div class="mini-bracket">'
-      + '<div class="mini-bracket-col"><div class="mini-bracket-title">16\u00c8MES</div>' + r32Box + '</div>'
-      + '<div class="mini-bracket-arrow">\u203a</div>'
-      + '<div class="mini-bracket-col"><div class="mini-bracket-title">8\u00c8MES</div>' + r16Box + '</div>'
+    function teamRow(t, isMe, hasBorder) {
+      const f = t.flag ? '<img src="https://flagcdn.com/w20/'+t.flag+'.png" class="bracket-flag">' : '<span style="width:18px;display:inline-block;flex-shrink:0"></span>';
+      const cls = 'bracket-team' + (isMe ? ' highlight' : t.tbd ? ' tbd' : '');
+      const border = hasBorder ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : '';
+      return '<div class="'+cls+'" style="'+border+'">'+f+'<span>'+t.name+'</span></div>';
+    }
+
+    const myBox = '<div class="bracket-match" style="width:160px">'
+      + teamRow(myT1, myT1me, true)
+      + teamRow(myT2, myT2me, false)
       + '</div>';
+
+    const partnerBox = partnerMatch
+      ? '<div class="bracket-match" style="width:160px">'
+        + teamRow(partnerMatch.tH, false, true)
+        + teamRow(partnerMatch.tA, false, false)
+        + '</div>'
+      : '<div class="bracket-match tbd" style="width:160px">'
+        + '<div class="bracket-team tbd" style="border-bottom:1px solid rgba(255,255,255,0.06)">\u00e0 d\u00e9terminer</div>'
+        + '<div class="bracket-team tbd">\u00e0 d\u00e9terminer</div>'
+        + '</div>';
+
+    const r16Label1 = 'W M' + r32Num;
+    const r16Label2 = partnerNum ? 'W M' + partnerNum : '\u00e0 d\u00e9terminer';
+    const r16Box = '<div class="bracket-match" style="width:160px">'
+      + '<div class="bracket-team tbd" style="border-bottom:1px solid rgba(255,255,255,0.06)">'+r16Label1+'</div>'
+      + '<div class="bracket-team tbd">'+r16Label2+'</div>'
+      + '</div>';
+
+    // Layout : col R32 | connecteur SVG | col R16 centré
+    bracketHtml = '<div style="margin-top:16px;display:flex;align-items:center;gap:0;overflow-x:auto">'
+      // Colonne R32 : 2 matchs
+      + '<div>'
+        + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:8px">16\u00c8MES</div>'
+        + '<div style="display:flex;flex-direction:column;gap:8px">'
+          + myBox
+          + partnerBox
+        + '</div>'
+      + '</div>'
+      // Connecteur SVG
+      + '<svg width="40" height="90" style="flex-shrink:0;overflow:visible" viewBox="0 0 40 90">'
+        + '<path d="M0,19 H20 V45 M0,71 H20 V45 M20,45 H40" stroke="rgba(212,168,67,0.3)" stroke-width="1.5" fill="none"/>'
+      + '</svg>'
+      // Colonne R16 : 1 match centré
+      + '<div>'
+        + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:8px">8\u00c8MES</div>'
+        + '<div style="display:flex;align-items:center;height:90px">'
+          + r16Box
+        + '</div>'
+      + '</div>'
+    + '</div>';
 
   } else if (teamRank === 3) {
     bracketHtml = '<div style="margin-top:12px;background:#0d0f15;border:1px solid rgba(0,229,160,0.15);border-radius:8px;padding:10px 14px;font-size:12px;color:#00e5a0">Qualification incertaine — d\u00e9pend des autres 3e</div>';
