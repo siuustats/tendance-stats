@@ -488,10 +488,10 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
     const dateStr = new Date(nextMatch.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', timeZone:'Europe/Paris'});
     const timeStr = new Date(nextMatch.date).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris'});
     const oppFlagImg = oppFlag ? '<img src="https://flagcdn.com/w20/'+oppFlag+'.png" style="width:14px;height:10px;object-fit:cover;border-radius:1px;vertical-align:middle;margin-right:4px">' : '';
-    nextMatchHtml = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06)">'
-      + '<div style="font-size:9px;letter-spacing:1.5px;color:#6b7280;text-transform:uppercase;margin-bottom:5px">Prochain match</div>'
-      + '<div style="font-size:12px;font-weight:600;color:#f0f2f8">'+oppFlagImg+opp+'</div>'
-      + '<div style="font-size:10px;color:#6b7280;margin-top:2px">'+dateStr+' \u00b7 '+timeStr+'</div>'
+    nextMatchHtml = '<div style="margin-top:10px;padding:8px 10px;background:#0d0f15;border:1px solid rgba(212,168,67,0.15);border-radius:8px;display:flex;align-items:center;gap:10px">'
+      + '<div style="font-size:9px;letter-spacing:1.5px;color:#6b7280;text-transform:uppercase;flex-shrink:0">Prochain match</div>'
+      + '<div style="font-size:12px;font-weight:600;color:#f0f2f8;flex:1">'+oppFlagImg+opp+'</div>'
+      + '<div style="font-size:10px;color:#9ca3af;flex-shrink:0">'+dateStr+' \u00b7 '+timeStr+'</div>'
       + '</div>';
   }
 
@@ -572,7 +572,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
       + '<div class="bracket-team tbd">'+r16Label2+'</div>'
       + '</div>';
 
-    // Hauteur d'une boîte ~37px, gap 8px → total 2 boîtes = 82px, centre = 41px, r16 box = 37px → margin-top = (82-37)/2 = 22px
+    // Hauteur boîte ~37px, gap 8px → 2 boîtes = 82px. Milieux : 18px et 63px. Centre : 41px
     const R32_H = 82; const R16_H = 37; const R16_MT = Math.round((R32_H - R16_H) / 2);
 
     bracketHtml = '<div>'
@@ -584,12 +584,12 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
             + partnerBox
           + '</div>'
         + '</div>'
-        + '<svg width="36" height="'+R32_H+'" style="flex-shrink:0;overflow:visible;margin-top:22px" viewBox="0 0 36 '+R32_H+'">'
-          + '<path d="M0,19 H18 V41 M0,63 H18 V41 M18,41 H36" stroke="rgba(212,168,67,0.3)" stroke-width="1.5" fill="none"/>'
+        + '<svg width="36" height="82" style="flex-shrink:0;overflow:visible;margin-top:22px" viewBox="0 0 36 82">'
+          + '<path d="M0,18 H18 V41 M0,64 H18 V41 M18,41 H36" stroke="rgba(212,168,67,0.35)" stroke-width="1.5" fill="none"/>'
         + '</svg>'
         + '<div>'
           + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:10px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:4px">8\u00c8MES</div>'
-          + '<div style="margin-top:'+R16_MT+'px">'
+          + '<div style="margin-top:' + R16_MT + 'px">'
             + r16Box
           + '</div>'
         + '</div>'
