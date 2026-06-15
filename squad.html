@@ -373,29 +373,95 @@ function sortGroup(nations, st) {
     });
 }
 
+function renderProjection(groupObj, st, highlightId, teamName) {
+  if (!groupObj) return '';
+  const ranked = sortGroup(groupObj.ids, st);
+  const teamRank = ranked.findIndex(function(t){ return t.id === highlightId; }) + 1;
+  const groupLetter = groupObj.name.slice(-1); // 'A', 'B', etc.
+
+  // Mapping 16ème de finale CDM 2026 (48 équipes, 12 groupes, top 2 + 8 meilleurs 3e)
+  // Top 2 de chaque groupe qualifiés + 8 meilleurs 3e
+  const teamSt = ranked[teamRank-1] || {};
+  const mj = teamSt.mj || 0;
+
+  let statusMsg = '';
+  let statusColor = '#9ca3af';
+  let nextOpponent = '';
+
+  if (mj === 0) {
+    statusMsg = 'Pas encore de match joué';
+    statusColor = '#6b7280';
+  } else if (teamRank === 1) {
+    statusMsg = '🥇 1er du groupe ' + groupLetter + ' — Qualifié';
+    statusColor = '#d4a843';
+    nextOpponent = 'Meilleur 3e ou 2e d\'un autre groupe';
+  } else if (teamRank === 2) {
+    statusMsg = '🥈 2e du groupe ' + groupLetter + ' — Qualifié';
+    statusColor = '#d4a843';
+    nextOpponent = '1er d\'un autre groupe';
+  } else if (teamRank === 3) {
+    statusMsg = '3e du groupe ' + groupLetter + ' — Possible si meilleur 3e';
+    statusColor = '#00e5a0';
+    nextOpponent = 'Qualification incertaine';
+  } else {
+    statusMsg = '4e du groupe ' + groupLetter + ' — Éliminé';
+    statusColor = '#ff5050';
+  }
+
+  const pts = teamSt.pts || 0;
+  const ptsLeft = (3 - mj) * 3;
+  const maxPts = pts + ptsLeft;
+
+  return `<div style="background:#111318;border:1px solid #1e2130;border-radius:12px;padding:16px;margin-bottom:20px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:#9ca3af;margin-bottom:12px">🏆 SITUATION ACTUELLE</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:${statusColor}">${teamRank > 0 ? teamRank+'e' : '—'}</div>
+      <div>
+        <div style="font-size:13px;font-weight:600;color:${statusColor}">${statusMsg}</div>
+        ${nextOpponent ? `<div style="font-size:11px;color:#6b7280;margin-top:2px">16e de finale : vs ${nextOpponent}</div>\` : ''}
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <div style="background:#161820;border-radius:8px;padding:8px 14px;text-align:center">
+        <div style="font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:#f0f2f8">${pts}</div>
+        <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Pts actuels</div>
+      </div>
+      <div style="background:#161820;border-radius:8px;padding:8px 14px;text-align:center">
+        <div style="font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:#9ca3af">${maxPts}</div>
+        <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Max atteignable</div>
+      </div>
+      <div style="background:#161820;border-radius:8px;padding:8px 14px;text-align:center">
+        <div style="font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:#9ca3af">${3-mj}</div>
+        <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Matchs restants</div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderGroupTable(groupObj, st, highlightId) {
   const ranked = sortGroup(groupObj.ids, st);
   let rows = '';
   ranked.forEach(function(t, i) {
     const isHighlight = t.id === highlightId;
-    const qual = i < 2 ? 'rgba(0,229,160,0.08)' : i === 2 ? 'rgba(212,168,67,0.06)' : '';
+    const bg = isHighlight ? 'rgba(0,229,160,0.12)' : i < 2 ? 'rgba(212,168,67,0.06)' : i === 2 ? 'rgba(0,229,160,0.04)' : '';
+    const borderLeft = i < 2 ? '3px solid #d4a843' : i === 2 ? '3px solid rgba(0,229,160,0.4)' : '3px solid transparent';
     const diff = (t.bp||0)-(t.bc||0);
-    rows += `<tr style="background:${isHighlight?'rgba(0,229,160,0.12)':qual};${isHighlight?'font-weight:600;':''}">
-      <td style="padding:6px 10px;font-size:12px;color:#6b7280">${i+1}</td>
-      <td style="padding:6px 8px"><img src="${t.logo}" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:5px">${t.name||'?'}</td>
-      <td style="padding:6px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px">${t.mj||0}</td>
-      <td style="padding:6px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px">${t.v||0}</td>
-      <td style="padding:6px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px">${t.n||0}</td>
-      <td style="padding:6px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px">${t.d||0}</td>
-      <td style="padding:6px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px">${t.bp||0}:${t.bc||0}</td>
-      <td style="padding:6px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:${diff>=0?'#00e5a0':'#ff5050'}">${diff>0?'+':''}${diff}</td>
-      <td style="padding:6px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:#f0f2f8">${t.pts||0}</td>
+    rows += `<tr style="background:${bg};border-left:${borderLeft};${isHighlight?'font-weight:600;':''}">
+      <td style="padding:7px 10px;font-size:12px;color:${i<2?'#d4a843':i===2?'#00e5a0':'#6b7280'};font-weight:700">${i+1}</td>
+      <td style="padding:7px 8px;display:flex;align-items:center;gap:6px"><img src="${t.logo}" style="width:20px;height:20px;object-fit:contain"><span style="font-size:13px;color:${isHighlight?'#00e5a0':'#f0f2f8'}">${t.name||'?'}</span></td>
+      <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:#9ca3af">${t.mj||0}</td>
+      <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:#00e5a0">${t.v||0}</td>
+      <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:#9ca3af">${t.n||0}</td>
+      <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:#ff5050">${t.d||0}</td>
+      <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:#9ca3af">${t.bp||0}:${t.bc||0}</td>
+      <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:${diff>=0?'#00e5a0':'#ff5050'}">${diff>0?'+':''}${diff}</td>
+      <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:#f0f2f8">${t.pts||0}</td>
     </tr>`;
   });
   return `<div style="background:#111318;border:1px solid #1e2130;border-radius:12px;overflow:hidden;margin-bottom:20px">
     <div style="padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:#9ca3af;border-bottom:1px solid #1e2130">${groupObj.name}</div>
     <table style="width:100%;border-collapse:collapse">
-      <thead><tr style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px">
+      <thead><tr style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1e2130">
         <th style="padding:6px 10px;text-align:left">#</th>
         <th style="padding:6px 8px;text-align:left">Équipe</th>
         <th style="padding:6px 8px;text-align:center">MJ</th>
@@ -408,20 +474,21 @@ function renderGroupTable(groupObj, st, highlightId) {
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <div style="padding:6px 12px 8px;font-size:10px;color:#4b5563;display:flex;gap:12px">
-      <span>🟢 Qualifié (top 2)</span><span>🟡 Possible (3e)</span>
+    <div style="padding:6px 12px 8px;font-size:10px;color:#4b5563;display:flex;gap:14px">
+      <span style="color:#d4a843">▌ Qualifié direct (top 2)</span><span style="color:#00e5a0">▌ Possible meilleur 3e</span>
     </div>
   </div>`;
 }
 
+let _matchToggleIdx = 0;
 function renderMatchHistory(matches, teamName) {
   const teamMatches = (matches||[]).filter(function(m){
-    return m.leagueId===6 && m.homeGoals!==undefined &&
-      (NAME_FIX_ST[m.homeTeam]||m.homeTeam)===teamName ||
-      (NAME_FIX_ST[m.awayTeam]||m.awayTeam)===teamName;
+    const h = NAME_FIX_ST[m.homeTeam]||m.homeTeam;
+    const a = NAME_FIX_ST[m.awayTeam]||m.awayTeam;
+    return m.leagueId===6 && m.homeGoals!==undefined && (h===teamName || a===teamName);
   }).sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
   if (!teamMatches.length) return '<div style="color:#6b7280;font-size:13px;padding:12px">Aucun match joué pour le moment.</div>';
-  return teamMatches.map(function(m) {
+  return teamMatches.map(function(m, idx) {
     const home = NAME_FIX_ST[m.homeTeam]||m.homeTeam;
     const away = NAME_FIX_ST[m.awayTeam]||m.awayTeam;
     const isHome = home === teamName;
@@ -431,14 +498,32 @@ function renderMatchHistory(matches, teamName) {
     const resultColor = draw ? '#9ca3af' : won ? '#00e5a0' : '#ff5050';
     const resultBg = draw ? 'rgba(107,114,128,0.15)' : won ? 'rgba(0,229,160,0.15)' : 'rgba(255,80,80,0.15)';
     const date = new Date(m.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',timeZone:'Europe/Paris'});
-    const scorers = (m.players||[]).filter(function(p){ return (p.goals||0)>0; }).map(function(p){ return p.name+'⚽'; }).join(' · ');
-    return `<div style="background:#111318;border:1px solid #1e2130;border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
-      <div style="background:${resultBg};color:${resultColor};font-weight:700;font-size:12px;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${result}</div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:600;color:#f0f2f8">${home} <span style="color:#6b7280;font-weight:400">vs</span> ${away} <span style="font-family:'DM Mono',monospace;font-size:14px;margin-left:6px">${m.homeGoals}–${m.awayGoals}</span></div>
-        ${scorers ? `<div style="font-size:11px;color:#6b7280;margin-top:3px">${scorers}</div>` : ''}
+
+    // Buteurs avec leurs passeurs
+    const goalPlayers = (m.players||[]).filter(function(p){ return (p.goals||0)>0; });
+    const assistPlayers = (m.players||[]).filter(function(p){ return (p.assists||0)>0; });
+    // Construire lignes but + passe
+    const goalLines = goalPlayers.map(function(scorer) {
+      const assister = assistPlayers.find(function(a){ return a.teamName === scorer.teamName; });
+      const line = scorer.name + ' ⚽' + (scorer.goals > 1 ? ' x'+scorer.goals : '');
+      return assister ? line + ' <span style="color:#5e81f4">(← ' + assister.name + ')</span>' : line;
+    });
+
+    const detailId = 'match-detail-' + idx;
+    const detailHtml = goalLines.length ? goalLines.join('<br>') : 'Aucun buteur enregistré';
+
+    return `<div style="background:#111318;border:1px solid #1e2130;border-radius:10px;margin-bottom:8px;overflow:hidden">
+      <div style="padding:12px 16px;display:flex;align-items:center;gap:12px">
+        <div style="background:${resultBg};color:${resultColor};font-weight:700;font-size:12px;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${result}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:#f0f2f8">${home} <span style="color:#6b7280;font-weight:400">vs</span> ${away} <span style="font-family:'DM Mono',monospace;font-size:14px;margin-left:6px">${m.homeGoals}–${m.awayGoals}</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+          <span style="font-size:11px;color:#6b7280">${date}</span>
+          <button onclick="var el=document.getElementById('${detailId}');el.style.display=el.style.display==='none'?'block':'none'" style="background:rgba(255,255,255,0.05);border:1px solid #1e2130;border-radius:6px;padding:3px 8px;font-size:11px;color:#9ca3af;cursor:pointer">🎯 Buts</button>
+        </div>
       </div>
-      <div style="font-size:11px;color:#6b7280;flex-shrink:0">${date}</div>
+      <div id="${detailId}" style="display:none;padding:8px 16px 12px;border-top:1px solid #1e2130;font-size:12px;color:#9ca3af;line-height:2">${detailHtml}</div>
     </div>`;
   }).join('');
 }
@@ -498,10 +583,14 @@ async function loadSquad(teamId, team, group) {
   const groupHtml = groupObj ? renderGroupTable(groupObj, st, teamId) : '';
 
   // Historique matchs
+  // Projection 16ème de finale
+  const projHtml = renderProjection(groupObj, st, teamId, team.name);
+
   const histHtml = renderMatchHistory(dataJson?.matches || [], team.name);
 
   document.getElementById('squadContent').innerHTML =
     groupHtml +
+    projHtml +
     `<div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:#9ca3af;margin:20px 0 10px">🎮 Matchs joués</div>` +
     histHtml +
     `<div style="margin-top:20px">
@@ -511,6 +600,15 @@ async function loadSquad(teamId, team, group) {
       </button>
       <div id="rosterContent" style="display:none;margin-top:8px"></div>
     </div>`;
+
+  // Pré-indexer les stats CDM depuis data.json par ID joueur
+  const cdmStatsMap = {};
+  if (dataJson?.players) {
+    dataJson.players.filter(p => p.leagueId === 6).forEach(function(p) {
+      cdmStatsMap[String(p.id)] = p;
+    });
+  }
+  window._cdmStatsMap = cdmStatsMap;
 
   window._loadRosterFn = async function() {
     document.getElementById('rosterContent').innerHTML = '<div class="loading">Chargement...</div>';
@@ -574,6 +672,16 @@ async function loadSquad(teamId, team, group) {
         const teamEnc  = encodeURIComponent(currentTeamName || '');
         const posEnc   = encodeURIComponent(pos);
         const url      = `player-cdm.html?id=${pid}&name=${nameEnc}&photo=${photoEnc}&pos=${posEnc}&jersey=${jersey}&teamName=${teamEnc}`;
+        const st = (window._cdmStatsMap||{})[pid] || {};
+        const sb = st.totalGoals||0, sp = st.totalAssists||0, sm = st.totalGames||0;
+        const smoy = sm > 0 ? ((sb+sp)/sm).toFixed(2) : '—';
+        const statsHtml = sm > 0
+          ? `<div style="display:flex;gap:8px;font-size:10px;margin-top:4px;font-family:'DM Mono',monospace">
+              <span style="color:#00e5a0">${sb}B</span>
+              <span style="color:#5e81f4">${sp}P</span>
+              <span style="color:#ffd32a">${smoy}</span>
+             </div>`
+          : '';
         html += `
           <div class="player-card" style="cursor:pointer" onclick="window.location.href='${url}'">
             <div class="player-jersey">${jersey}</div>
@@ -583,6 +691,7 @@ async function loadSquad(teamId, team, group) {
             <div>
               <div class="player-name">${name}</div>
               <div class="player-nb">${pos}</div>
+              ${statsHtml}
             </div>
           </div>`;
       }
