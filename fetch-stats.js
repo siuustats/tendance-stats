@@ -1544,9 +1544,11 @@ async function main() {
   const cdmSync = await syncCDMRosters(stored, photosCache);
   let updatedPhotos = await fetchMissingPhotos(players, cdmSync.photosCache);
 
-  // Ajouter tous les joueurs CDM (leagueId:6) même si leur ID existe côté club
-  // Un joueur peut avoir une entrée club ET une entrée CDM avec le même ID ESPN
-  players.push(...(cdmSync.cdmPlayers || []));
+  // Ajouter les joueurs CDM depuis le roster — seulement ceux absents de players (pas encore de stats)
+  // Les joueurs avec stats CDM sont déjà dans players via rebuildPlayers
+  const playersWithStats = new Set(players.filter(p => p.leagueId === 6).map(p => String(p.id)));
+  const cdmToAdd = (cdmSync.cdmPlayers || []).filter(p => !playersWithStats.has(String(p.id)));
+  players.push(...cdmToAdd);
 
   if (JSON.stringify(updatedPhotos) !== JSON.stringify(photosCache)) {
     fs.writeFileSync('photos.json', JSON.stringify(updatedPhotos, null, 2));
