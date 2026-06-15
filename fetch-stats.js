@@ -1233,13 +1233,16 @@ async function fetchMissingPhotos(players, photosCache, apiAvailable = null) {
         .map(([id]) => id)
     : []));
 
-  const missing = players.filter(p => {
+  // Limiter à 20 photos par cron pour ne pas bloquer
+  const missingAll = players.filter(p => {
     if (!p.name) return false;
     if (photosCache[p.id] === undefined) return true;          // jamais cherché
     if (photosCache[p.id] === '' && !retrySet.has(String(p.id))) return true; // échec ancien → retenter
     return false;
   });
-  if (!missing.length) { console.log('✅ Toutes les photos sont en cache'); return photosCache; }
+  const missing = missingAll.slice(0, 20);
+  if (!missingAll.length) { console.log('✅ Toutes les photos sont en cache'); return photosCache; }
+  if (missing.length < missingAll.length) console.log(`  ℹ️  ${missingAll.length} photos manquantes, traitement limité à ${missing.length}/cron`);
 
   console.log(`\n📸 Recherche de ${missing.length} photo(s) via Transfermarkt...`);
   const updated = { ...photosCache };
@@ -1451,7 +1454,13 @@ async function main() {
   console.log(`📅 Dates cibles : ${dates.join(', ')}`);
   const newMatches = [];
 
+  // Saison clubs terminée — skipper les ligues clubs jusqu'à la reprise
+  const CLUBS_SEASON_ACTIVE = false; // Remettre à true en août pour la reprise
   for (const league of LEAGUES) {
+    if (league.id !== 6 && !CLUBS_SEASON_ACTIVE) {
+      console.log(`\n⚽ ${league.name} (skippé — hors saison)`);
+      continue;
+    }
     tic(`ESPN ${league.name}`);
     console.log(`\n⚽ ${league.name}`);
     const allEvents = [];
