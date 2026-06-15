@@ -573,7 +573,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
       + '</div>';
 
     // Hauteur boîte ~37px, gap 8px → 2 boîtes = 82px. Milieux : 18px et 63px. Centre : 41px
-    const R32_H = 82; const R16_H = 37; const R16_MT = Math.round((R32_H - R16_H) / 2);
+    const R32_H = 98; const R16_H = 42; const R16_MT = Math.round((R32_H - R16_H) / 2);
 
     bracketHtml = '<div>'
       + '<div style="display:flex;align-items:flex-start;gap:0;overflow-x:auto">'
@@ -584,8 +584,8 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
             + partnerBox
           + '</div>'
         + '</div>'
-        + '<svg width="36" height="82" style="flex-shrink:0;overflow:visible;margin-top:22px" viewBox="0 0 36 82">'
-          + '<path d="M0,18 H18 V41 M0,64 H18 V41 M18,41 H36" stroke="rgba(212,168,67,0.35)" stroke-width="1.5" fill="none"/>'
+        + '<svg width="36" height="98" style="flex-shrink:0;overflow:visible;margin-top:22px" viewBox="0 0 36 98">'
+          + '<path d="M0,21 H18 V49 M0,77 H18 V49 M18,49 H36" stroke="rgba(212,168,67,0.35)" stroke-width="1.5" fill="none"/>'
         + '</svg>'
         + '<div>'
           + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:10px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:4px">8\u00c8MES</div>'
