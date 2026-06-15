@@ -440,7 +440,7 @@ function getTeamFromSlot(slot, groupsData, st) {
   return { name: t.name, flag: FLAG_MAP[t.name] || '', tbd: false };
 }
 
-function renderProjection(groupObj, st, highlightId, teamName, allGroups) {
+function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMatches) {
   if (!groupObj) return '';
   const ranked = sortGroup(groupObj.ids, st);
   const teamRank = ranked.findIndex(function(t){ return t.id === highlightId; }) + 1;
@@ -469,6 +469,48 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups) {
   } else {
     statusMsg = '4e du groupe ' + groupLetter + ' - \u00c9limin\u00e9';
     statusColor = '#ff5050';
+  }
+
+  // Prochain match non joué
+  const cdmMatches = (allMatches || []).filter(function(m){ return m.leagueId === 6; });
+  const nextMatch = cdmMatches.filter(function(m){
+    const h = NAME_FIX_ST[m.homeTeam] || m.homeTeam;
+    const a = NAME_FIX_ST[m.awayTeam] || m.awayTeam;
+    return m.homeGoals === undefined && (h === teamName || a === teamName);
+  }).sort(function(a,b){ return new Date(a.date) - new Date(b.date); })[0];
+
+  let nextMatchHtml = '';
+  if (nextMatch) {
+    const h = NAME_FIX_ST[nextMatch.homeTeam] || nextMatch.homeTeam;
+    const a = NAME_FIX_ST[nextMatch.awayTeam] || nextMatch.awayTeam;
+    const opp = h === teamName ? a : h;
+    const oppFlag = FLAG_MAP[opp] || '';
+    const dateStr = new Date(nextMatch.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', timeZone:'Europe/Paris'});
+    const timeStr = new Date(nextMatch.date).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris'});
+    const oppFlagImg = oppFlag ? '<img src="https://flagcdn.com/w20/'+oppFlag+'.png" style="width:14px;height:10px;object-fit:cover;border-radius:1px;vertical-align:middle;margin-right:4px">' : '';
+    nextMatchHtml = '<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06)">'
+      + '<div style="font-size:9px;letter-spacing:1.5px;color:#6b7280;text-transform:uppercase;margin-bottom:5px">Prochain match</div>'
+      + '<div style="font-size:12px;font-weight:600;color:#f0f2f8">'+oppFlagImg+opp+'</div>'
+      + '<div style="font-size:10px;color:#6b7280;margin-top:2px">'+dateStr+' \u00b7 '+timeStr+'</div>'
+      + '</div>';
+  }
+
+  // Rang de chaque équipe pour affichage dans les boîtes bracket
+  function getRankLabel(tName) {
+    for (var gi = 0; gi < (allGroups||[]).length; gi++) {
+      var g = allGroups[gi];
+      var r = sortGroup(g.ids, st);
+      for (var ri = 0; ri < r.length; ri++) {
+        if (r[ri].name === tName) {
+          var gl = g.name.slice(-1);
+          var rk = ri + 1;
+          var rkStr = rk === 1 ? '1er' : rk+'e';
+          var col = rk <= 2 ? '#d4a843' : rk === 3 ? '#00e5a0' : '#6b7280';
+          return '<span style="font-size:9px;color:'+col+';margin-left:auto;font-family:\'DM Mono\',monospace;white-space:nowrap">'+rkStr+' Gr.'+gl+'</span>';
+        }
+      }
+    }
+    return '';
   }
 
   let bracketHtml = '';
@@ -502,7 +544,8 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups) {
       const f = t.flag ? '<img src="https://flagcdn.com/w20/'+t.flag+'.png" class="bracket-flag">' : '<span style="width:18px;display:inline-block;flex-shrink:0"></span>';
       const cls = 'bracket-team' + (isMe ? ' highlight' : t.tbd ? ' tbd' : '');
       const border = hasBorder ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : '';
-      return '<div class="'+cls+'" style="'+border+'">'+f+'<span>'+t.name+'</span></div>';
+      const rank = (!t.tbd && allGroups) ? getRankLabel(t.name) : '';
+      return '<div class="'+cls+'" style="'+border+'">'+f+'<span>'+t.name+'</span>'+rank+'</div>';
     }
 
     const myBox = '<div class="bracket-match" style="width:160px">'
@@ -562,6 +605,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups) {
           + '<div style="font-size:13px;font-weight:600;color:' + statusColor + ';line-height:1.3">' + statusMsg + '</div>'
         + '</div>'
         + '<div style="font-size:11px;color:#6b7280">' + pts + ' pt' + (pts > 1 ? 's' : '') + ' \u00b7 ' + (3 - mj) + ' match' + (3 - mj > 1 ? 's' : '') + ' restant' + (3 - mj > 1 ? 's' : '') + '</div>'
+        + nextMatchHtml
       + '</div>'
       + (bracketHtml ? '<div style="margin-left:auto">' + bracketHtml + '</div>' : '')
     + '</div>'
@@ -714,7 +758,7 @@ async function loadSquad(teamId, team, group) {
 
   // Historique matchs
   // Projection 16ème de finale
-  const projHtml = renderProjection(groupObj, st, teamId, team.name, GROUPS);
+  const projHtml = renderProjection(groupObj, st, teamId, team.name, GROUPS, dataJson?.matches || []);
 
   const histHtml = renderMatchHistory(dataJson?.matches || [], team.name);
 
