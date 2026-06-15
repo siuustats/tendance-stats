@@ -1213,7 +1213,8 @@ async function syncCDMRosters(stored, photosCache) {
 
 // ── API-Football : photos des nouveaux joueurs ───────────────────────────────
 
-async function fetchMissingPhotos(players, photosCache) {
+let _tmApiAvailable = null;
+async function fetchMissingPhotos(players, photosCache, apiAvailable = null) {
   const TM_API = 'https://transfermarkt-api-fiqh.onrender.com';
 
   // Stratégie de recherche :
@@ -1239,14 +1240,19 @@ async function fetchMissingPhotos(players, photosCache) {
   const updated = { ...photosCache };
 
   // ── Wake-up ping + Test de santé ─────────────────────────────────────────
-  // Fly.io se met en veille → envoyer un ping d'abord et attendre le réveil
-  console.log('  🔔 Wake-up ping Transfermarkt...');
-  try {
-    const wakeCtrl = new AbortController();
-    setTimeout(() => wakeCtrl.abort(), 3000);
-    await fetch(`${TM_API}/`, { headers: { 'User-Agent': 'TendanceStats/1.0' }, signal: wakeCtrl.signal });
-  } catch(e) {} // on ignore l'erreur du ping, c'est juste pour réveiller l'instance
-  await new Promise(r => setTimeout(r, 55000)); // attendre 55s pour le cold start Render (peut prendre 50s+)
+  if (apiAvailable === false) {
+    console.log('  ⏭️  API Transfermarkt indisponible (connu) — photos ignorées');
+    return photosCache;
+  }
+  if (apiAvailable === null) { // premier appel : faire le ping
+    console.log('  🔔 Wake-up ping Transfermarkt...');
+    try {
+      const wakeCtrl = new AbortController();
+      setTimeout(() => wakeCtrl.abort(), 3000);
+      await fetch(`${TM_API}/`, { headers: { 'User-Agent': 'TendanceStats/1.0' }, signal: wakeCtrl.signal });
+    } catch(e) {}
+    await new Promise(r => setTimeout(r, 55000));
+  }
 
   let apiOk = false;
   for (const testName of ['Mbappe', 'Ronaldo', 'Messi']) {
@@ -1261,6 +1267,7 @@ async function fetchMissingPhotos(players, photosCache) {
     await new Promise(r => setTimeout(r, 1000));
   }
 
+  _tmApiAvailable = apiOk;
   if (!apiOk) {
     console.log('  ❌ API Transfermarkt indisponible — photos ignorées');
     return photosCache;
@@ -1559,9 +1566,9 @@ async function main() {
 
   const players = rebuildPlayers(trimmed);
 
-  // Sync rosters CDM (toutes les 48h) : ajout/retrait joueurs + photos
-  const cdmSync = await syncCDMRosters(stored, photosCache);
-  let updatedPhotos = await fetchMissingPhotos(players, cdmSync.photosCache);
+  // syncCDMRosters désactivé — tous les joueurs sont récupérés via playedByTeam
+  const cdmSync = { photosCache, cdmPlayers: (stored.players || []).filter(p => p.leagueId === 6), syncAt: stored.cdmRosterSyncAt };
+  let updatedPhotos = await fetchMissingPhotos(players, cdmSync.photosCache, _tmApiAvailable);
 
   // Ajouter les joueurs CDM depuis le roster — seulement ceux absents de players (pas encore de stats)
   // Les joueurs avec stats CDM sont déjà dans players via rebuildPlayers
