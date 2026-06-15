@@ -42,16 +42,6 @@ const CDM_TEAM_FLAGS = {
   '2570':'uz','208':'co','448':'gb-eng','477':'hr','4469':'gh','2659':'pa',
 };
 
-// Mapping teamName → leagueFlag pour les équipes CDM (noms français ET anglais)
-const cdmNameToFlag = {};
-for (const [id, name] of Object.entries(CDM_TEAM_NAMES)) {
-  cdmNameToFlag[name] = CDM_TEAM_FLAGS[id] || 'eu'; // nom français
-}
-// Ajouter les noms anglais ESPN via TEAM_FIX inversé
-for (const [enName, frName] of Object.entries(TEAM_FIX)) {
-  if (cdmNameToFlag[frName]) cdmNameToFlag[enName] = cdmNameToFlag[frName];
-}
-
 // ── Calculs ───────────────────────────────────────────────────────────────────
 
 function calcTrendScore(last5, totalGames, totalGoals, totalAssists) {
@@ -137,6 +127,15 @@ const TEAM_FIX = {
   'Atletico de Madrid':     'Atletico Madrid',
   'Athletic Club':          'Athletic Bilbao',
 };
+// Mapping teamName → leagueFlag pour les équipes CDM (noms français ET anglais)
+const cdmNameToFlag = {};
+for (const [id, name] of Object.entries(CDM_TEAM_NAMES)) {
+  cdmNameToFlag[name] = CDM_TEAM_FLAGS[id] || 'eu';
+}
+for (const [enName, frName] of Object.entries(TEAM_FIX)) {
+  if (cdmNameToFlag[frName]) cdmNameToFlag[enName] = cdmNameToFlag[frName];
+}
+
 async function fetchFixtures() {
   const fixtures = [];
   const today = new Date();
