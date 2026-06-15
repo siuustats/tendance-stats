@@ -373,6 +373,21 @@ function sortGroup(nations, st) {
     });
 }
 
+const FLAG_MAP = {
+  "Mexique":"mx","Afrique du Sud":"za","Cor\u00e9e du Sud":"kr","Tch\u00e9quie":"cz",
+  "Canada":"ca","Bosnie-Herz\u00e9govine":"ba","Qatar":"qa","Suisse":"ch",
+  "Br\u00e9sil":"br","Maroc":"ma","Ha\u00efti":"ht","\u00c9cosse":"gb-sct",
+  "\u00c9tats-Unis":"us","Paraguay":"py","Australie":"au","Turquie":"tr",
+  "Allemagne":"de","Cura\u00e7ao":"cw","C\u00f4te d\u2019Ivoire":"ci","\u00c9quateur":"ec",
+  "Pays-Bas":"nl","Japon":"jp","Su\u00e8de":"se","Tunisie":"tn",
+  "Belgique":"be","\u00c9gypte":"eg","Iran":"ir","Nouvelle-Z\u00e9lande":"nz",
+  "Espagne":"es","Cap-Vert":"cv","Arabie Saoudite":"sa","Uruguay":"uy",
+  "France":"fr","S\u00e9n\u00e9gal":"sn","Irak":"iq","Norv\u00e8ge":"no",
+  "Argentine":"ar","Alg\u00e9rie":"dz","Autriche":"at","Jordanie":"jo",
+  "Portugal":"pt","RD Congo":"cd","Ouzb\u00e9kistan":"uz","Colombie":"co",
+  "Angleterre":"gb-eng","Croatie":"hr","Ghana":"gh","Panama":"pa"
+};
+
 const R32_MATCHES = [
   { num:73, h:{type:'runner',group:'A'}, a:{type:'runner',group:'B'} },
   { num:74, h:{type:'winner',group:'E'}, a:{type:'best3',groups:'A/B/C/D/F'} },
@@ -397,7 +412,17 @@ function getOpponentLabel(slot) {
   return (slot.type === 'winner' ? '1er' : '2e') + ' Gr.' + slot.group;
 }
 
-function renderProjection(groupObj, st, highlightId, teamName) {
+function getTeamFromSlot(slot, groupsData, st) {
+  if (slot.type === 'best3') return { name: 'Meill. 3\u00e8me (' + slot.groups + ')', tbd: true };
+  const gi = 'ABCDEFGHIJKL'.indexOf(slot.group);
+  if (gi < 0 || !groupsData[gi]) return { name: (slot.type === 'winner' ? '1er' : '2\u00e8me') + ' Gr.' + slot.group, tbd: true };
+  const ranked = sortGroup(groupsData[gi].ids, st);
+  const t = slot.type === 'winner' ? ranked[0] : ranked[1];
+  if (!t) return { name: (slot.type === 'winner' ? '1er' : '2\u00e8me') + ' Gr.' + slot.group, tbd: true };
+  return { name: t.name, flag: FLAG_MAP[t.name] || '', tbd: false };
+}
+
+function renderProjection(groupObj, st, highlightId, teamName, allGroups) {
   if (!groupObj) return '';
   const ranked = sortGroup(groupObj.ids, st);
   const teamRank = ranked.findIndex(function(t){ return t.id === highlightId; }) + 1;
@@ -407,75 +432,79 @@ function renderProjection(groupObj, st, highlightId, teamName) {
   const pts = teamSt.pts || 0;
   const maxPts = pts + (3 - mj) * 3;
 
-  let statusMsg = '', statusColor = '#9ca3af', nextOpponent = '', matchNum = '';
+  let statusMsg = '', statusColor = '#9ca3af';
+  let r32Match = null, teamSlotType = null;
 
   if (mj === 0) {
-    statusMsg = 'Pas encore de match joué';
+    statusMsg = 'Pas encore de match jou\u00e9';
     statusColor = '#6b7280';
   } else if (teamRank <= 2) {
-    const type = teamRank === 1 ? 'winner' : 'runner';
-    statusMsg = (teamRank === 1 ? '🥇 1er' : '🥈 2e') + ' du groupe ' + groupLetter + ' - Qualifié';
+    teamSlotType = teamRank === 1 ? 'winner' : 'runner';
+    statusMsg = (teamRank === 1 ? '\ud83e\udd47 1er' : '\ud83e\udd48 2e') + ' du groupe ' + groupLetter + ' - Qualifi\u00e9';
     statusColor = '#d4a843';
-    // Trouver le match R32 correspondant
-    const r32 = R32_MATCHES.find(function(m) {
-      return (m.h.type === type && m.h.group === groupLetter) ||
-             (m.a.type === type && m.a.group === groupLetter);
+    r32Match = R32_MATCHES.find(function(m) {
+      return (m.h.type === teamSlotType && m.h.group === groupLetter) ||
+             (m.a.type === teamSlotType && m.a.group === groupLetter);
     });
-    if (r32) {
-      const oppSlot = (r32.h.group === groupLetter && r32.h.type === type) ? r32.a : r32.h;
-      nextOpponent = getOpponentLabel(oppSlot);
-      matchNum = 'M' + r32.num;
-    }
   } else if (teamRank === 3) {
     statusMsg = '3e du groupe ' + groupLetter + ' - Possible si meilleur 3e';
     statusColor = '#00e5a0';
-    nextOpponent = 'Qualification incertaine';
   } else {
-    statusMsg = '4e du groupe ' + groupLetter + ' - Éliminé';
+    statusMsg = '4e du groupe ' + groupLetter + ' - \u00c9limin\u00e9';
     statusColor = '#ff5050';
   }
 
-  const nextMatchBlock = nextOpponent ? `
-    <div style="background:#161820;border:1px solid rgba(212,168,67,0.2);border-radius:10px;padding:12px 16px;min-width:160px;flex-shrink:0">
-      <div style="font-size:9px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;margin-bottom:6px">Prochain match</div>
-      <div style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;color:#d4a843;margin-bottom:4px">${matchNum}</div>
-      <div style="font-size:11px;color:#9ca3af;line-height:1.4">⚔️ vs ${nextOpponent}</div>
-    </div>` : (teamRank === 3 ? `
-    <div style="background:#161820;border:1px solid rgba(0,229,160,0.15);border-radius:10px;padding:12px 16px;min-width:160px;flex-shrink:0">
-      <div style="font-size:9px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;margin-bottom:6px">Prochain match</div>
-      <div style="font-size:12px;color:#00e5a0;margin-top:4px">Qualification incertaine</div>
-    </div>` : teamRank >= 4 ? `
-    <div style="background:#161820;border:1px solid rgba(255,80,80,0.15);border-radius:10px;padding:12px 16px;min-width:160px;flex-shrink:0">
-      <div style="font-size:9px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;margin-bottom:6px">Prochain match</div>
-      <div style="font-size:12px;color:#ff5050;margin-top:4px">Éliminé</div>
-    </div>` : '');
+  // Mini bracket R32
+  let bracketHtml = '';
+  if (r32Match && teamRank <= 2) {
+    const isHome = r32Match.h.type === teamSlotType && r32Match.h.group === groupLetter;
+    const mySlot = isHome ? r32Match.h : r32Match.a;
+    const oppSlot = isHome ? r32Match.a : r32Match.h;
+    const myTeam = { name: teamName, flag: FLAG_MAP[teamName] || '', tbd: false, isMe: true };
+    const oppTeam = getTeamFromSlot(oppSlot, allGroups || [], st);
+    const teams = isHome ? [myTeam, oppTeam] : [oppTeam, myTeam];
 
-  return `<div style="background:#111318;border:1px solid #1e2130;border-radius:12px;padding:16px;margin-bottom:20px">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:#9ca3af;margin-bottom:12px">🏆 SITUATION ACTUELLE</div>
-    <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;flex-wrap:wrap">
-      <div style="flex:1;min-width:180px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <div style="font-size:28px;font-weight:700;font-family:'DM Mono',monospace;color:${statusColor}">${teamRank}e</div>
-          <div style="font-size:13px;font-weight:600;color:${statusColor};line-height:1.3">${statusMsg}</div>
-        </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <div style="background:#161820;border-radius:8px;padding:8px 14px;text-align:center">
-            <div style="font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:#f0f2f8">${pts}</div>
-            <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Pts actuels</div>
-          </div>
-          <div style="background:#161820;border-radius:8px;padding:8px 14px;text-align:center">
-            <div style="font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:#9ca3af">${maxPts}</div>
-            <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Max atteignable</div>
-          </div>
-          <div style="background:#161820;border-radius:8px;padding:8px 14px;text-align:center">
-            <div style="font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:#9ca3af">${3-mj}</div>
-            <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Matchs restants</div>
-          </div>
-        </div>
-      </div>
-      ${nextMatchBlock}
-    </div>
-  </div>`;
+    function bracketTeamRow(t) {
+      const flagHtml = t.flag ? '<img src="https://flagcdn.com/w20/' + t.flag + '.png" style="width:18px;height:12px;object-fit:cover;border-radius:2px;flex-shrink:0">' : '';
+      const color = t.isMe ? '#d4a843' : (t.tbd ? '#6b7280' : '#f0f2f8');
+      const style = 'font-style:' + (t.tbd ? 'italic' : 'normal') + ';font-weight:' + (t.isMe ? '700' : (t.tbd ? '400' : '500')) + ';';
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:11px;color:' + color + ';' + style + (t.isMe ? 'background:rgba(212,168,67,0.06);' : '') + '">' + flagHtml + '<span>' + t.name + '</span></div>';
+    }
+
+    bracketHtml = '<div style="margin-top:14px">'
+      + '<div style="font-size:9px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;margin-bottom:8px">16\u00e8mes de finale (si qualifi\u00e9)</div>'
+      + '<div style="background:#111318;border:1px solid rgba(212,168,67,0.2);border-radius:10px;overflow:hidden;position:relative;max-width:280px">'
+      + '<div style="position:absolute;top:3px;right:6px;font-size:9px;color:#6b7280;font-family:\'DM Mono\',monospace">M' + r32Match.num + '</div>'
+      + bracketTeamRow(teams[0])
+      + '<div style="border-top:1px solid rgba(255,255,255,0.06)"></div>'
+      + bracketTeamRow(teams[1])
+      + '</div>'
+      + '</div>';
+  } else if (teamRank === 3) {
+    bracketHtml = '<div style="margin-top:14px">'
+      + '<div style="font-size:9px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;margin-bottom:8px">16\u00e8mes de finale</div>'
+      + '<div style="background:#111318;border:1px solid rgba(0,229,160,0.15);border-radius:10px;padding:10px 14px;max-width:280px;font-size:12px;color:#00e5a0">Qualification incertaine — d\u00e9pend des autres 3e</div>'
+      + '</div>';
+  } else if (teamRank >= 4 && mj > 0) {
+    bracketHtml = '<div style="margin-top:14px">'
+      + '<div style="font-size:9px;letter-spacing:2px;color:#6b7280;text-transform:uppercase;margin-bottom:8px">16\u00e8mes de finale</div>'
+      + '<div style="background:#111318;border:1px solid rgba(255,80,80,0.15);border-radius:10px;padding:10px 14px;max-width:280px;font-size:12px;color:#ff5050">\u00c9limin\u00e9</div>'
+      + '</div>';
+  }
+
+  return '<div style="background:#111318;border:1px solid #1e2130;border-radius:12px;padding:16px;margin-bottom:20px">'
+    + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;letter-spacing:2px;color:#9ca3af;margin-bottom:12px">\ud83c\udfc6 SITUATION ACTUELLE</div>'
+    + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'
+    + '<div style="font-size:28px;font-weight:700;font-family:\'DM Mono\',monospace;color:' + statusColor + '">' + teamRank + 'e</div>'
+    + '<div style="font-size:13px;font-weight:600;color:' + statusColor + ';line-height:1.3">' + statusMsg + '</div>'
+    + '</div>'
+    + '<div style="display:flex;gap:10px;flex-wrap:wrap">'
+    + '<div style="background:#161820;border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:18px;font-weight:700;font-family:\'DM Mono\',monospace;color:#f0f2f8">' + pts + '</div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Pts actuels</div></div>'
+    + '<div style="background:#161820;border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:18px;font-weight:700;font-family:\'DM Mono\',monospace;color:#9ca3af">' + maxPts + '</div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Max atteignable</div></div>'
+    + '<div style="background:#161820;border-radius:8px;padding:8px 14px;text-align:center"><div style="font-size:18px;font-weight:700;font-family:\'DM Mono\',monospace;color:#9ca3af">' + (3-mj) + '</div><div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Matchs restants</div></div>'
+    + '</div>'
+    + bracketHtml
+    + '</div>';
 }
 
 function renderGroupTable(groupObj, st, highlightId) {
@@ -624,7 +653,7 @@ async function loadSquad(teamId, team, group) {
 
   // Historique matchs
   // Projection 16ème de finale
-  const projHtml = renderProjection(groupObj, st, teamId, team.name);
+  const projHtml = renderProjection(groupObj, st, teamId, team.name, GROUPS);
 
   const histHtml = renderMatchHistory(dataJson?.matches || [], team.name);
 
