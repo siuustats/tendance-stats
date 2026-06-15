@@ -420,7 +420,7 @@ function renderMatchHistory(matches, teamName) {
       (NAME_FIX_ST[m.homeTeam]||m.homeTeam)===teamName ||
       (NAME_FIX_ST[m.awayTeam]||m.awayTeam)===teamName;
   }).sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
-  if (!teamMatches.length) return '<div style="color:#6b7280;font-size:13px;padding:12px">Aucun match joué pour l'instant.</div>';
+  if (!teamMatches.length) return '<div style="color:#6b7280;font-size:13px;padding:12px">Aucun match joué pour le moment.</div>';
   return teamMatches.map(function(m) {
     const home = NAME_FIX_ST[m.homeTeam]||m.homeTeam;
     const away = NAME_FIX_ST[m.awayTeam]||m.awayTeam;
@@ -506,7 +506,7 @@ async function loadSquad(teamId, team, group) {
     histHtml +
     `<div style="margin-top:20px">
       <button onclick="toggleRoster()" style="width:100%;background:#111318;border:1px solid #1e2130;border-radius:10px;padding:12px 16px;color:#9ca3af;font-size:13px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between" id="rosterBtn">
-        <span>👥 Voir l'effectif complet (26 joueurs)</span>
+        <span>👥 Voir l&#39;effectif complet (26 joueurs)</span>
         <span id="rosterArrow">▼</span>
       </button>
       <div id="rosterContent" style="display:none;margin-top:8px"></div>
