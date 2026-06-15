@@ -488,7 +488,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
     const dateStr = new Date(nextMatch.date).toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit', timeZone:'Europe/Paris'});
     const timeStr = new Date(nextMatch.date).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit', timeZone:'Europe/Paris'});
     const oppFlagImg = oppFlag ? '<img src="https://flagcdn.com/w20/'+oppFlag+'.png" style="width:14px;height:10px;object-fit:cover;border-radius:1px;vertical-align:middle;margin-right:4px">' : '';
-    nextMatchHtml = '<div style="padding:10px 14px;background:#0d0f15;border:1px solid rgba(212,168,67,0.2);border-radius:10px">'
+    nextMatchHtml = '<div style="padding:10px 14px;background:#0d0f15;border:1px solid rgba(212,168,67,0.2);border-radius:10px;width:100%;box-sizing:border-box">'
       + '<div style="font-size:9px;letter-spacing:1.5px;color:#6b7280;text-transform:uppercase;margin-bottom:8px">Prochain match</div>'
       + '<div style="font-size:14px;font-weight:600;color:#f0f2f8;margin-bottom:4px">'+oppFlagImg+opp+'</div>'
       + '<div style="font-size:11px;color:#9ca3af">'+dateStr+' \u00b7 '+timeStr+'</div>'
@@ -600,7 +600,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
 
   return '<div style="background:#111318;border:1px solid #1e2130;border-radius:12px;padding:16px;margin-bottom:20px">'
     + '<div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap">'
-      + '<div style="flex-shrink:0;min-width:200px">'
+      + '<div style="flex-shrink:0;min-width:200px;display:flex;flex-direction:column">'
         + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;letter-spacing:2px;color:#9ca3af;margin-bottom:12px">\ud83c\udfc6 SITUATION ACTUELLE</div>'
         + '<div style="font-size:14px;font-weight:600;color:' + statusColor + ';line-height:1.4;margin-bottom:8px">' + statusMsg + '</div>'
         + '<div style="font-size:12px;color:#6b7280;margin-bottom:14px">' + pts + ' pt' + (pts > 1 ? 's' : '') + ' \u00b7 ' + (3 - mj) + ' match' + (3 - mj > 1 ? 's' : '') + ' restant' + (3 - mj > 1 ? 's' : '') + '</div>'
