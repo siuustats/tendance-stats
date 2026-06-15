@@ -394,11 +394,11 @@ function renderProjection(groupObj, st, highlightId, teamName) {
   } else if (teamRank === 1) {
     statusMsg = '🥇 1er du groupe ' + groupLetter + ' — Qualifié';
     statusColor = '#d4a843';
-    nextOpponent = 'Meilleur 3e ou 2e d\'un autre groupe';
+    nextOpponent = "Meilleur 3e ou 2e d'un autre groupe";
   } else if (teamRank === 2) {
     statusMsg = '🥈 2e du groupe ' + groupLetter + ' — Qualifié';
     statusColor = '#d4a843';
-    nextOpponent = '1er d\'un autre groupe';
+    nextOpponent = "1er d'un autre groupe";
   } else if (teamRank === 3) {
     statusMsg = '3e du groupe ' + groupLetter + ' — Possible si meilleur 3e';
     statusColor = '#00e5a0';
@@ -418,7 +418,7 @@ function renderProjection(groupObj, st, highlightId, teamName) {
       <div style="font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:${statusColor}">${teamRank > 0 ? teamRank+'e' : '—'}</div>
       <div>
         <div style="font-size:13px;font-weight:600;color:${statusColor}">${statusMsg}</div>
-        ${nextOpponent ? `<div style="font-size:11px;color:#6b7280;margin-top:2px">16e de finale : vs ${nextOpponent}</div>\` : ''}
+        ${nextOpponent ? `<div style="font-size:11px;color:#6b7280;margin-top:2px">16e de finale : vs ${nextOpponent}</div>` : ''}
       </div>
     </div>
     <div style="display:flex;gap:12px;flex-wrap:wrap">
