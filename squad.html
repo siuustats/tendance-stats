@@ -345,6 +345,104 @@ const GROUPS = [
   { name: "Groupe L", ids: ["448","477","4469","2659"] },
 ];
 
+const NAME_FIX_ST = {'Mexico':'Mexique','South Africa':'Afrique du Sud','South Korea':'Corée du Sud','Czechia':'Tchéquie','Bosnia and Herzegovina':'Bosnie-Herzégovine','Bosnia-Herzegovina':'Bosnie-Herzégovine','Switzerland':'Suisse','Brazil':'Brésil','Morocco':'Maroc','Haiti':'Haïti','Scotland':'Écosse','USA':'États-Unis','United States':'États-Unis','Australia':'Australie','Turkey':'Turquie','Germany':'Allemagne','Curacao':'Curaçao','Ivory Coast':"Côte d'Ivoire",'Ecuador':'Équateur','Netherlands':'Pays-Bas','Japan':'Japon','Sweden':'Suède','Tunisia':'Tunisie','Belgium':'Belgique','Egypt':'Égypte','Iran':'Iran','New Zealand':'Nouvelle-Zélande','Spain':'Espagne','Cape Verde':'Cap-Vert','Saudi Arabia':'Arabie Saoudite','Uruguay':'Uruguay','Senegal':'Sénégal','Iraq':'Irak','Norway':'Norvège','Argentina':'Argentine','Algeria':'Algérie','Austria':'Autriche','Jordan':'Jordanie','Portugal':'Portugal','DR Congo':'RD Congo','Uzbekistan':'Ouzbékistan','Colombia':'Colombie','England':'Angleterre','Croatia':'Croatie','Ghana':'Ghana','Panama':'Panama','Canada':'Canada','Qatar':'Qatar','Paraguay':'Paraguay'};
+
+function buildStandings(matches) {
+  const s = {};
+  GROUPS.forEach(function(g){ g.ids.forEach(function(id){ const n=TEAM_MAP[id]?.name; if(n) s[n]={mj:0,v:0,n:0,d:0,bp:0,bc:0,pts:0,id}; }); });
+  (matches||[]).filter(function(m){ return m.leagueId===6 && m.homeGoals!==undefined; }).forEach(function(m) {
+    const h=NAME_FIX_ST[m.homeTeam]||m.homeTeam, a=NAME_FIX_ST[m.awayTeam]||m.awayTeam;
+    if (!s[h]||!s[a]) return;
+    const hg=m.homeGoals, ag=m.awayGoals;
+    s[h].mj++; s[a].mj++;
+    s[h].bp+=hg; s[h].bc+=ag; s[a].bp+=ag; s[a].bc+=hg;
+    if (hg>ag){ s[h].v++; s[h].pts+=3; s[a].d++; }
+    else if (hg<ag){ s[a].v++; s[a].pts+=3; s[h].d++; }
+    else { s[h].n++; s[h].pts++; s[a].n++; s[a].pts++; }
+  });
+  return s;
+}
+
+function sortGroup(nations, st) {
+  return nations.map(function(id){ const n=TEAM_MAP[id]?.name; return Object.assign({name:n,id,logo:TEAM_MAP[id]?.logo||''}, st[n]||{mj:0,v:0,n:0,d:0,bp:0,bc:0,pts:0}); })
+    .sort(function(a,b){
+      if (b.pts!==a.pts) return b.pts-a.pts;
+      if ((b.bp-b.bc)!==(a.bp-a.bc)) return (b.bp-b.bc)-(a.bp-a.bc);
+      if (b.bp!==a.bp) return b.bp-a.bp;
+      return (a.name||'').localeCompare(b.name||'');
+    });
+}
+
+function renderGroupTable(groupObj, st, highlightId) {
+  const ranked = sortGroup(groupObj.ids, st);
+  let rows = '';
+  ranked.forEach(function(t, i) {
+    const isHighlight = t.id === highlightId;
+    const qual = i < 2 ? 'rgba(0,229,160,0.08)' : i === 2 ? 'rgba(212,168,67,0.06)' : '';
+    const diff = (t.bp||0)-(t.bc||0);
+    rows += `<tr style="background:${isHighlight?'rgba(0,229,160,0.12)':qual};${isHighlight?'font-weight:600;':''}">
+      <td style="padding:6px 10px;font-size:12px;color:#6b7280">${i+1}</td>
+      <td style="padding:6px 8px"><img src="${t.logo}" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:5px">${t.name||'?'}</td>
+      <td style="padding:6px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px">${t.mj||0}</td>
+      <td style="padding:6px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px">${t.v||0}</td>
+      <td style="padding:6px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px">${t.n||0}</td>
+      <td style="padding:6px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px">${t.d||0}</td>
+      <td style="padding:6px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px">${t.bp||0}:${t.bc||0}</td>
+      <td style="padding:6px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:${diff>=0?'#00e5a0':'#ff5050'}">${diff>0?'+':''}${diff}</td>
+      <td style="padding:6px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;color:#f0f2f8">${t.pts||0}</td>
+    </tr>`;
+  });
+  return `<div style="background:#111318;border:1px solid #1e2130;border-radius:12px;overflow:hidden;margin-bottom:20px">
+    <div style="padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:#9ca3af;border-bottom:1px solid #1e2130">${groupObj.name}</div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px">
+        <th style="padding:6px 10px;text-align:left">#</th>
+        <th style="padding:6px 8px;text-align:left">Équipe</th>
+        <th style="padding:6px 8px;text-align:center">MJ</th>
+        <th style="padding:6px 8px;text-align:center">V</th>
+        <th style="padding:6px 8px;text-align:center">N</th>
+        <th style="padding:6px 8px;text-align:center">D</th>
+        <th style="padding:6px 8px;text-align:center">B</th>
+        <th style="padding:6px 8px;text-align:center">+/-</th>
+        <th style="padding:6px 8px;text-align:center">Pts</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="padding:6px 12px 8px;font-size:10px;color:#4b5563;display:flex;gap:12px">
+      <span>🟢 Qualifié (top 2)</span><span>🟡 Possible (3e)</span>
+    </div>
+  </div>`;
+}
+
+function renderMatchHistory(matches, teamName) {
+  const teamMatches = (matches||[]).filter(function(m){
+    return m.leagueId===6 && m.homeGoals!==undefined &&
+      (NAME_FIX_ST[m.homeTeam]||m.homeTeam)===teamName ||
+      (NAME_FIX_ST[m.awayTeam]||m.awayTeam)===teamName;
+  }).sort(function(a,b){ return new Date(b.date)-new Date(a.date); });
+  if (!teamMatches.length) return '<div style="color:#6b7280;font-size:13px;padding:12px">Aucun match joué pour l'instant.</div>';
+  return teamMatches.map(function(m) {
+    const home = NAME_FIX_ST[m.homeTeam]||m.homeTeam;
+    const away = NAME_FIX_ST[m.awayTeam]||m.awayTeam;
+    const isHome = home === teamName;
+    const won = isHome ? m.homeGoals > m.awayGoals : m.awayGoals > m.homeGoals;
+    const draw = m.homeGoals === m.awayGoals;
+    const result = draw ? 'N' : won ? 'V' : 'D';
+    const resultColor = draw ? '#9ca3af' : won ? '#00e5a0' : '#ff5050';
+    const resultBg = draw ? 'rgba(107,114,128,0.15)' : won ? 'rgba(0,229,160,0.15)' : 'rgba(255,80,80,0.15)';
+    const date = new Date(m.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',timeZone:'Europe/Paris'});
+    const scorers = (m.players||[]).filter(function(p){ return (p.goals||0)>0; }).map(function(p){ return p.name+'⚽'; }).join(' · ');
+    return `<div style="background:#111318;border:1px solid #1e2130;border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+      <div style="background:${resultBg};color:${resultColor};font-weight:700;font-size:12px;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${result}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600;color:#f0f2f8">${home} <span style="color:#6b7280;font-weight:400">vs</span> ${away} <span style="font-family:'DM Mono',monospace;font-size:14px;margin-left:6px">${m.homeGoals}–${m.awayGoals}</span></div>
+        ${scorers ? `<div style="font-size:11px;color:#6b7280;margin-top:3px">${scorers}</div>` : ''}
+      </div>
+      <div style="font-size:11px;color:#6b7280;flex-shrink:0">${date}</div>
+    </div>`;
+  }).join('');
+}
+
 function renderTeams() {
   const container = document.getElementById('teamsGrid');
   container.innerHTML = '';
@@ -375,23 +473,49 @@ function renderTeams() {
 }
 
 async function loadSquad(teamId, team, group) {
-  // Charger photos.json pour enrichir les photos manquantes
   let photosMap = {};
+  let dataJson  = null;
   try {
-    const pr = await fetch('photos.json?v=' + Date.now());
-    if (pr.ok) photosMap = await pr.json();
+    const [pr, dr] = await Promise.all([
+      fetch('photos.json?v='+Date.now()).catch(()=>null),
+      fetch('data.json?v='+Date.now()),
+    ]);
+    if (pr?.ok) photosMap = await pr.json();
+    if (dr.ok)  dataJson  = await dr.json();
   } catch(e) {}
   window.currentTeamName = team.name;
-  // Afficher la vue effectif
+
   document.getElementById('teamsView').style.display = 'none';
   const squadView = document.getElementById('squadView');
   squadView.style.display = 'block';
   document.getElementById('squadLogo').src = team.logo;
   document.getElementById('squadName').textContent = team.name;
   document.getElementById('squadGroup').textContent = `Groupe ${group} · Coupe du Monde 2026`;
-  document.getElementById('squadContent').innerHTML = '<div class="loading">Chargement de l\'effectif...</div>';
 
-  try {
+  // Classement du groupe
+  const st = buildStandings(dataJson?.matches || []);
+  const groupObj = GROUPS.find(g => g.ids.includes(teamId));
+  const groupHtml = groupObj ? renderGroupTable(groupObj, st, teamId) : '';
+
+  // Historique matchs
+  const histHtml = renderMatchHistory(dataJson?.matches || [], team.name);
+
+  document.getElementById('squadContent').innerHTML =
+    groupHtml +
+    `<div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:#9ca3af;margin:20px 0 10px">🎮 Matchs joués</div>` +
+    histHtml +
+    `<div style="margin-top:20px">
+      <button onclick="toggleRoster()" style="width:100%;background:#111318;border:1px solid #1e2130;border-radius:10px;padding:12px 16px;color:#9ca3af;font-size:13px;font-weight:600;cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between" id="rosterBtn">
+        <span>👥 Voir l'effectif complet (26 joueurs)</span>
+        <span id="rosterArrow">▼</span>
+      </button>
+      <div id="rosterContent" style="display:none;margin-top:8px"></div>
+    </div>`;
+
+  window._loadRosterFn = async function() {
+    document.getElementById('rosterContent').innerHTML = '<div class="loading">Chargement...</div>';
+
+    try {
     const url = `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/teams/${teamId}/roster`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -465,10 +589,28 @@ async function loadSquad(teamId, team, group) {
       html += '</div></div>';
     }
 
-    document.getElementById('squadContent').innerHTML = html || '<div class="error-msg">Effectif non disponible</div>';
+    document.getElementById('rosterContent').innerHTML = html || '<div class="error-msg">Effectif non disponible</div>';
 
-  } catch(e) {
-    document.getElementById('squadContent').innerHTML = `<div class="error-msg">Effectif non disponible pour le moment.<br>Les effectifs seront mis à jour avant la CDM.</div>`;
+    } catch(e) {
+      document.getElementById('rosterContent').innerHTML = `<div class="error-msg">Effectif non disponible.</div>`;
+    }
+  };
+}
+
+function toggleRoster() {
+  const el    = document.getElementById('rosterContent');
+  const arrow = document.getElementById('rosterArrow');
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    arrow.textContent = '▲';
+    // Charger seulement la première fois
+    if (!el.dataset.loaded) {
+      el.dataset.loaded = '1';
+      window._loadRosterFn && window._loadRosterFn();
+    }
+  } else {
+    el.style.display = 'none';
+    arrow.textContent = '▼';
   }
 }
 
