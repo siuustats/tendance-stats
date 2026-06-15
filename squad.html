@@ -527,23 +527,20 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups) {
       + '<div class="bracket-team tbd">'+r16Label2+'</div>'
       + '</div>';
 
-    // Layout : col R32 | connecteur SVG | col R16 centré
-    bracketHtml = '<div style="display:flex;align-items:center;gap:0;overflow-x:auto">'
-      // Colonne R32 : 2 matchs
+    // Layout : col R32 | connecteur SVG | col R16
+    bracketHtml = '<div style="display:flex;align-items:flex-start;gap:0;overflow-x:auto">'
       + '<div>'
-        + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:8px">16\u00c8MES</div>'
+        + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:10px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:4px">16\u00c8MES</div>'
         + '<div style="display:flex;flex-direction:column;gap:8px">'
           + myBox
           + partnerBox
         + '</div>'
       + '</div>'
-      // Connecteur SVG
-      + '<svg width="40" height="90" style="flex-shrink:0;overflow:visible" viewBox="0 0 40 90">'
-        + '<path d="M0,19 H20 V45 M0,71 H20 V45 M20,45 H40" stroke="rgba(212,168,67,0.3)" stroke-width="1.5" fill="none"/>'
+      + '<svg width="36" height="90" style="flex-shrink:0;overflow:visible;margin-top:22px" viewBox="0 0 36 90">'
+        + '<path d="M0,19 H18 V45 M0,71 H18 V45 M18,45 H36" stroke="rgba(212,168,67,0.3)" stroke-width="1.5" fill="none"/>'
       + '</svg>'
-      // Colonne R16 : 1 match centré
       + '<div>'
-        + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:11px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:8px">8\u00c8MES</div>'
+        + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:10px;letter-spacing:2px;color:#d4a843;text-align:center;margin-bottom:4px">8\u00c8MES</div>'
         + '<div style="display:flex;align-items:center;height:90px">'
           + r16Box
         + '</div>'
@@ -566,7 +563,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups) {
         + '</div>'
         + '<div style="font-size:11px;color:#6b7280">' + pts + ' pt' + (pts > 1 ? 's' : '') + ' \u00b7 ' + (3 - mj) + ' match' + (3 - mj > 1 ? 's' : '') + ' restant' + (3 - mj > 1 ? 's' : '') + '</div>'
       + '</div>'
-      + (bracketHtml ? bracketHtml : '')
+      + (bracketHtml ? '<div style="margin-left:auto">' + bracketHtml + '</div>' : '')
     + '</div>'
   + '</div>';
 }
