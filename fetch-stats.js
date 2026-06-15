@@ -5,6 +5,11 @@
 const fs = require('fs');
 const DATA_FILE = 'data.json';
 
+// ── Chronomètre ───────────────────────────────────────────────────────────────
+const _t = {};
+function tic(label) { _t[label] = Date.now(); }
+function toc(label) { const ms = Date.now() - (_t[label]||Date.now()); console.log(`⏱️  ${label}: ${ms >= 1000 ? (ms/1000).toFixed(1)+'s' : ms+'ms'}`); delete _t[label]; }
+
 const LEAGUES = [
   { code: 'eng.1',         id: 17, name: 'Premier League',      flag: 'gb-eng', flagAlt: 'EN', cls: 'pl',  label: 'PL'   },
   { code: 'fra.1',         id: 34, name: 'Ligue 1',             flag: 'fr',     flagAlt: 'FR', cls: 'l1',  label: 'L1'   },
@@ -1447,6 +1452,7 @@ async function main() {
   const newMatches = [];
 
   for (const league of LEAGUES) {
+    tic(`ESPN ${league.name}`);
     console.log(`\n⚽ ${league.name}`);
     const allEvents = [];
     const seenEventIds = new Set();
@@ -1461,6 +1467,7 @@ async function main() {
     }
     const events = allEvents;
     console.log(`  📅 ${events.length} match(s)`);
+    toc(`ESPN ${league.name}`);
     // Récupérer les blessés/suspendus pour cette ligue
     const leagueInjuries = await fetchInjuries(league.code);
 
@@ -1482,7 +1489,9 @@ async function main() {
       console.log(`  🎮 ${homeName} ${homeScore}-${awayScore} ${awayName}`);
 
       // Récupérer photos, passes et joueurs ayant joué depuis le summary
+      tic(`summary_${fId}`);
       const { photos, assists, playedByTeam } = await fetchSummaryData(league.code, fId, leagueInjuries);
+      toc(`summary_${fId}`);
       const mergedPhotos = { ...photosCache, ...photos };
       const players  = extractContributions(event, league, mergedPhotos, assists);
       const contribs = players.filter(p => p.goals > 0);
@@ -1566,9 +1575,12 @@ async function main() {
 
   const players = rebuildPlayers(trimmed);
 
+  tic('syncCDMRosters');
   // syncCDMRosters désactivé — tous les joueurs sont récupérés via playedByTeam
   const cdmSync = { photosCache, cdmPlayers: (stored.players || []).filter(p => p.leagueId === 6), syncAt: stored.cdmRosterSyncAt };
+  tic('Transfermarkt');
   let updatedPhotos = await fetchMissingPhotos(players, cdmSync.photosCache, _tmApiAvailable);
+  toc('Transfermarkt');
 
   // Ajouter les joueurs CDM depuis le roster — seulement ceux absents de players (pas encore de stats)
   // Les joueurs avec stats CDM sont déjà dans players via rebuildPlayers
@@ -1644,7 +1656,9 @@ async function main() {
   // Collecter les prochains matchs — exclure ceux déjà joués (présents dans stored.matches)
   const playedIds = new Set(trimmed.map(m => m.fixtureId));
   const nowISO = new Date().toISOString();
+  tic('fetchFixtures');
   const allFixtures = await fetchFixtures();
+  toc('fetchFixtures');
   const fixtures = allFixtures.filter(f => !playedIds.has(f.id) && f.date > nowISO);
 
   // ── ARCHIVAGE HISTORIQUE PRÉDICTIONS CDM ───────────────────────────────────
