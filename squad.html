@@ -189,7 +189,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .mini-bracket-arrow{display:flex;align-items:center;padding:28px 8px 0;color:#3a3f55;font-size:18px}
   .bracket-match{background:#0d0f15;border:1px solid rgba(212,168,67,0.15);border-radius:10px;overflow:hidden;position:relative;transition:border-color .2s}
   .bracket-match:hover{border-color:rgba(212,168,67,0.3)}
-  .bracket-team{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:11px;font-weight:600;color:#f0f2f8}
+  .bracket-team{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:11px;font-weight:600;color:#f0f2f8;transition:background .15s}
+  .bracket-team.clickable{cursor:pointer}
+  .bracket-team.clickable:hover{background:rgba(212,168,67,0.1);}
+  .group-row:hover td { background:rgba(212,168,67,0.06); }
   .bracket-team:first-child{border-bottom:1px solid rgba(255,255,255,0.06)}
   .bracket-team.highlight{color:#d4a843;background:rgba(212,168,67,0.08);font-weight:700}
   .bracket-team.tbd{color:#4b5563;font-style:italic;font-weight:400}
@@ -544,10 +547,11 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
 
     function teamRow(t, isMe, hasBorder) {
       const f = t.flag ? '<img src="https://flagcdn.com/w20/'+t.flag+'.png" class="bracket-flag">' : '<span style="width:18px;display:inline-block;flex-shrink:0"></span>';
-      const cls = 'bracket-team' + (isMe ? ' highlight' : t.tbd ? ' tbd' : '');
+      const isClickable = !t.tbd && t.name;
+      const cls = 'bracket-team' + (isMe ? ' highlight' : t.tbd ? ' tbd' : '') + (isClickable ? ' clickable' : '');
       const border = hasBorder ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : '';
       const rank = (!t.tbd && allGroups) ? getRankLabel(t.name) : '';
-      const click = (!t.tbd && t.name) ? ' onclick="goToSquad(\''+t.name.replace(/'/g,"\\'")+'\')" style="cursor:pointer"' : '';
+      const click = isClickable ? ' onclick="goToSquad(\''+t.name.replace(/'/g,"\\'")+'\')"' : '';
       return '<div class="'+cls+'" style="'+border+'"'+click+'>'+f+'<span>'+t.name+'</span>'+rank+'</div>';
     }
 
@@ -628,7 +632,8 @@ function renderGroupTable(groupObj, st, highlightId) {
     const bg = isHighlight ? (i < 2 ? 'rgba(212,168,67,0.10)' : 'rgba(0,229,160,0.10)') : qualBg;
     const borderLeft = i < 2 ? '3px solid #d4a843' : i === 2 ? '3px solid rgba(0,229,160,0.5)' : '3px solid transparent';
     const diff = (t.bp||0)-(t.bc||0);
-    rows += `<tr style="background:${bg};border-left:${borderLeft};cursor:pointer" onclick="goToSquad(\&quot;${t.name||''}\&quot;)">
+    const rowBorderTop = i > 0 ? 'border-top:1px solid rgba(255,255,255,0.05);' : '';
+    rows += `<tr class="group-row" style="background:${bg};border-left:${borderLeft};cursor:pointer;${rowBorderTop}" onclick="goToSquad('${(t.name||'').replace(/'/g,"\\'")}')">
       <td style="padding:7px 10px;font-size:12px;color:${i<2?'#d4a843':i===2?'#00e5a0':'#6b7280'};font-weight:600">${i+1}</td>
       <td style="padding:7px 8px;display:flex;align-items:center;gap:6px"><img src="${t.logo}" style="width:20px;height:20px;object-fit:contain"><span style="font-size:13px;color:#f0f2f8">${t.name||'?'}</span></td>
       <td style="padding:7px 8px;text-align:center;font-family:'DM Mono',monospace;font-size:12px;color:#9ca3af">${t.mj||0}</td>
