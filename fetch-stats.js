@@ -137,6 +137,24 @@ const cdmNameToFlag = {};
 for (const [id, name] of Object.entries(CDM_TEAM_NAMES)) {
   cdmNameToFlag[name] = CDM_TEAM_FLAGS[id] || 'eu';
 }
+// Noms anglais ESPN → même flag
+const CDM_EN_TO_FLAG = {
+  'Germany':'de','New Zealand':'nz','United States':'us','Sweden':'se',
+  'South Korea':'kr','Netherlands':'nl','Scotland':'gb-sct','Mexico':'mx',
+  'Australia':'au','Ivory Coast':'ci','Czechia':'cz','Switzerland':'ch',
+  'Japan':'jp','Brazil':'br','Saudi Arabia':'sa','Egypt':'eg',
+  'Tunisia':'tn','Morocco':'ma','Bosnia-Herzegovina':'ba','Haiti':'ht',
+  'Cape Verde':'cv','Türkiye':'tr','Spain':'es','Ecuador':'ec',
+  'Belgium':'be','South Africa':'za','France':'fr','Argentina':'ar',
+  'Portugal':'pt','England':'gb-eng','Croatia':'hr','Belgium':'be',
+  'Colombia':'co','Uruguay':'uy','Senegal':'sn','Norway':'no',
+  'Algeria':'dz','Austria':'at','Jordan':'jo','DR Congo':'cd',
+  'Uzbekistan':'uz','Ghana':'gh','Panama':'pa','Iraq':'iq',
+  'Qatar':'qa','Curacao':'cw','Paraguay':'py','Canada':'ca',
+};
+for (const [en, flag] of Object.entries(CDM_EN_TO_FLAG)) {
+  cdmNameToFlag[en] = flag;
+}
 for (const [enName, frName] of Object.entries(TEAM_FIX)) {
   if (cdmNameToFlag[frName]) cdmNameToFlag[enName] = cdmNameToFlag[frName];
 }
@@ -455,11 +473,16 @@ function rebuildPlayers(matches) {
     const trendScore     = calcTrendScore(last5, matches.length, totalGoals, totalAssists);
     const recent_goals   = last5.reduce((s, m) => s + m.goals,   0);
     const recent_assists = last5.reduce((s, m) => s + m.assists, 0);
+    // Pour les joueurs CDM, toujours recalculer le flag depuis cdmNameToFlag
+    const isCdm = leagueInfo.leagueId === 6;
+    const teamN = info.teamName || '';
+    const correctFlag = isCdm ? (cdmNameToFlag[teamN] || cdmNameToFlag[TEAM_FIX[teamN]]) : null;
     return {
       id: info.id, name: info.name, photo: info.photo || '',
-      teamName: info.teamName,
+      teamName: teamN,
       leagueId: leagueInfo.leagueId, leagueName: leagueInfo.leagueName,
-      leagueFlag: leagueInfo.leagueFlag, leagueFlagAlt: leagueInfo.leagueFlagAlt,
+      leagueFlag: correctFlag || leagueInfo.leagueFlag,
+      leagueFlagAlt: correctFlag ? correctFlag.toUpperCase().replace('-','').slice(0,2) : leagueInfo.leagueFlagAlt,
       leagueCls: leagueInfo.leagueCls, leagueLabel: leagueInfo.leagueLabel,
       totalGoals, totalAssists, totalGames: matches.length,
       avg: matches.length > 0 ? parseFloat(((totalGoals + totalAssists) / matches.length).toFixed(2)) : 0,
@@ -1815,29 +1838,44 @@ async function main() {
 
   console.log(`🔮 Prédictions CDM calculées pour ${cdmPlayers.filter(p => p.predScore > 0).length} joueurs`);
 
+  // Dédupliquer les joueurs CDM — garder l'entrée avec le plus de matchs joués
+  const cdmDedup = {};
+  const nonCdm = [];
+  for (const p of players) {
+    if (p.leagueId !== 6) { nonCdm.push(p); continue; }
+    const existing = cdmDedup[p.id];
+    if (!existing || (p.totalGames || 0) > (existing.totalGames || 0) ||
+        ((p.totalGames || 0) === (existing.totalGames || 0) && (p.predScore || 0) > (existing.predScore || 0))) {
+      cdmDedup[p.id] = p;
+    }
+  }
+  const dedupedPlayers = [...nonCdm, ...Object.values(cdmDedup)];
+  console.log(`🔁 Déduplication CDM: ${players.filter(p=>p.leagueId===6).length} → ${Object.keys(cdmDedup).length} joueurs uniques`);
+
   fs.writeFileSync(DATA_FILE, JSON.stringify({
     updatedAt:          new Date().toISOString(),
     cdmRosterSyncAt:    cdmSync.syncAt || stored.cdmRosterSyncAt || null,
     totalMatches:       trimmed.length,
-    totalPlayers:       players.length,
+    totalPlayers:       dedupedPlayers.length,
     totalRequests:      LEAGUES.length,
     newMatchesToday:    newMatches.length,
     matches:            trimmed,
-    players,
+    players:            dedupedPlayers,
     fixtures,
     predHistory,
   }));
 
   // Générer les pages joueurs statiques pour le SEO
-  generatePlayerPages(players, updatedPhotos);
+  generatePlayerPages(dedupedPlayers, updatedPhotos);
 
   // Générer le sitemap.xml avec toutes les pages
   const starPlayerMap = {};
-  for (const p of players) starPlayerMap[String(p.id)] = p;
+  for (const p of dedupedPlayers) starPlayerMap[String(p.id)] = p;
   generateSitemap(STAR_PLAYERS, starPlayerMap);
 
-  console.log(`\n✅ ${newMatches.length} match(s) | ${players.length} joueurs | ${LEAGUES.length} requêtes ESPN`);
-  if (players.length > 0) console.log(`🏆 Top : ${players[0].name} (trend: ${players[0].trendScore})`);
+  console.log(`
+✅ ${newMatches.length} match(s) | ${players.length} joueurs | ${LEAGUES.length} requêtes ESPN`);
+  if (dedupedPlayers.length > 0) console.log(`🏆 Top : ${dedupedPlayers[0].name} (trend: ${dedupedPlayers[0].trendScore})`);
 }
 
 main().catch(err => { console.error('💥', err); process.exit(1); });
