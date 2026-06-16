@@ -688,10 +688,10 @@ function renderMatchHistory(matches, teamName) {
 
     // Buteurs séparés par équipe
     function scorerLines(teamN) {
-      const scorers = (m.players||[]).filter(function(p){ return (p.goals||0)>0 && p.teamName===teamN; });
+      const scorers = (m.players||[]).filter(function(p){ return (p.goals||0)>0 && (NAME_FIX_ST[p.teamName]||p.teamName)===teamN; });
       if (!scorers.length) return '';
       return scorers.map(function(scorer) {
-        const assister = (m.players||[]).find(function(a){ return (a.assists||0)>0 && a.teamName===scorer.teamName && a.id!==scorer.id; });
+        const assister = (m.players||[]).find(function(a){ return (a.assists||0)>0 && (NAME_FIX_ST[a.teamName]||a.teamName)===teamN && a.id!==scorer.id; });
         let line = '⚽ ' + scorer.name;
         if (scorer.goals > 1) line += ' x'+scorer.goals;
         if (assister) line += ' <span style="color:#6b7280">← '+assister.name+'</span>';
