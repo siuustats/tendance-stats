@@ -181,6 +181,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     /* ── BOUTON RETOUR ── */
     .back-btn { margin:12px 12px 0; }
+
+    /* ── CLASSEMENT GROUPE : scroll horizontal ── */
+    .group-table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .group-table-wrap table { min-width:480px; }
+
+    /* ── SITUATION ACTUELLE : colonne sur mobile ── */
+    .situation-flex { flex-direction:column !important; gap:12px !important; }
+    .situation-bracket { margin-left:0 !important; width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
   }
   /* Mini bracket */
   .mini-bracket{display:flex;align-items:flex-start;gap:0;margin-top:14px}
@@ -606,14 +614,14 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
   }
 
   return '<div style="background:#111318;border:1px solid #1e2130;border-radius:12px;padding:16px;margin-bottom:20px">'
-    + '<div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap">'
+    + '<div class="situation-flex" style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap">'
       + '<div style="width:290px;flex-shrink:0;display:flex;flex-direction:column">'
         + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;letter-spacing:2px;color:#9ca3af;margin-bottom:12px">\ud83c\udfc6 SITUATION ACTUELLE</div>'
         + '<div style="font-size:14px;font-weight:600;color:' + statusColor + ';line-height:1.4;margin-bottom:8px">' + statusMsg + '</div>'
         + '<div style="font-size:12px;color:#6b7280;margin-bottom:14px">' + pts + ' pt' + (pts > 1 ? 's' : '') + ' \u00b7 ' + (3 - mj) + ' match' + (3 - mj > 1 ? 's' : '') + ' restant' + (3 - mj > 1 ? 's' : '') + '</div>'
         + nextMatchHtml
       + '</div>'
-      + (bracketHtml ? '<div style="margin-left:auto">' + bracketHtml + '</div>' : '')
+      + (bracketHtml ? '<div class="situation-bracket" style="margin-left:auto">' + bracketHtml + '</div>' : '')
     + '</div>'
   + '</div>';
 }
@@ -647,7 +655,7 @@ function renderGroupTable(groupObj, st, highlightId) {
   });
   return `<div style="background:#111318;border:1px solid #1e2130;border-radius:12px;overflow:hidden;margin-bottom:20px">
     <div style="padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:#9ca3af;border-bottom:1px solid #1e2130">${groupObj.name}</div>
-    <table style="width:100%;border-collapse:collapse">
+    <div class="group-table-wrap"><table style="width:100%;border-collapse:collapse">
       <thead><tr style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #1e2130">
         <th style="padding:6px 10px;text-align:left">#</th>
         <th style="padding:6px 8px;text-align:left">Équipe</th>
@@ -660,7 +668,7 @@ function renderGroupTable(groupObj, st, highlightId) {
         <th style="padding:6px 8px;text-align:center">Pts</th>
       </tr></thead>
       <tbody>${rows}</tbody>
-    </table>
+    </table></div>
     <div style="padding:10px 12px 8px;font-size:10px;color:#4b5563;display:flex;gap:14px;border-top:1px solid #1e2130;margin-top:4px">
       <span style="color:#d4a843">▌ Qualifié direct (top 2)</span><span style="color:#00e5a0">▌ Possible meilleur 3e</span>
     </div>
