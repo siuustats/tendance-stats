@@ -1611,11 +1611,15 @@ async function main() {
   }
 
   // Corriger les flags de TOUS les joueurs CDM — passe globale de sécurité
+  let flagFixed = 0, flagMissing = [];
   for (const p of players) {
     if (p.leagueId !== 6) continue;
     const flag = cdmNameToFlag[p.teamName] || cdmNameToFlag[TEAM_FIX[p.teamName]];
-    if (flag) { p.leagueFlag = flag; p.leagueFlagAlt = flag.toUpperCase().replace('-','').slice(0,2); }
+    if (flag) { p.leagueFlag = flag; p.leagueFlagAlt = flag.toUpperCase().replace('-','').slice(0,2); flagFixed++; }
+    else flagMissing.push(p.teamName);
   }
+  console.log(`🏳️  Flags CDM corrigés: ${flagFixed} joueurs`);
+  if (flagMissing.length) console.log(`⚠️  Flags manquants pour: ${[...new Set(flagMissing)].join(', ')}`);
 
   // Générer photos-index.json : ID → nom du joueur
   const photosIndex = {};
