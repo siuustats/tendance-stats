@@ -400,8 +400,9 @@ function extractContributions(event, league, photos = {}, assists = {}) {
           photo: photos[aid] || `https://a.espncdn.com/i/headshots/soccer/players/full/${aid}.png`,
           teamName: teamName || '', teamWon,
           leagueId: league.id, leagueName: league.name,
-          leagueFlag: league.flag, leagueFlagAlt: league.flagAlt,
-          leagueCls: league.cls, leagueLabel: league.label,
+          leagueFlag: league.id === 6 ? (cdmNameToFlag[teamName] || league.flag) : league.flag,
+          leagueFlagAlt: league.flagAlt,
+          leagueCls: league.id === 6 ? 'cdm' : league.cls, leagueLabel: league.label,
         };
       }
     }
@@ -1597,11 +1598,23 @@ async function main() {
   // Les joueurs avec stats CDM sont déjà dans players via rebuildPlayers
   const playersWithStats = new Set(players.filter(p => p.leagueId === 6).map(p => String(p.id)));
   const cdmToAdd = (cdmSync.cdmPlayers || []).filter(p => !playersWithStats.has(String(p.id)));
+  // Corriger les flags EU des joueurs roster en cache
+  cdmToAdd.forEach(p => {
+    const correctFlag = cdmNameToFlag[p.teamName] || cdmNameToFlag[TEAM_FIX[p.teamName]];
+    if (correctFlag) { p.leagueFlag = correctFlag; p.leagueFlagAlt = correctFlag.toUpperCase().replace('-','').slice(0,2); }
+  });
   players.push(...cdmToAdd);
 
   if (JSON.stringify(updatedPhotos) !== JSON.stringify(photosCache)) {
     fs.writeFileSync('photos.json', JSON.stringify(updatedPhotos, null, 2));
     console.log(`📸 photos.json mis à jour (${Object.keys(updatedPhotos).length} photos)`);
+  }
+
+  // Corriger les flags de TOUS les joueurs CDM — passe globale de sécurité
+  for (const p of players) {
+    if (p.leagueId !== 6) continue;
+    const flag = cdmNameToFlag[p.teamName] || cdmNameToFlag[TEAM_FIX[p.teamName]];
+    if (flag) { p.leagueFlag = flag; p.leagueFlagAlt = flag.toUpperCase().replace('-','').slice(0,2); }
   }
 
   // Générer photos-index.json : ID → nom du joueur
