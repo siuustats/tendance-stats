@@ -429,6 +429,8 @@ function rebuildPlayers(matches) {
       // ── CDM → bucket séparé ───────────────────────────────────────
       if (p.leagueId === 6) {
         if (!cdm[p.id]) cdm[p.id] = { info: p, matches: [] };
+        // Normaliser le teamName en français au cas où les données en cache sont en anglais
+        if (p.teamName && TEAM_FIX[p.teamName]) p.teamName = TEAM_FIX[p.teamName];
         if (p.goals > 0 || p.assists > 0) cdm[p.id].info = p;
         else if (p.name && (!cdm[p.id].info?.name || cdm[p.id].info.goals === 0)) cdm[p.id].info = p;
         cdm[p.id].matches.push({ goals: p.goals, assists: p.assists, played: p.played, teamWon: p.teamWon, date: p.date || match.date, leagueId: 6 });
@@ -1741,8 +1743,10 @@ async function main() {
   const goalsConcededMap = {};
   cdmMatches.forEach(m => {
     if (m.homeGoals === undefined) return;
-    goalsConcededMap[m.homeTeam] = (goalsConcededMap[m.homeTeam] || 0) + (m.awayGoals || 0);
-    goalsConcededMap[m.awayTeam] = (goalsConcededMap[m.awayTeam] || 0) + (m.homeGoals || 0);
+    const ht = TEAM_FIX[m.homeTeam] || m.homeTeam;
+    const at = TEAM_FIX[m.awayTeam] || m.awayTeam;
+    goalsConcededMap[ht] = (goalsConcededMap[ht] || 0) + (m.awayGoals || 0);
+    goalsConcededMap[at] = (goalsConcededMap[at] || 0) + (m.homeGoals || 0);
   });
 
   // Index joueurs CDM par équipe pour oppScore
@@ -1762,9 +1766,14 @@ async function main() {
     const gaCdm = (p.totalGoals || 0) + (p.totalAssists || 0);
     const ga5   = (p.recent_goals || 0) + (p.recent_assists || 0);
     const ts    = p.trendScore || p.signal || 0;
+    const played = p.totalGames || 0;
     const base  = gaCdm > 0
       ? Math.min(100, (gaCdm * 12) + (ts * 0.6))
-      : Math.min(100, (ga5 * 15) + (ts * 0.7));
+      : ga5 > 0
+        ? Math.min(100, (ga5 * 15) + (ts * 0.7))
+        : played > 0
+          ? Math.min(40, 10 + (ts * 0.4))  // a joué CDM sans marquer → score minimal
+          : Math.min(25, ts * 0.3);          // dans le roster, n'a pas encore joué
 
     // teamScore
     const wins  = (p.last5 || []).filter(m => m.teamWon === true).length;
