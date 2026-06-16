@@ -686,21 +686,30 @@ function renderMatchHistory(matches, teamName) {
     const resultBg = draw ? 'rgba(107,114,128,0.15)' : won ? 'rgba(0,229,160,0.15)' : 'rgba(255,80,80,0.15)';
     const date = new Date(m.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',timeZone:'Europe/Paris'});
 
-    // Buteurs avec leurs passeurs
-    const goalPlayers = (m.players||[]).filter(function(p){ return (p.goals||0)>0; });
-    const assistPlayers = (m.players||[]).filter(function(p){ return (p.assists||0)>0; });
-    // Construire lignes but + passe
-    const goalLines = goalPlayers.map(function(scorer) {
-      const assister = assistPlayers.find(function(a){ return a.id !== scorer.id && a.teamName === scorer.teamName; });
-      let line = scorer.name + ' ⚽';
-      if (scorer.goals > 1) line += ' x' + scorer.goals;
-      if (assister) line += ' ← ' + assister.name + ' 🎯';
-      return line;
-    });
+    // Buteurs séparés par équipe
+    function scorerLines(teamN) {
+      const scorers = (m.players||[]).filter(function(p){ return (p.goals||0)>0 && p.teamName===teamN; });
+      if (!scorers.length) return '';
+      return scorers.map(function(scorer) {
+        const assister = (m.players||[]).find(function(a){ return (a.assists||0)>0 && a.teamName===scorer.teamName && a.id!==scorer.id; });
+        let line = '⚽ ' + scorer.name;
+        if (scorer.goals > 1) line += ' x'+scorer.goals;
+        if (assister) line += ' <span style="color:#6b7280">← '+assister.name+'</span>';
+        return '<div>'+line+'</div>';
+      }).join('');
+    }
+
+    const homeLines = scorerLines(home);
+    const awayLines = scorerLines(away);
+    const detailHtml = (homeLines || awayLines)
+      ? '<div style="display:flex;gap:16px">'
+        + '<div style="flex:1"><div style="font-size:10px;letter-spacing:1px;color:#6b7280;margin-bottom:4px;text-transform:uppercase">'+home+'</div>'+(homeLines||'<span style="color:#4b5563;font-style:italic">-</span>')+'</div>'
+        + '<div style="width:1px;background:rgba(255,255,255,0.06);flex-shrink:0"></div>'
+        + '<div style="flex:1"><div style="font-size:10px;letter-spacing:1px;color:#6b7280;margin-bottom:4px;text-transform:uppercase">'+away+'</div>'+(awayLines||'<span style="color:#4b5563;font-style:italic">-</span>')+'</div>'
+        + '</div>'
+      : '<span style="color:#4b5563;font-style:italic">Aucun buteur enregistré</span>';
 
     const detailId = 'match-detail-' + idx;
-    const detailHtml = goalLines.length ? goalLines.join('<br>') : 'Aucun buteur enregistré';
-
     return `<div style="background:#111318;border:1px solid #1e2130;border-radius:10px;margin-bottom:8px;overflow:hidden;cursor:pointer" onclick="var el=document.getElementById('${detailId}');el.style.display=el.style.display==='none'?'block':'none'">
       <div style="padding:12px 16px;display:flex;align-items:center;gap:12px">
         <div style="background:${resultBg};color:${resultColor};font-weight:700;font-size:12px;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${result}</div>
