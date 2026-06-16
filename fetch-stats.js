@@ -176,8 +176,8 @@ async function fetchFixtures() {
               leagueId:    6,
               leagueLabel: 'CDM',
               leagueCls:   'cdm',
-              homeTeam:    homeName,
-              awayTeam:    awayName,
+              homeTeam:    TEAM_FIX[homeName] || homeName,
+              awayTeam:    TEAM_FIX[awayName] || awayName,
               homeLogo:    homeComp?.team?.logo || '',
               awayLogo:    awayComp?.team?.logo || '',
             });
@@ -1542,7 +1542,7 @@ async function main() {
       newMatches.push({
         fixtureId: fId, date: event.date,
         leagueId: league.id, leagueName: league.name,
-        homeTeam: homeName, awayTeam: awayName,
+        homeTeam: TEAM_FIX[homeName] || homeName, awayTeam: TEAM_FIX[awayName] || awayName,
         homeGoals: homeScore, awayGoals: awayScore,
         players,
       });
