@@ -186,9 +186,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .group-table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
     .group-table-wrap table { min-width:480px; }
 
-    /* ── SITUATION ACTUELLE : colonne sur mobile ── */
-    .situation-flex { flex-direction:column !important; gap:12px !important; }
-    .situation-bracket { margin-left:0 !important; width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    /* ── SITUATION ACTUELLE : scroll horizontal sur mobile ── */
+    .situation-flex { flex-wrap:nowrap !important; }
+    .situation-inner { overflow-x:auto; -webkit-overflow-scrolling:touch; }
   }
   /* Mini bracket */
   .mini-bracket{display:flex;align-items:flex-start;gap:0;margin-top:14px}
@@ -614,6 +614,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
   }
 
   return '<div style="background:#111318;border:1px solid #1e2130;border-radius:12px;padding:16px;margin-bottom:20px">'
+    + '<div class="situation-inner">'
     + '<div class="situation-flex" style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap">'
       + '<div style="width:290px;flex-shrink:0;display:flex;flex-direction:column">'
         + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;letter-spacing:2px;color:#9ca3af;margin-bottom:12px">\ud83c\udfc6 SITUATION ACTUELLE</div>'
@@ -622,6 +623,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
         + nextMatchHtml
       + '</div>'
       + (bracketHtml ? '<div class="situation-bracket" style="margin-left:auto">' + bracketHtml + '</div>' : '')
+    + '</div>'
     + '</div>'
   + '</div>';
 }
