@@ -132,6 +132,40 @@ const TEAM_FIX = {
   'Atletico de Madrid':     'Atletico Madrid',
   'Athletic Club':          'Athletic Bilbao',
 };
+
+// Normalise les noms de nations ESPN (anglais) vers le français — utilisé PARTOUT
+// où homeTeam/awayTeam de matchs/fixtures CDM sont stockés. Sans ce mapping,
+// les nations dont le nom ESPN diffère du français (Czechia/Czech Republic,
+// South Africa, Mexico, South Korea, Switzerland, Bosnia-Herzegovina, etc.)
+// ne matchent jamais p.teamName (déjà en français) → predOpponent introuvable
+// → joueur absent des prédictions malgré des stats CDM réelles.
+const NATION_EN_TO_FR = {
+  'France':'France','Brazil':'Brésil','England':'Angleterre','Uruguay':'Uruguay',
+  'Spain':'Espagne','Egypt':'Égypte','Norway':'Norvège','Sweden':'Suède',
+  'Belgium':'Belgique','South Korea':'Corée du Sud','Germany':'Allemagne',
+  'Switzerland':'Suisse','Nigeria':'Nigeria','Morocco':'Maroc','Italy':'Italie',
+  'Argentina':'Argentine','Portugal':'Portugal','Croatia':'Croatie',
+  'Netherlands':'Pays-Bas','Denmark':'Danemark','Serbia':'Serbie',
+  'Algeria':'Algérie','Austria':'Autriche','Colombia':'Colombie',
+  'Mexico':'Mexique','Japan':'Japon','Senegal':'Sénégal','Ghana':'Ghana',
+  'Australia':'Australie','Ecuador':'Équateur','Iran':'Iran',
+  'Canada':'Canada','Wales':'Pays de Galles','Scotland':'Écosse',
+  'Tunisia':'Tunisie','Cameroon':'Cameroun','Costa Rica':'Costa Rica',
+  'Saudi Arabia':'Arabie Saoudite','Poland':'Pologne','United States':'États-Unis',
+  'Republic of Ireland':'Irlande','Czech Republic':'Tchéquie','Czechia':'Tchéquie',
+  'South Africa':'Afrique du Sud','Panama':'Panama','Iraq':'Irak',
+  'Jordan':'Jordanie','Uzbekistan':'Ouzbékistan','DR Congo':'RD Congo',
+  'Cape Verde':'Cap-Vert','New Zealand':'Nouvelle-Zélande','Curacao':'Curaçao','Curaçao':'Curaçao',
+  "Ivory Coast":"Côte d'Ivoire",'Haiti':'Haïti','Paraguay':'Paraguay',
+  'Turkey':'Turquie','Türkiye':'Turquie',
+  'Bosnia and Herzegovina':'Bosnie-Herzégovine','Bosnia-Herzegovina':'Bosnie-Herzégovine',
+  'Qatar':'Qatar',
+};
+
+// Helper : traduit un nom d'équipe (club via TEAM_FIX, nation via NATION_EN_TO_FR)
+function fixTeamName(name) {
+  return TEAM_FIX[name] || NATION_EN_TO_FR[name] || name;
+}
 // Mapping teamName → leagueFlag pour les équipes CDM (noms français ET anglais)
 const cdmNameToFlag = {};
 for (const [id, name] of Object.entries(CDM_TEAM_NAMES)) {
@@ -194,8 +228,8 @@ async function fetchFixtures() {
               leagueId:    6,
               leagueLabel: 'CDM',
               leagueCls:   'cdm',
-              homeTeam:    TEAM_FIX[homeName] || homeName,
-              awayTeam:    TEAM_FIX[awayName] || awayName,
+              homeTeam:    fixTeamName(homeName),
+              awayTeam:    fixTeamName(awayName),
               homeLogo:    homeComp?.team?.logo || '',
               awayLogo:    awayComp?.team?.logo || '',
             });
@@ -222,8 +256,8 @@ async function fetchFixtures() {
             leagueId:   league.id,
             leagueLabel:league.label,
             leagueCls:  league.cls,
-            homeTeam:   TEAM_FIX[homeName] || homeName,
-            awayTeam:   TEAM_FIX[awayName] || awayName,
+            homeTeam:   fixTeamName(homeName),
+            awayTeam:   fixTeamName(awayName),
             homeLogo:   homeComp?.team?.logo || '',
             awayLogo:   awayComp?.team?.logo || '',
           });
@@ -449,7 +483,7 @@ function rebuildPlayers(matches) {
       if (p.leagueId === 6) {
         if (!cdm[p.id]) cdm[p.id] = { info: p, matches: [] };
         // Normaliser le teamName en français au cas où les données en cache sont en anglais
-        if (p.teamName && TEAM_FIX[p.teamName]) p.teamName = TEAM_FIX[p.teamName];
+        if (p.teamName) p.teamName = fixTeamName(p.teamName);
         if (p.goals > 0 || p.assists > 0) cdm[p.id].info = p;
         else if (p.name && (!cdm[p.id].info?.name || cdm[p.id].info.goals === 0)) cdm[p.id].info = p;
         cdm[p.id].matches.push({ goals: p.goals, assists: p.assists, played: p.played, teamWon: p.teamWon, date: p.date || match.date, leagueId: 6 });
@@ -476,7 +510,7 @@ function rebuildPlayers(matches) {
     // Pour les joueurs CDM, toujours recalculer le flag depuis cdmNameToFlag
     const isCdm = leagueInfo.leagueId === 6;
     const teamN = info.teamName || '';
-    const correctFlag = isCdm ? (cdmNameToFlag[teamN] || cdmNameToFlag[TEAM_FIX[teamN]]) : null;
+    const correctFlag = isCdm ? (cdmNameToFlag[teamN] || cdmNameToFlag[fixTeamName(teamN)]) : null;
     return {
       id: info.id, name: info.name, photo: info.photo || '',
       teamName: teamN,
@@ -672,27 +706,7 @@ function generatePlayerPages(players, photosCache) {
     }).join(' ');
 
     // Nation → lien vers squad.html
-    // Normaliser les noms de pays ESPN (anglais) vers le français
-    const NATION_EN_TO_FR = {
-      'France':'France','Brazil':'Brésil','England':'Angleterre','Uruguay':'Uruguay',
-      'Spain':'Espagne','Egypt':'Égypte','Norway':'Norvège','Sweden':'Suède',
-      'Belgium':'Belgique','South Korea':'Corée du Sud','Germany':'Allemagne',
-      'Switzerland':'Suisse','Nigeria':'Nigeria','Morocco':'Maroc','Italy':'Italie',
-      'Argentina':'Argentine','Portugal':'Portugal','Croatia':'Croatie',
-      'Netherlands':'Pays-Bas','Denmark':'Danemark','Serbia':'Serbie',
-      'Algeria':'Algérie','Austria':'Autriche','Colombia':'Colombie',
-      'Mexico':'Mexique','Japan':'Japon','Senegal':'Sénégal','Ghana':'Ghana',
-      'Australia':'Australie','Ecuador':'Équateur','Iran':'Iran',
-      'Canada':'Canada','Wales':'Pays de Galles','Scotland':'Écosse',
-      'Tunisia':'Tunisie','Cameroon':'Cameroun','Costa Rica':'Costa Rica',
-      'Saudi Arabia':'Arabie Saoudite','Poland':'Pologne','United States':'États-Unis',
-      'Republic of Ireland':'Irlande','Czech Republic':'Tchéquie',
-      'South Africa':'Afrique du Sud','Panama':'Panama','Iraq':'Irak',
-      'Jordan':'Jordanie','Uzbekistan':'Ouzbékistan','DR Congo':'RD Congo',
-      'Cape Verde':'Cap-Vert','New Zealand':'Nouvelle-Zélande','Curacao':'Curaçao',
-      "Ivory Coast":"Côte d'Ivoire",'Haiti':'Haïti','Paraguay':'Paraguay',
-      'Turkey':'Turquie',
-    };
+    // Normaliser les noms de pays ESPN (anglais) vers le français (mapping global)
     const nationFr = NATION_EN_TO_FR[star.nation] || star.nation;
 
     const NATION_IDS = {
@@ -1540,7 +1554,7 @@ async function main() {
 
       for (const [teamName, teamPlayers] of Object.entries(playedByTeam)) {
         const fixedTeam = TEAM_FIX[teamName] || teamName;
-        const isHome = (TEAM_FIX[homeName] || homeName) === fixedTeam;
+        const isHome = fixTeamName(homeName) === fixedTeam;
         const teamWon = isHome ? homeWon : awayWon;
 
         for (const tp of teamPlayers) {
@@ -1568,7 +1582,7 @@ async function main() {
       newMatches.push({
         fixtureId: fId, date: event.date,
         leagueId: league.id, leagueName: league.name,
-        homeTeam: TEAM_FIX[homeName] || homeName, awayTeam: TEAM_FIX[awayName] || awayName,
+        homeTeam: fixTeamName(homeName), awayTeam: fixTeamName(awayName),
         homeGoals: homeScore, awayGoals: awayScore,
         players,
       });
@@ -1623,7 +1637,7 @@ async function main() {
   const cdmToAdd = (cdmSync.cdmPlayers || []).filter(p => !playersWithStats.has(String(p.id)));
   // Corriger les flags EU des joueurs roster en cache
   cdmToAdd.forEach(p => {
-    const correctFlag = cdmNameToFlag[p.teamName] || cdmNameToFlag[TEAM_FIX[p.teamName]];
+    const correctFlag = cdmNameToFlag[p.teamName] || cdmNameToFlag[fixTeamName(p.teamName)];
     if (correctFlag) { p.leagueFlag = correctFlag; p.leagueFlagAlt = correctFlag.toUpperCase().replace('-','').slice(0,2); }
   });
   players.push(...cdmToAdd);
@@ -1637,7 +1651,7 @@ async function main() {
   let flagFixed = 0, flagMissing = [];
   for (const p of players) {
     if (p.leagueId !== 6) continue;
-    const flag = cdmNameToFlag[p.teamName] || cdmNameToFlag[TEAM_FIX[p.teamName]];
+    const flag = cdmNameToFlag[p.teamName] || cdmNameToFlag[fixTeamName(p.teamName)];
     if (flag) { p.leagueFlag = flag; p.leagueFlagAlt = flag.toUpperCase().replace('-','').slice(0,2); flagFixed++; }
     else flagMissing.push(p.teamName);
   }
@@ -1753,8 +1767,8 @@ async function main() {
   const goalsConcededMap = {};
   cdmMatches.forEach(m => {
     if (m.homeGoals === undefined) return;
-    const ht = TEAM_FIX[m.homeTeam] || m.homeTeam;
-    const at = TEAM_FIX[m.awayTeam] || m.awayTeam;
+    const ht = fixTeamName(m.homeTeam);
+    const at = fixTeamName(m.awayTeam);
     goalsConcededMap[ht] = (goalsConcededMap[ht] || 0) + (m.awayGoals || 0);
     goalsConcededMap[at] = (goalsConcededMap[at] || 0) + (m.homeGoals || 0);
   });
