@@ -217,14 +217,6 @@ body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif
     <div class="filter-label">Filtrer par date</div>
     <div class="filters" id="dateFilters" style="margin-bottom:12px">
       <button class="filter-btn date-filter-btn on" onclick="setDateFilter('all',this)">Tous</button>
-      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-11',this)">11 juin</button>
-      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-12',this)">12 juin</button>
-      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-13',this)">13 juin</button>
-      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-14',this)">14 juin</button>
-      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-15',this)">15 juin</button>
-      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-16',this)">16 juin</button>
-      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-17',this)">17 juin</button>
-      <button class="filter-btn date-filter-btn" onclick="setDateFilter('2026-06-18',this)">18 juin</button>
     </div>
     <div class="filter-label">Filtrer par groupe</div>
     <div class="filters" id="filters">
@@ -344,7 +336,7 @@ function getPredLabel(score) {
   if (score >= 75) return { label:'🔥 EN FEU',   color:'#ff9f43', colorDim:'#ff9f4388' };
   if (score >= 55) return { label:'⚡ CHAUD',     color:'#ffd32a', colorDim:'#ffd32a88' };
   if (score >= 35) return { label:'📈 EN FORME',  color:'#00e5a0', colorDim:'#00e5a088' };
-  if (score >= 20) return { label:'💤 DISCRET',   color:'#5e81f4', colorDim:'#5e81f488' };
+  if (score >= 15) return { label:'💤 DISCRET',   color:'#5e81f4', colorDim:'#5e81f488' };
   return null;
 }
 
@@ -360,6 +352,19 @@ function toLocaleDateStr(dateStr) {
   const d = new Date(dateStr);
   return d.toLocaleDateString("fr-FR", {year:"numeric", month:"2-digit", day:"2-digit", timeZone:"Europe/Paris"})
     .split("/").reverse().join("-");
+}
+
+// Génère les boutons de filtre date dynamiquement depuis les dates réelles des fixtures CDM
+function renderDateFilterButtons() {
+  const container = document.getElementById('dateFilters');
+  if (!container) return;
+  const dates = [...new Set(allFixtures.map(f => toLocaleDateStr(f.date)).filter(Boolean))].sort();
+  let html = `<button class="filter-btn date-filter-btn${currentDateFilter==='all'?' on':''}" onclick="setDateFilter('all',this)">Tous</button>`;
+  for (const d of dates) {
+    const label = new Date(d + 'T12:00:00Z').toLocaleDateString('fr-FR', {day:'2-digit', month:'long', timeZone:'Europe/Paris'});
+    html += `<button class="filter-btn date-filter-btn${currentDateFilter===d?' on':''}" onclick="setDateFilter('${d}',this)">${label}</button>`;
+  }
+  container.innerHTML = html;
 }
 
 function setDateFilter(date, btn) {
@@ -788,8 +793,7 @@ async function init() {
 
     // Stars CDM enrichies par fetch-stats.js — _isStar déjà dans data.json
 
-
-
+    renderDateFilterButtons();
     render();
   } catch(e) {
     document.getElementById('predictions-container').innerHTML =
