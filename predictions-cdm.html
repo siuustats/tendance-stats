@@ -604,6 +604,9 @@ function render() {
   let fixtures = currentDateFilter !== 'all'
     ? allFixtures.filter(f => f.date && toLocaleDateStr(f.date) === currentDateFilter)
     : allFixtures;
+  if (currentFilter !== 'all') {
+    fixtures = fixtures.filter(f => TEAM_TO_GROUP[f.homeTeam] === currentFilter || TEAM_TO_GROUP[f.awayTeam] === currentFilter);
+  }
   let players = allPlayers.filter(p => p.leagueId === 6 && p.cdmStatus !== 'absent');
   if (currentFilter !== 'all') {
     players = players.filter(p => TEAM_TO_GROUP[p.teamName] === currentFilter);
@@ -666,6 +669,7 @@ function render() {
 
   const matches = Object.values(fixtureMap)
     .map(m => ({ ...m, players: m.players.sort((a,b) => b.score - a.score).slice(0,3) }))
+    .filter(m => m.players.length > 0) // masque automatiquement les matchs sans prédictions (ex: J3 avant que J2 soit joué)
     .sort((a,b) => new Date(a.date) - new Date(b.date));
 
   if (!matches.length) {
