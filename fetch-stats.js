@@ -1657,52 +1657,22 @@ async function main() {
     if (!p.photo && updatedPhotos[p.id]) p.photo = updatedPhotos[p.id];
   }
   // ── ENRICHISSEMENT STARS CDM AVEC STATS CLUB ─────────────────────────────
-  // Matching par nom : joueurs CDM sans stats (totalGames=0) → stats club
-  const normalize = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, ' ').trim();
-  const clubPlayers = players.filter(p => p.leagueId !== 6);
-  const clubByName = {};
-  clubPlayers.forEach(p => { clubByName[normalize(p.name)] = p; });
-
-  const nationCount = {};
-  players
-    .filter(p => p.leagueId === 6 && (p.totalGames || 0) === 0)
-    .forEach(cdmP => {
-      const normName = normalize(cdmP.name);
-      const clubP = clubByName[normName] || clubPlayers.find(cp => {
-        const cn = normalize(cp.name);
-        // Correspondance exacte uniquement — évite les faux positifs sur noms courts (ex: "Issa")
-        const cdmWords = normName.split(' ').filter(Boolean);
-        if (cdmWords.length < 2) return cn === normName; // nom court = match exact seulement
-        return cn === normName || cn.includes(normName) || normName.includes(cn);
-      });
-      if (!clubP || (clubP.signal || clubP.trendScore || 0) <= 20) return;
-      if (!nationCount[cdmP.teamName]) nationCount[cdmP.teamName] = 0;
-      if (nationCount[cdmP.teamName] >= 3) return;
-
-      // Vérifier si ce joueur est le meilleur signal pour cette nation
-      // (on trie ensuite)
-      cdmP._isStar      = true;
-      cdmP._clubSignal  = clubP.signal || clubP.trendScore || 0;
-      cdmP._clubGoals   = (clubP.last5 || []).slice(0, 5).reduce((s, m) => s + (m.goals || 0), 0);
-      cdmP._clubAssists = (clubP.last5 || []).slice(0, 5).reduce((s, m) => s + (m.assists || 0), 0);
-      cdmP._clubLast5   = clubP.last5 || [];
-      cdmP._clubPhoto   = clubP.photo || cdmP.photo || '';
-      nationCount[cdmP.teamName]++;
-    });
-
-  // Trier par signal et ne garder que les 3 meilleurs par nation
-  const finalNationCount = {};
-  players
-    .filter(p => p._isStar)
-    .sort((a, b) => (b._clubSignal || 0) - (a._clubSignal || 0))
-    .forEach(p => {
-      if (!finalNationCount[p.teamName]) finalNationCount[p.teamName] = 0;
-      if (finalNationCount[p.teamName] >= 3) { p._isStar = false; return; }
-      finalNationCount[p.teamName]++;
-    });
-
-  const starCount = players.filter(p => p._isStar).length;
-  console.log(`⭐ ${starCount} joueurs stars enrichis avec stats club`);
+  // DÉSACTIVÉ depuis le 18/06/2026 : toutes les équipes ont joué leur J1,
+  // les joueurs CDM ont désormais leurs propres stats CDM réelles.
+  // Ce système servait uniquement avant le début de la CDM (matching par nom
+  // vers stats club) et créait un risque d'afficher des joueurs blessés/non
+  // sélectionnés que le système cdmStatus:'absent' ne couvre pas pour les
+  // joueurs sans historique CDM. Pour réactiver, restaurer le bloc ci-dessous.
+  // Purge des flags résiduels d'un cron précédent (cache data.json)
+  let purged = 0;
+  for (const p of players) {
+    if (p._isStar) {
+      delete p._isStar; delete p._clubSignal; delete p._clubGoals;
+      delete p._clubAssists; delete p._clubLast5; delete p._clubPhoto;
+      purged++;
+    }
+  }
+  console.log(`⭐ Enrichissement stars désactivé (toutes les équipes ont joué leur J1)${purged ? ` — ${purged} flag(s) résiduel(s) purgé(s)` : ''}`);
 
   // Collecter les prochains matchs — exclure ceux déjà joués (présents dans stored.matches)
   const playedIds = new Set(trimmed.map(m => m.fixtureId));
@@ -1797,6 +1767,7 @@ async function main() {
   });
 
   cdmPlayers.forEach(p => {
+    if (p.cdmStatus === 'absent') { p.predScore = 0; p.predOpponent = null; p.predDate = null; return; }
     const nextMatch = fixtures.find(f => f.homeTeam === p.teamName || f.awayTeam === p.teamName);
     if (!nextMatch) { p.predScore = 0; p.predOpponent = null; p.predDate = null; return; }
 
