@@ -154,7 +154,7 @@ const NATION_EN_TO_FR = {
   'Saudi Arabia':'Arabie Saoudite','Poland':'Pologne','United States':'États-Unis',
   'Republic of Ireland':'Irlande','Czech Republic':'Tchéquie','Czechia':'Tchéquie',
   'South Africa':'Afrique du Sud','Panama':'Panama','Iraq':'Irak',
-  'Jordan':'Jordanie','Uzbekistan':'Ouzbékistan','DR Congo':'RD Congo',
+  'Jordan':'Jordanie','Uzbekistan':'Ouzbékistan','DR Congo':'RD Congo','Congo DR':'RD Congo',
   'Cape Verde':'Cap-Vert','New Zealand':'Nouvelle-Zélande','Curacao':'Curaçao','Curaçao':'Curaçao',
   "Ivory Coast":"Côte d'Ivoire",'Haiti':'Haïti','Paraguay':'Paraguay',
   'Turkey':'Turquie','Türkiye':'Turquie',
@@ -182,7 +182,7 @@ const CDM_EN_TO_FLAG = {
   'Belgium':'be','South Africa':'za','France':'fr','Argentina':'ar',
   'Portugal':'pt','England':'gb-eng','Croatia':'hr','Belgium':'be',
   'Colombia':'co','Uruguay':'uy','Senegal':'sn','Norway':'no',
-  'Algeria':'dz','Austria':'at','Jordan':'jo','DR Congo':'cd',
+  'Algeria':'dz','Austria':'at','Jordan':'jo','DR Congo':'cd','Congo DR':'cd',
   'Uzbekistan':'uz','Ghana':'gh','Panama':'pa','Iraq':'iq',
   'Qatar':'qa','Curacao':'cw','Paraguay':'py','Canada':'ca',
 };
