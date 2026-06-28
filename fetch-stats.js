@@ -350,15 +350,18 @@ async function fetchSummaryData(leagueCode, eventId, injuries = {}) {
     const assists = {}; // { "scorerId_goalIndex": { name, id } }
     const goalCount = {}; // compteur de buts par joueur pour l'index
 
+    // Détection séance TAB par clock dupliqué (voir extractContributions pour explication)
+    const keyEventGoals = (data.keyEvents || []).filter(e => e.scoringPlay);
+    const keMaxClock = keyEventGoals.reduce((max, e) => Math.max(max, e.clock?.value || 0), 0);
+    const keAtMaxCount = keyEventGoals.filter(e => (e.clock?.value || 0) === keMaxClock).length;
+    const keShootoutClock = (keAtMaxCount > 1) ? keMaxClock : null;
+
     for (const event of (data.keyEvents || [])) {
       if (!event.scoringPlay) continue;
       const typeStr = (event.type?.type || event.type?.text || '').toLowerCase();
       if (!typeStr.includes('goal') && typeStr !== 'goal') continue;
-      // Exclure les buts marqués lors de la séance de tirs au but — ils ne
-      // comptent pas comme stats individuelles (ESPN les marque souvent avec
-      // "shootout" ou "penalty shootout" dans le type, ou period >= 5).
-      if (typeStr.includes('shootout')) continue;
-      if (event.period?.number >= 5 || event.period?.type === 'shootout') continue;
+      // Exclure les buts de la séance de tirs au but (clock dupliqué)
+      if (keShootoutClock !== null && (event.clock?.value || 0) === keShootoutClock) continue;
       const participants = event.participants || [];
       const scorer   = participants[0]?.athlete;
       const assister = participants[1]?.athlete;
@@ -375,12 +378,15 @@ async function fetchSummaryData(leagueCode, eventId, injuries = {}) {
     // Passes décisives — source 2 : comp.details (si keyEvents incomplets)
     const comp = data.header?.competitions?.[0] || data.competitions?.[0];
     const goalCount2 = {};
-    for (const detail of (comp?.details || data.drives?.previous || [])) {
+    const detailsList = comp?.details || data.drives?.previous || [];
+    const detailGoals = detailsList.filter(d => d.scoringPlay && !d.ownGoal);
+    const dMaxClock = detailGoals.reduce((max, d) => Math.max(max, d.clock?.value || 0), 0);
+    const dAtMaxCount = detailGoals.filter(d => (d.clock?.value || 0) === dMaxClock).length;
+    const dShootoutClock = (dAtMaxCount > 1) ? dMaxClock : null;
+    for (const detail of detailsList) {
       if (!detail.scoringPlay) continue;
       if (detail.ownGoal) continue;
-      const detailTypeStr2 = (detail.type?.type || detail.type?.text || '').toLowerCase();
-      if (detailTypeStr2.includes('shootout')) continue;
-      if (detail.period?.number >= 5 || detail.period?.type === 'shootout') continue;
+      if (dShootoutClock !== null && (detail.clock?.value || 0) === dShootoutClock) continue;
       const involved = detail.athletesInvolved || [];
       const scorer   = involved[0];
       const assister = involved[1];
@@ -424,22 +430,23 @@ function extractContributions(event, league, photos = {}, assists = {}) {
 
   const goalsMap = {}, assistsMap = {}, infoMap = {};
 
-  // Debug temporaire : si la séance de TAB a eu lieu sur ce match, logger TOUS
-  // les details scoringPlay pour identifier la vraie structure des buts TAB.
-  if (homeComp?.shootoutScore !== undefined) {
-    console.log('  🔍 DEBUG TAB DETAILS — total details:', details.length);
-    details.filter(d => d.scoringPlay).forEach((d, i) => {
-      console.log(`  🔍 [${i}] type:`, JSON.stringify(d.type), '| period:', JSON.stringify(d.period), '| athlete:', d.athletesInvolved?.[0]?.displayName, '| clock:', JSON.stringify(d.clock));
-    });
-  }
+  // ESPN ne distingue PAS les tirs au but via un champ type/period dédié — un
+  // but de TAB a exactement le même type "Penalty - Scored" qu'un penalty de
+  // jeu, et clock.value figé à la fin des prolongations (ex: 7200 = 120').
+  // Détection fiable : si plusieurs buts scoringPlay partagent EXACTEMENT le
+  // même clock.value maximum du match ET que ce nombre de buts dépasse 1,
+  // c'est la séance de TAB (un seul but légitime peut tomber à la dernière
+  // seconde, mais jamais 2+ buts identiques à la même seconde en jeu réel).
+  const scoringDetails = details.filter(d => d.scoringPlay && !d.ownGoal);
+  const maxClock = scoringDetails.reduce((max, d) => Math.max(max, d.clock?.value || 0), 0);
+  const atMaxClockCount = scoringDetails.filter(d => (d.clock?.value || 0) === maxClock).length;
+  const shootoutClockValue = (atMaxClockCount > 1) ? maxClock : null;
 
   for (const detail of details) {
     if (!detail.scoringPlay) continue;
     if (detail.ownGoal) continue;
-    // Exclure les buts de la séance de tirs au but — ne comptent pas comme stats
-    const detailTypeStr = (detail.type?.type || detail.type?.text || '').toLowerCase();
-    if (detailTypeStr.includes('shootout')) continue;
-    if (detail.period?.number >= 5 || detail.period?.type === 'shootout') continue;
+    // Exclure les buts de la séance de tirs au but (détectés via clock dupliqué)
+    if (shootoutClockValue !== null && (detail.clock?.value || 0) === shootoutClockValue) continue;
 
     const athlete = detail.athletesInvolved?.[0];
     if (!athlete) continue;
