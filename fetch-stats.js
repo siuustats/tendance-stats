@@ -1514,7 +1514,9 @@ async function main() {
     console.log(`\n⚽ ${league.name}`);
     const allEvents = [];
     const seenEventIds = new Set();
-    for (const date of dates) {
+    // Exception LDC : ajouter la date exacte de la finale (hors fenêtre minDays normale)
+    const datesToFetch = isLdcException ? [...dates, '20260530'] : dates;
+    for (const date of datesToFetch) {
       const evs = await fetchESPN(league.code, date);
       for (const ev of evs) {
         if (!seenEventIds.has(ev.id)) {
