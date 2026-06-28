@@ -736,12 +736,14 @@ function renderMatchHistory(matches, teamName) {
     const home = NAME_FIX_ST[m.homeTeam]||m.homeTeam;
     const away = NAME_FIX_ST[m.awayTeam]||m.awayTeam;
     const isHome = home === teamName;
-    const won = isHome ? m.homeGoals > m.awayGoals : m.awayGoals > m.homeGoals;
-    const draw = m.homeGoals === m.awayGoals;
+    const wentToPens = m.homeGoals === m.awayGoals && m.penaltyWinner;
+    const won = wentToPens ? m.penaltyWinner === teamName : (isHome ? m.homeGoals > m.awayGoals : m.awayGoals > m.homeGoals);
+    const draw = !wentToPens && m.homeGoals === m.awayGoals;
     const result = draw ? 'N' : won ? 'V' : 'D';
     const resultColor = draw ? '#9ca3af' : won ? '#00e5a0' : '#ff5050';
     const resultBg = draw ? 'rgba(107,114,128,0.15)' : won ? 'rgba(0,229,160,0.15)' : 'rgba(255,80,80,0.15)';
     const date = new Date(m.date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',timeZone:'Europe/Paris'});
+    const tabScoreHtml = m.penaltyScore ? '<span style="font-size:10px;color:#6b7280;margin-left:4px">('+m.penaltyScore.home+'-'+m.penaltyScore.away+')</span>' : '';
 
     // Buteurs séparés par équipe
     function scorerLines(teamN) {
@@ -771,7 +773,7 @@ function renderMatchHistory(matches, teamName) {
       <div style="padding:12px 16px;display:flex;align-items:center;gap:12px">
         <div style="background:${resultBg};color:${resultColor};font-weight:700;font-size:12px;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${result}</div>
         <div style="flex:1">
-          <div style="font-size:13px;font-weight:600;color:#f0f2f8">${home} <span style="color:#6b7280;font-weight:400">vs</span> ${away} <span style="font-family:'DM Mono',monospace;font-size:14px;margin-left:6px">${m.homeGoals}–${m.awayGoals}</span></div>
+          <div style="font-size:13px;font-weight:600;color:#f0f2f8">${home} <span style="color:#6b7280;font-weight:400">vs</span> ${away} <span style="font-family:'DM Mono',monospace;font-size:14px;margin-left:6px">${m.homeGoals}-${m.awayGoals}</span>${tabScoreHtml}</div>
         </div>
         <span style="font-size:11px;color:#6b7280;flex-shrink:0">${date}</span>
       </div>
