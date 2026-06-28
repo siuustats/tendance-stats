@@ -1496,8 +1496,17 @@ async function main() {
 
   // Saison clubs terminée — skipper les ligues clubs jusqu'à la reprise
   const CLUBS_SEASON_ACTIVE = false; // Remettre à true en août pour la reprise
+  // Exception ciblée : réactiver temporairement la LDC (id:7) pour retraiter
+  // la finale avec le nouveau support des tirs au but (penaltyWinner).
+  // Remettre à false une fois la finale correctement retraitée.
+  const LDC_FINAL_REFETCH = true;
+  // fixtureId de la finale LDC PSG-Arsenal (30/05/2026) à forcer en retraitement
+  // malgré storedIds — elle est déjà stockée avec un score nul sans vainqueur.
+  // Retirer cette ligne une fois le retraitement confirmé réussi.
+  const FORCE_REFETCH_IDS = new Set(['401862897']);
   for (const league of LEAGUES) {
-    if (league.id !== 6 && !CLUBS_SEASON_ACTIVE) {
+    const isLdcException = league.id === 7 && LDC_FINAL_REFETCH;
+    if (league.id !== 6 && !CLUBS_SEASON_ACTIVE && !isLdcException) {
       console.log(`\n⚽ ${league.name} (skippé — hors saison)`);
       continue;
     }
@@ -1526,7 +1535,7 @@ async function main() {
       if (status !== 'post') continue; // seulement les matchs terminés
 
       const fId    = event.id;
-      if (storedIds.has(fId)) { console.log(`  ⏭️  Déjà stocké`); continue; }
+      if (storedIds.has(fId) && !FORCE_REFETCH_IDS.has(String(fId))) { console.log(`  ⏭️  Déjà stocké`); continue; }
 
       const homeComp  = comp.competitors?.find(c => c.homeAway === 'home');
       const awayComp  = comp.competitors?.find(c => c.homeAway === 'away');
@@ -1534,6 +1543,13 @@ async function main() {
       const awayName  = awayComp?.team?.displayName || '?';
       const homeScore = parseInt(homeComp?.score || 0);
       const awayScore = parseInt(awayComp?.score || 0);
+      // ESPN fournit homeComp.winner/awayComp.winner (booléen) qui prend en
+      // compte les tirs au but pour les matchs à élimination directe — utile
+      // car homeScore/awayScore peuvent rester égaux (90min/prolongations)
+      // alors que le vainqueur réel est déterminé aux tirs au but.
+      const homeWinner = homeComp?.winner === true;
+      const awayWinner = awayComp?.winner === true;
+      const wentToPenalties = homeScore === awayScore && (homeWinner || awayWinner);
 
       console.log(`  🎮 ${homeName} ${homeScore}-${awayScore} ${awayName}`);
 
@@ -1584,6 +1600,7 @@ async function main() {
         leagueId: league.id, leagueName: league.name,
         homeTeam: fixTeamName(homeName), awayTeam: fixTeamName(awayName),
         homeGoals: homeScore, awayGoals: awayScore,
+        ...(wentToPenalties ? { penaltyWinner: homeWinner ? fixTeamName(homeName) : fixTeamName(awayName) } : {}),
         players,
       });
     }
@@ -1605,7 +1622,7 @@ async function main() {
   }
 
   // Supprimer les anciennes versions des matchs re-traités avant de les rajouter
-  const reProcessedIds = new Set(newMatches.filter(m => recentIds.has(m.fixtureId)).map(m => m.fixtureId));
+  const reProcessedIds = new Set(newMatches.filter(m => recentIds.has(m.fixtureId) || FORCE_REFETCH_IDS.has(String(m.fixtureId))).map(m => m.fixtureId));
   const existingMatches = (stored.matches || []).filter(m => !reProcessedIds.has(m.fixtureId));
   const allMatches = [...existingMatches, ...newMatches];
   const byLeague   = {};
