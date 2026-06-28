@@ -424,6 +424,15 @@ function extractContributions(event, league, photos = {}, assists = {}) {
 
   const goalsMap = {}, assistsMap = {}, infoMap = {};
 
+  // Debug temporaire : si la séance de TAB a eu lieu sur ce match, logger TOUS
+  // les details scoringPlay pour identifier la vraie structure des buts TAB.
+  if (homeComp?.shootoutScore !== undefined) {
+    console.log('  🔍 DEBUG TAB DETAILS — total details:', details.length);
+    details.filter(d => d.scoringPlay).forEach((d, i) => {
+      console.log(`  🔍 [${i}] type:`, JSON.stringify(d.type), '| period:', JSON.stringify(d.period), '| athlete:', d.athletesInvolved?.[0]?.displayName, '| clock:', JSON.stringify(d.clock));
+    });
+  }
+
   for (const detail of details) {
     if (!detail.scoringPlay) continue;
     if (detail.ownGoal) continue;
