@@ -354,6 +354,11 @@ async function fetchSummaryData(leagueCode, eventId, injuries = {}) {
       if (!event.scoringPlay) continue;
       const typeStr = (event.type?.type || event.type?.text || '').toLowerCase();
       if (!typeStr.includes('goal') && typeStr !== 'goal') continue;
+      // Exclure les buts marqués lors de la séance de tirs au but — ils ne
+      // comptent pas comme stats individuelles (ESPN les marque souvent avec
+      // "shootout" ou "penalty shootout" dans le type, ou period >= 5).
+      if (typeStr.includes('shootout')) continue;
+      if (event.period?.number >= 5 || event.period?.type === 'shootout') continue;
       const participants = event.participants || [];
       const scorer   = participants[0]?.athlete;
       const assister = participants[1]?.athlete;
@@ -373,6 +378,9 @@ async function fetchSummaryData(leagueCode, eventId, injuries = {}) {
     for (const detail of (comp?.details || data.drives?.previous || [])) {
       if (!detail.scoringPlay) continue;
       if (detail.ownGoal) continue;
+      const detailTypeStr2 = (detail.type?.type || detail.type?.text || '').toLowerCase();
+      if (detailTypeStr2.includes('shootout')) continue;
+      if (detail.period?.number >= 5 || detail.period?.type === 'shootout') continue;
       const involved = detail.athletesInvolved || [];
       const scorer   = involved[0];
       const assister = involved[1];
@@ -415,6 +423,10 @@ function extractContributions(event, league, photos = {}, assists = {}) {
   for (const detail of details) {
     if (!detail.scoringPlay) continue;
     if (detail.ownGoal) continue;
+    // Exclure les buts de la séance de tirs au but — ne comptent pas comme stats
+    const detailTypeStr = (detail.type?.type || detail.type?.text || '').toLowerCase();
+    if (detailTypeStr.includes('shootout')) continue;
+    if (detail.period?.number >= 5 || detail.period?.type === 'shootout') continue;
 
     const athlete = detail.athletesInvolved?.[0];
     if (!athlete) continue;
@@ -1552,6 +1564,19 @@ async function main() {
       const homeWinner = homeComp?.winner === true;
       const awayWinner = awayComp?.winner === true;
       const wentToPenalties = homeScore === awayScore && (homeWinner || awayWinner);
+      let penaltyScore = null;
+      if (wentToPenalties) {
+        // Debug : logger toute la structure pour identifier le champ exact du score TAB
+        console.log('  🔍 DEBUG TAB — homeComp:', JSON.stringify(homeComp).slice(0, 800));
+        console.log('  🔍 DEBUG TAB — awayComp:', JSON.stringify(awayComp).slice(0, 800));
+        console.log('  🔍 DEBUG TAB — comp.status:', JSON.stringify(comp?.status));
+        // Tentatives de champs probables (à ajuster une fois la vraie structure connue)
+        const homeShootout = homeComp?.shootoutScore ?? homeComp?.statistics?.find(s => s.name === 'shootoutScore')?.value;
+        const awayShootout = awayComp?.shootoutScore ?? awayComp?.statistics?.find(s => s.name === 'shootoutScore')?.value;
+        if (homeShootout !== undefined && awayShootout !== undefined) {
+          penaltyScore = { home: Number(homeShootout), away: Number(awayShootout) };
+        }
+      }
 
       console.log(`  🎮 ${homeName} ${homeScore}-${awayScore} ${awayName}`);
 
@@ -1603,6 +1628,7 @@ async function main() {
         homeTeam: fixTeamName(homeName), awayTeam: fixTeamName(awayName),
         homeGoals: homeScore, awayGoals: awayScore,
         ...(wentToPenalties ? { penaltyWinner: homeWinner ? fixTeamName(homeName) : fixTeamName(awayName) } : {}),
+        ...(penaltyScore ? { penaltyScore } : {}),
         players,
       });
     }
