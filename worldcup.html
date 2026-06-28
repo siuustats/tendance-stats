@@ -566,14 +566,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
       <div class="sh" style="margin-bottom:0"><div class="st">🏆 Phase de compétition</div><div class="sb">CDM 2026</div></div>
       <div class="view-tabs">
-        <button class="view-tab active" id="tabGroupes" onclick="showView('groupes')">Groupes</button>
-        <button class="view-tab" id="tabBracket" onclick="showView('bracket')">Phase finale</button>
+        <button class="view-tab" id="tabGroupes" onclick="showView('groupes')">Groupes</button>
+        <button class="view-tab active" id="tabBracket" onclick="showView('bracket')">Phase finale</button>
       </div>
     </div>
-    <div id="viewGroupes">
+    <div id="viewGroupes" style="display:none">
       <div id="groupsGrid"></div>
     </div>
-    <div id="viewBracket" style="display:none">
+    <div id="viewBracket">
       <div class="bracket-wrap">
         <div class="bracket" id="bracketGrid"></div>
       </div>
@@ -1617,12 +1617,15 @@ function renderBracket(st, matches) {
       const matchDiv = document.createElement('div');
       matchDiv.className = 'bracket-match';
       const tH = m.h, tA = m.a;
+      const result = findMatchResult(tH, tA, matches);
       const flagH = tH.flag ? '<img src="https://flagcdn.com/w20/'+tH.flag+'.png" class="bracket-flag">' : '';
       const flagA = tA.flag ? '<img src="https://flagcdn.com/w20/'+tA.flag+'.png" class="bracket-flag">' : '';
+      const winnerClsH = (result && result.name === tH.name) ? ' winner' : '';
+      const winnerClsA = (result && result.name === tA.name) ? ' winner' : '';
       matchDiv.innerHTML =
         (m.num ? '<div class="bracket-match-num">M'+m.num+'</div>' : '') +
-        '<div class="bracket-team'+(tH.tbd?' tbd':'')+'">'+flagH+'<span>'+tH.name+'</span></div>'+
-        '<div class="bracket-team'+(tA.tbd?' tbd':'')+'">'+flagA+'<span>'+tA.name+'</span></div>';
+        '<div class="bracket-team'+(tH.tbd?' tbd':'')+winnerClsH+'">'+flagH+'<span>'+tH.name+'</span></div>'+
+        '<div class="bracket-team'+(tA.tbd?' tbd':'')+winnerClsA+'">'+flagA+'<span>'+tA.name+'</span></div>';
       matchCol.appendChild(matchDiv);
     });
     col.appendChild(matchCol);
