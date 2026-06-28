@@ -1258,6 +1258,7 @@ function openCardModal(player) {
       awayTeam:  match.awayTeam,
       homeGoals: match.homeGoals,
       awayGoals: match.awayGoals,
+      penaltyScore: match.penaltyScore || null,
       goals:     mp.goals   || 0,
       assists:   mp.assists || 0,
       played:    mp.played,
@@ -1301,6 +1302,7 @@ function openCardModal(player) {
       const home     = m.homeTeam || player.teamName;
       const away     = m.awayTeam || '—';
       const scoreStr = m.homeGoals !== undefined ? m.homeGoals + '-' + m.awayGoals : '—';
+      const tabStr   = m.penaltyScore ? '<div style="font-size:9px;color:var(--m);text-align:center;margin-top:1px">(' + m.penaltyScore.home + '-' + m.penaltyScore.away + ')</div>' : '';
 
       let pills = '';
       if (m.played === null)        pills += '<span class="cm-stat-pill" style="background:rgba(107,114,128,.15);color:#6b7280">❌ Absent</span>';
@@ -1314,7 +1316,7 @@ function openCardModal(player) {
         + '<span class="cm-match-date">' + date + '</span>'
         + '<span class="lpill cdm" style="font-size:9px;padding:1px 5px">CDM</span>'
         + '<div class="cm-match-teams">' + home + ' <span style="color:var(--m)">vs</span> ' + away + '</div>'
-        + '<span class="cm-match-score">' + scoreStr + '</span>'
+        + '<div style="text-align:right"><span class="cm-match-score">' + scoreStr + '</span>' + tabStr + '</div>'
         + pills
         + '<div class="cm-result" style="background:' + rbg + ';color:' + rcls + '">' + label + '</div>'
         + '</div>';
