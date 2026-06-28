@@ -206,6 +206,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .bracket-team:first-child{border-bottom:1px solid rgba(255,255,255,0.06)}
   .bracket-team.highlight{color:#d4a843;background:rgba(212,168,67,0.08);font-weight:700}
   .bracket-team.tbd{color:#4b5563;font-style:italic;font-weight:400}
+  .bracket-team.eliminated{opacity:0.4;text-decoration:line-through}
+  .bracket-team.eliminated.highlight{background:rgba(255,80,80,0.08);color:#ff5050}
   .bracket-flag{width:18px;height:12px;object-fit:cover;border-radius:2px;flex-shrink:0}
   </style>
 <script type="application/ld+json">
@@ -593,34 +595,50 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
     const myT2 = isHome ? oppTeam : myTeam;
     const myT2me = !isHome;
 
-    function teamRow(t, isMe, hasBorder) {
+    function teamRow(t, isMe, hasBorder, isEliminated) {
       const f = t.flag ? '<img src="https://flagcdn.com/w20/'+t.flag+'.png" class="bracket-flag">' : '<span style="width:18px;display:inline-block;flex-shrink:0"></span>';
       const isClickable = !t.tbd && t.name;
-      const cls = 'bracket-team' + (isMe ? ' highlight' : t.tbd ? ' tbd' : '') + (isClickable ? ' clickable' : '');
+      const cls = 'bracket-team' + (isMe ? ' highlight' : t.tbd ? ' tbd' : '') + (isClickable ? ' clickable' : '') + (isEliminated ? ' eliminated' : '');
       const border = hasBorder ? 'border-bottom:1px solid rgba(255,255,255,0.06);' : '';
       const rank = (!t.tbd && allGroups) ? getRankLabel(t.name) : '';
       const click = isClickable ? ' onclick="goToSquad(\''+t.name.replace(/'/g,"\\'")+'\')"' : '';
-      return '<div class="'+cls+'" style="'+border+'"'+click+'>'+f+'<span>'+t.name+'</span>'+rank+'</div>';
+      const elimBadge = isEliminated ? '<span style="margin-left:auto;font-size:9px;color:#ff5050">✕</span>' : '';
+      return '<div class="'+cls+'" style="'+border+'"'+click+'>'+f+'<span>'+t.name+'</span>'+rank+elimBadge+'</div>';
     }
 
     const BOX_W = '200px';
 
+    const myR32Result = findMatchResult(myT1, myT2, allMatches);
+    const myT1Eliminated = myR32Result && myR32Result.name !== myT1.name;
+    const myT2Eliminated = myR32Result && myR32Result.name !== myT2.name;
+
+    if (myR32Result) {
+      if (myR32Result.name === teamName) {
+        statusMsg = '\ud83c\udfc6 Qualifi\u00e9 pour les 8\u00e8mes de finale';
+        statusColor = '#00e5a0';
+      } else {
+        statusMsg = '\u274c \u00c9limin\u00e9 en 16\u00e8mes de finale';
+        statusColor = '#ff5050';
+      }
+    }
+
     const myBox = '<div class="bracket-match" style="width:'+BOX_W+'">'
-      + teamRow(myT1, myT1me, true)
-      + teamRow(myT2, myT2me, false)
+      + teamRow(myT1, myT1me, true, myT1Eliminated)
+      + teamRow(myT2, myT2me, false, myT2Eliminated)
       + '</div>';
 
+    const partnerR32Result = partnerMatch ? findMatchResult(partnerMatch.tH, partnerMatch.tA, allMatches) : null;
     const partnerBox = partnerMatch
       ? '<div class="bracket-match" style="width:'+BOX_W+'">'
-        + teamRow(partnerMatch.tH, false, true)
-        + teamRow(partnerMatch.tA, false, false)
+        + teamRow(partnerMatch.tH, false, true, partnerR32Result && partnerR32Result.name !== partnerMatch.tH.name)
+        + teamRow(partnerMatch.tA, false, false, partnerR32Result && partnerR32Result.name !== partnerMatch.tA.name)
         + '</div>'
       : '<div class="bracket-match tbd" style="width:'+BOX_W+'">'
         + '<div class="bracket-team tbd" style="border-bottom:1px solid rgba(255,255,255,0.06)">\u00e0 d\u00e9terminer</div>'
         + '<div class="bracket-team tbd">\u00e0 d\u00e9terminer</div>'
         + '</div>';
 
-    const myMatchResult = findMatchResult(myT1, myT2, allMatches);
+    const myMatchResult = myR32Result;
     const myWinnerTeam = myMatchResult || { name: 'W M' + r32Num, tbd: true };
     const partnerWinnerTeam = (partnerMatch && findMatchResult(partnerMatch.tH, partnerMatch.tA, allMatches))
       || { name: partnerNum ? 'W M' + partnerNum : '\u00e0 d\u00e9terminer', tbd: true };
