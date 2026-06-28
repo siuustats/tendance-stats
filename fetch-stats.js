@@ -417,6 +417,10 @@ function extractContributions(event, league, photos = {}, assists = {}) {
   const homeId   = homeComp?.team?.id;
   const homeScore = parseInt(homeComp?.score || 0);
   const awayScore = parseInt(awayComp?.score || 0);
+  // Prendre en compte les tirs au but : ESPN fournit winner=true/false par équipe,
+  // qui reste fiable même quand homeScore===awayScore (match décidé aux TAB).
+  const homeWonFinal = homeComp?.winner === true ? true : awayComp?.winner === true ? false : (homeScore > awayScore ? true : homeScore === awayScore ? null : false);
+  const awayWonFinal = awayComp?.winner === true ? true : homeComp?.winner === true ? false : (awayScore > homeScore ? true : awayScore === homeScore ? null : false);
 
   const goalsMap = {}, assistsMap = {}, infoMap = {};
 
@@ -437,7 +441,7 @@ function extractContributions(event, league, photos = {}, assists = {}) {
     const isHome   = teamId === homeId;
     const rawTeamName = isHome ? homeComp?.team?.displayName : awayComp?.team?.displayName;
     const teamName = TEAM_FIX[rawTeamName] || rawTeamName;
-    const teamWon  = isHome ? (homeScore > awayScore ? true : homeScore === awayScore ? null : false) : (awayScore > homeScore ? true : awayScore === homeScore ? null : false);
+    const teamWon  = isHome ? homeWonFinal : awayWonFinal;
 
     goalsMap[pid] = (goalsMap[pid] || 0) + 1;
     if (!infoMap[pid]) {
@@ -1566,13 +1570,8 @@ async function main() {
       const wentToPenalties = homeScore === awayScore && (homeWinner || awayWinner);
       let penaltyScore = null;
       if (wentToPenalties) {
-        // Debug : logger toute la structure pour identifier le champ exact du score TAB
-        console.log('  🔍 DEBUG TAB — homeComp:', JSON.stringify(homeComp).slice(0, 800));
-        console.log('  🔍 DEBUG TAB — awayComp:', JSON.stringify(awayComp).slice(0, 800));
-        console.log('  🔍 DEBUG TAB — comp.status:', JSON.stringify(comp?.status));
-        // Tentatives de champs probables (à ajuster une fois la vraie structure connue)
-        const homeShootout = homeComp?.shootoutScore ?? homeComp?.statistics?.find(s => s.name === 'shootoutScore')?.value;
-        const awayShootout = awayComp?.shootoutScore ?? awayComp?.statistics?.find(s => s.name === 'shootoutScore')?.value;
+        const homeShootout = homeComp?.shootoutScore;
+        const awayShootout = awayComp?.shootoutScore;
         if (homeShootout !== undefined && awayShootout !== undefined) {
           penaltyScore = { home: Number(homeShootout), away: Number(awayShootout) };
         }
@@ -1591,8 +1590,8 @@ async function main() {
 
       // Ajouter tous les joueurs ayant joué (starter/subbedIn), même sans stats
       const matchDate = event.date;
-      const homeWon = homeScore > awayScore ? true : homeScore === awayScore ? null : false;
-      const awayWon = awayScore > homeScore ? true : awayScore === homeScore ? null : false;
+      const homeWon = wentToPenalties ? homeWinner : (homeScore > awayScore ? true : homeScore === awayScore ? null : false);
+      const awayWon = wentToPenalties ? awayWinner : (awayScore > homeScore ? true : awayScore === homeScore ? null : false);
       const alreadyCounted = new Set(players.map(p => String(p.id)));
 
       for (const [teamName, teamPlayers] of Object.entries(playedByTeam)) {
