@@ -1421,7 +1421,16 @@ function buildStandings(matches) {
 
 
 // Retourne un Set des noms des 8 meilleurs 3emes (seulement si tous les groupes ont fini)
+// ── MEILLEURS 3EMES (officiels FIFA, confirmés après la phase de groupes) ──
+// Override manuel car les vraies règles de départage FIFA (fair-play, tirage au
+// sort en cas d'égalité totale) ne sont pas reproductibles à 100% par un calcul
+// points/diff seul. À SUPPRIMER quand on passera aux 8èmes (ce tableau ne sert
+// qu'à peupler les "Meill. 3ème (X/Y/Z)" des 16èmes avec les vraies équipes).
+const BEST_3RD_OFFICIAL = new Set(['Paraguay','Suède','Équateur','Sénégal','Bosnie-Herzégovine','Algérie','Ghana','RD Congo']);
+
 function getBest3rds(st) {
+  // Si l'override officiel est rempli (8 nations), on l'utilise directement
+  if (BEST_3RD_OFFICIAL.size === 8) return BEST_3RD_OFFICIAL;
   const thirds = [];
   GROUPS.forEach(function(g) {
     const ranked = g.nations.map(function(n){ return Object.assign({name:n,group:g.name.slice(-1)}, st[n]); })
@@ -1462,20 +1471,20 @@ function showView(v) {
 
 const R32_MATCHES = [
   { num:73, h:{type:'runner',group:'A'}, a:{type:'runner',group:'B'} },
-  { num:74, h:{type:'winner',group:'E'}, a:{type:'best3',groups:'A/B/C/D/F'} },
+  { num:74, h:{type:'winner',group:'E'}, a:{type:'fixed',name:'Paraguay'} },
   { num:75, h:{type:'winner',group:'F'}, a:{type:'runner',group:'C'} },
   { num:76, h:{type:'winner',group:'C'}, a:{type:'runner',group:'F'} },
-  { num:77, h:{type:'winner',group:'I'}, a:{type:'best3',groups:'C/D/F/G/H'} },
+  { num:77, h:{type:'winner',group:'I'}, a:{type:'fixed',name:'Suède'} },
   { num:78, h:{type:'runner',group:'E'}, a:{type:'runner',group:'I'} },
-  { num:79, h:{type:'winner',group:'A'}, a:{type:'best3',groups:'C/E/F/H/I'} },
-  { num:80, h:{type:'winner',group:'L'}, a:{type:'best3',groups:'E/H/I/J/K'} },
-  { num:81, h:{type:'winner',group:'D'}, a:{type:'best3',groups:'B/E/F/I/J'} },
-  { num:82, h:{type:'winner',group:'G'}, a:{type:'best3',groups:'A/E/H/I/J'} },
+  { num:79, h:{type:'winner',group:'A'}, a:{type:'fixed',name:'Équateur'} },
+  { num:80, h:{type:'winner',group:'L'}, a:{type:'fixed',name:'RD Congo'} },
+  { num:81, h:{type:'winner',group:'D'}, a:{type:'fixed',name:'Bosnie-Herzégovine'} },
+  { num:82, h:{type:'winner',group:'G'}, a:{type:'fixed',name:'Sénégal'} },
   { num:83, h:{type:'runner',group:'K'}, a:{type:'runner',group:'L'} },
   { num:84, h:{type:'winner',group:'H'}, a:{type:'runner',group:'J'} },
-  { num:85, h:{type:'winner',group:'B'}, a:{type:'best3',groups:'E/F/G/I/J'} },
+  { num:85, h:{type:'winner',group:'B'}, a:{type:'fixed',name:'Algérie'} },
   { num:86, h:{type:'winner',group:'J'}, a:{type:'runner',group:'H'} },
-  { num:87, h:{type:'winner',group:'K'}, a:{type:'best3',groups:'D/E/I/J/L'} },
+  { num:87, h:{type:'winner',group:'K'}, a:{type:'fixed',name:'Ghana'} },
   { num:88, h:{type:'runner',group:'D'}, a:{type:'runner',group:'G'} },
 ];
 
@@ -1488,12 +1497,52 @@ function getTeamFromStandings(slot, st) {
   return null;
 }
 
+// Paires R32 → R16 (quel match R32 alimente quel match R16, bracket officiel FIFA 2026)
+const R16_PAIRS = [[73,75],[74,77],[76,78],[79,80],[81,82],[83,84],[85,87],[86,88]];
+// Paires R16 → Quarts (indices 0-7 dans R16_PAIRS, regroupés par paires)
+const QF_PAIRS = [[0,1],[2,3],[4,5],[6,7]];
+// Paires Quarts → Demies
+const SF_PAIRS = [[0,1],[2,3]];
+
+// Trouve le résultat réel d'un match CDM entre deux équipes données (si déjà joué)
+function findMatchResult(teamA, teamB, matches) {
+  if (!teamA || !teamB || teamA.tbd || teamB.tbd) return null;
+  const m = (matches||[]).find(function(mm){
+    return mm.leagueId === 6 && mm.homeGoals !== undefined &&
+      ((mm.homeTeam === teamA.name && mm.awayTeam === teamB.name) ||
+       (mm.homeTeam === teamB.name && mm.awayTeam === teamA.name));
+  });
+  if (!m) return null;
+  const aIsHome = m.homeTeam === teamA.name;
+  const aGoals = aIsHome ? m.homeGoals : m.awayGoals;
+  const bGoals = aIsHome ? m.awayGoals : m.homeGoals;
+  if (aGoals === bGoals) {
+    // Score à égalité — vérifier si un vainqueur aux tirs au but est connu (ESPN)
+    if (m.penaltyWinner) return m.penaltyWinner === teamA.name ? teamA : teamB;
+    return null; // match nul sans vainqueur connu (prolongations/TAB pas encore joués)
+  }
+  return aGoals > bGoals ? teamA : teamB;
+}
+
 function renderBracket(st, matches) {
   const grid = document.getElementById('bracketGrid');
   if (!grid) return;
 
   function teamLabel(slot) {
+    if (slot.type === 'fixed') {
+      return { name: slot.name, flag: FLAG_MAP[slot.name]||'', tbd: false, isThird: true };
+    }
     if (slot.type === 'best3') {
+      const eligibleGroups = slot.groups.split('/');
+      for (const gl of eligibleGroups) {
+        const gi = 'ABCDEFGHIJKL'.indexOf(gl);
+        if (gi < 0 || !GROUPS[gi]) continue;
+        const ranked = sortGroup(GROUPS[gi].nations, st);
+        const third = ranked[2];
+        if (third && BEST_3RD_OFFICIAL.has(third.name)) {
+          return { name: third.name, flag: FLAG_MAP[third.name]||'', tbd: false, isThird: true };
+        }
+      }
       return { name: 'Meill. 3ème ('+slot.groups+')', tbd: true };
     }
     const t = getTeamFromStandings(slot, st);
@@ -1505,12 +1554,51 @@ function renderBracket(st, matches) {
     return { name: t.name, flag: FLAG_MAP[t.name]||'', tbd: false };
   }
 
+  // Résout les équipes de chaque match R32
+  const r32Teams = R32_MATCHES.map(function(m){
+    return { num: m.num, h: teamLabel(m.h), a: teamLabel(m.a) };
+  });
+
+  // Résout les vainqueurs R32 → équipes des Huitièmes
+  const r16Teams = R16_PAIRS.map(function(pair){
+    const m1 = r32Teams.find(function(r){ return r.num === pair[0]; });
+    const m2 = r32Teams.find(function(r){ return r.num === pair[1]; });
+    const w1 = m1 ? (findMatchResult(m1.h, m1.a, matches) || { name: 'Vainqueur M'+pair[0], tbd: true }) : { name:'?', tbd:true };
+    const w2 = m2 ? (findMatchResult(m2.h, m2.a, matches) || { name: 'Vainqueur M'+pair[1], tbd: true }) : { name:'?', tbd:true };
+    return { h: w1, a: w2 };
+  });
+
+  // Résout les vainqueurs Huitièmes → équipes des Quarts
+  const qfTeams = QF_PAIRS.map(function(pair){
+    const r1 = r16Teams[pair[0]];
+    const r2 = r16Teams[pair[1]];
+    const w1 = r1 ? (findMatchResult(r1.h, r1.a, matches) || { name: 'Vainqueur 8e', tbd: true }) : { name:'?', tbd:true };
+    const w2 = r2 ? (findMatchResult(r2.h, r2.a, matches) || { name: 'Vainqueur 8e', tbd: true }) : { name:'?', tbd:true };
+    return { h: w1, a: w2 };
+  });
+
+  // Résout les vainqueurs Quarts → équipes des Demies
+  const sfTeams = SF_PAIRS.map(function(pair){
+    const q1 = qfTeams[pair[0]];
+    const q2 = qfTeams[pair[1]];
+    const w1 = q1 ? (findMatchResult(q1.h, q1.a, matches) || { name: 'Vainqueur 1/4', tbd: true }) : { name:'?', tbd:true };
+    const w2 = q2 ? (findMatchResult(q2.h, q2.a, matches) || { name: 'Vainqueur 1/4', tbd: true }) : { name:'?', tbd:true };
+    return { h: w1, a: w2 };
+  });
+
+  // Résout les vainqueurs Demies → finalistes
+  const finalTeam = (function(){
+    const w1 = sfTeams[0] ? (findMatchResult(sfTeams[0].h, sfTeams[0].a, matches) || { name: 'Vainqueur 1/2', tbd: true }) : { name:'?', tbd:true };
+    const w2 = sfTeams[1] ? (findMatchResult(sfTeams[1].h, sfTeams[1].a, matches) || { name: 'Vainqueur 1/2', tbd: true }) : { name:'?', tbd:true };
+    return { h: w1, a: w2 };
+  })();
+
   const rounds = [
-    { title: 'SEIZIÈMES', matches: R32_MATCHES },
-    { title: 'Huitièmes', matches: Array(8).fill(null) },
-    { title: 'Quarts', matches: Array(4).fill(null) },
-    { title: 'Demies', matches: Array(2).fill(null) },
-    { title: 'Finale', matches: Array(1).fill(null) },
+    { title: 'SEIZIÈMES', resolved: R32_MATCHES.map(function(m,i){ return { num:m.num, h:r32Teams[i].h, a:r32Teams[i].a }; }) },
+    { title: 'Huitièmes', resolved: r16Teams.map(function(m){ return { h:m.h, a:m.a }; }) },
+    { title: 'Quarts', resolved: qfTeams.map(function(m){ return { h:m.h, a:m.a }; }) },
+    { title: 'Demies', resolved: sfTeams.map(function(m){ return { h:m.h, a:m.a }; }) },
+    { title: 'Finale', resolved: [finalTeam] },
   ];
 
   grid.innerHTML = '';
@@ -1523,21 +1611,16 @@ function renderBracket(st, matches) {
     col.appendChild(title);
     const matchCol = document.createElement('div');
     matchCol.className = 'bracket-col';
-    round.matches.forEach(function(m) {
+    round.resolved.forEach(function(m) {
       const matchDiv = document.createElement('div');
       matchDiv.className = 'bracket-match';
-      if (!m) {
-        matchDiv.innerHTML = '<div class="bracket-team tbd"><span>à déterminer</span></div><div class="bracket-team tbd"><span>à déterminer</span></div>';
-      } else {
-        const tH = teamLabel(m.h);
-        const tA = teamLabel(m.a);
-        const flagH = tH.flag ? '<img src="https://flagcdn.com/w20/'+tH.flag+'.png" class="bracket-flag">' : '';
-        const flagA = tA.flag ? '<img src="https://flagcdn.com/w20/'+tA.flag+'.png" class="bracket-flag">' : '';
-        matchDiv.innerHTML =
-          '<div class="bracket-match-num">M'+m.num+'</div>'+
-          '<div class="bracket-team'+(tH.tbd?' tbd':'')+'">'+flagH+'<span>'+tH.name+'</span></div>'+
-          '<div class="bracket-team'+(tA.tbd?' tbd':'')+'">'+flagA+'<span>'+tA.name+'</span></div>';
-      }
+      const tH = m.h, tA = m.a;
+      const flagH = tH.flag ? '<img src="https://flagcdn.com/w20/'+tH.flag+'.png" class="bracket-flag">' : '';
+      const flagA = tA.flag ? '<img src="https://flagcdn.com/w20/'+tA.flag+'.png" class="bracket-flag">' : '';
+      matchDiv.innerHTML =
+        (m.num ? '<div class="bracket-match-num">M'+m.num+'</div>' : '') +
+        '<div class="bracket-team'+(tH.tbd?' tbd':'')+'">'+flagH+'<span>'+tH.name+'</span></div>'+
+        '<div class="bracket-team'+(tA.tbd?' tbd':'')+'">'+flagA+'<span>'+tA.name+'</span></div>';
       matchCol.appendChild(matchDiv);
     });
     col.appendChild(matchCol);
@@ -1575,7 +1658,7 @@ function renderGroups(matches) {
       const flagImg = flag ? '<img src="https://flagcdn.com/w20/'+flag+'.png" class="group-flag" alt="">' : '';
       const id = NATION_IDS[t.name];
       const click = id ? ' onclick="window.location.href=&quot;squad.html?team='+id+'&quot;" style="cursor:pointer"' : '';
-      const qcls = i<2 ? ' qualified' : '';
+      const qcls = i<2 ? ' qualified' : (i===2 && BEST_3RD_OFFICIAL.has(t.name)) ? ' third-qualified' : '';
       const diff = t.bp-t.bc;
       const diffCls = diff>0?'group-diff-pos':diff<0?'group-diff-neg':'group-diff-zero';
       const diffStr = diff>0?'+'+diff:String(diff);
