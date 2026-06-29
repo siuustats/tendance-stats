@@ -1409,9 +1409,17 @@ function buildStandings(matches) {
   const NAME_FIX_ST = {'Mexico':'Mexique','South Africa':'Afrique du Sud','South Korea':'Corée du Sud','Czechia':'Tchéquie','Czech Republic':'Tchéquie','Bosnia and Herzegovina':'Bosnie-Herzégovine','Bosnia-Herzegovina':'Bosnie-Herzégovine','Switzerland':'Suisse','Brazil':'Brésil','Morocco':'Maroc','Haiti':'Haïti','Scotland':'Écosse','USA':'États-Unis','United States':'États-Unis','Australia':'Australie','Turkey':'Turquie','Türkiye':'Turquie','Germany':'Allemagne','Curacao':'Curaçao','Ivory Coast':"Côte d'Ivoire",'Ecuador':'Équateur','Netherlands':'Pays-Bas','Japan':'Japon','Sweden':'Suède','Tunisia':'Tunisie','Belgium':'Belgique','Egypt':'Égypte','Iran':'Iran','New Zealand':'Nouvelle-Zélande','Spain':'Espagne','Cape Verde':'Cap-Vert','Saudi Arabia':'Arabie Saoudite','Uruguay':'Uruguay','Senegal':'Sénégal','Iraq':'Irak','Norway':'Norvège','Argentina':'Argentine','Algeria':'Algérie','Austria':'Autriche','Jordan':'Jordanie','Portugal':'Portugal','DR Congo':'RD Congo','Congo DR':'RD Congo','Uzbekistan':'Ouzbékistan','Colombia':'Colombie','England':'Angleterre','Croatia':'Croatie','Ghana':'Ghana','Panama':'Panama','Canada':'Canada','Qatar':'Qatar','Paraguay':'Paraguay'};
   const s = {};
   GROUPS.forEach(function(g){ g.nations.forEach(function(n){ s[n]={mj:0,v:0,n:0,d:0,bp:0,bc:0,pts:0}; }); });
-  (matches||[]).filter(function(m){ return m.leagueId===6 && m.homeGoals!==undefined; }).forEach(function(m) {
+  // Phase de groupe = exactement 3 matchs par équipe. Au-delà (16èmes, 8èmes...),
+  // les matchs ont le même leagueId:6 mais ne doivent PAS compter dans le classement
+  // de groupe — on les ignore dès qu'une équipe a déjà atteint 3 matchs comptés.
+  const sortedByDate = (matches||[])
+    .filter(function(m){ return m.leagueId===6 && m.homeGoals!==undefined; })
+    .slice()
+    .sort(function(a,b){ return new Date(a.date) - new Date(b.date); });
+  sortedByDate.forEach(function(m) {
     const h=NAME_FIX_ST[m.homeTeam]||m.homeTeam, a=NAME_FIX_ST[m.awayTeam]||m.awayTeam, hg=m.homeGoals, ag=m.awayGoals;
     if (!s[h]||!s[a]) return;
+    if (s[h].mj >= 3 || s[a].mj >= 3) return; // match de phase finale, pas de groupe
     s[h].mj++; s[a].mj++;
     s[h].bp+=hg; s[h].bc+=ag; s[a].bp+=ag; s[a].bc+=hg;
     if (hg>ag){ s[h].v++; s[h].pts+=3; s[a].d++; }
