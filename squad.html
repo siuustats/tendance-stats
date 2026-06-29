@@ -377,9 +377,16 @@ const NAME_FIX_ST = {'Mexico':'Mexique','South Africa':'Afrique du Sud','South K
 function buildStandings(matches) {
   const s = {};
   GROUPS.forEach(function(g){ g.ids.forEach(function(id){ const n=TEAM_MAP[id]?.name; if(n) s[n]={mj:0,v:0,n:0,d:0,bp:0,bc:0,pts:0,id}; }); });
-  (matches||[]).filter(function(m){ return m.leagueId===6 && m.homeGoals!==undefined; }).forEach(function(m) {
+  // Phase de groupe = exactement 3 matchs par équipe. Les matchs de phase finale
+  // (16èmes...) partagent le même leagueId:6 — on les exclut en plafonnant à 3.
+  const sortedByDate = (matches||[])
+    .filter(function(m){ return m.leagueId===6 && m.homeGoals!==undefined; })
+    .slice()
+    .sort(function(a,b){ return new Date(a.date) - new Date(b.date); });
+  sortedByDate.forEach(function(m) {
     const h=NAME_FIX_ST[m.homeTeam]||m.homeTeam, a=NAME_FIX_ST[m.awayTeam]||m.awayTeam;
     if (!s[h]||!s[a]) return;
+    if (s[h].mj >= 3 || s[a].mj >= 3) return; // match de phase finale, pas de groupe
     const hg=m.homeGoals, ag=m.awayGoals;
     s[h].mj++; s[a].mj++;
     s[h].bp+=hg; s[h].bc+=ag; s[a].bp+=ag; s[a].bc+=hg;
