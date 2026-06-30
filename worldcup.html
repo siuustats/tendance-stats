@@ -1603,8 +1603,17 @@ function renderBracket(st, matches) {
     return { h: w1, a: w2 };
   })();
 
+  // Réordonner les SEIZIÈMES selon R16_PAIRS pour que les 2 matchs qui
+  // alimentent un même 8ème soient visuellement côte à côte (alignés avec
+  // la boîte 8ème correspondante), au lieu de l'ordre numérique brut M73-M88.
+  const r32OrderedNums = R16_PAIRS.flat();
+  const r32Ordered = r32OrderedNums.map(function(num){
+    const idx = R32_MATCHES.findIndex(function(m){ return m.num === num; });
+    return { num: num, h: r32Teams[idx].h, a: r32Teams[idx].a };
+  });
+
   const rounds = [
-    { title: 'SEIZIÈMES', resolved: R32_MATCHES.map(function(m,i){ return { num:m.num, h:r32Teams[i].h, a:r32Teams[i].a }; }) },
+    { title: 'SEIZIÈMES', resolved: r32Ordered },
     { title: 'Huitièmes', resolved: r16Teams.map(function(m){ return { h:m.h, a:m.a }; }) },
     { title: 'Quarts', resolved: qfTeams.map(function(m){ return { h:m.h, a:m.a }; }) },
     { title: 'Demies', resolved: sfTeams.map(function(m){ return { h:m.h, a:m.a }; }) },
