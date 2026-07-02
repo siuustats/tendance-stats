@@ -350,11 +350,14 @@ async function fetchSummaryData(leagueCode, eventId, injuries = {}) {
     const assists = {}; // { "scorerId_goalIndex": { name, id } }
     const goalCount = {}; // compteur de buts par joueur pour l'index
 
-    // Détection séance TAB par clock dupliqué (voir extractContributions pour explication)
+    // Détection séance TAB par clock dupliqué — seulement si le match a eu des TAB
+    const summaryComp = data.header?.competitions?.[0] || data.competitions?.[0];
+    const summaryHomeComp = summaryComp?.competitors?.find(c => c.homeAway === 'home');
+    const summaryWentToShootout = summaryHomeComp?.shootoutScore !== undefined;
     const keyEventGoals = (data.keyEvents || []).filter(e => e.scoringPlay);
     const keMaxClock = keyEventGoals.reduce((max, e) => Math.max(max, e.clock?.value || 0), 0);
     const keAtMaxCount = keyEventGoals.filter(e => (e.clock?.value || 0) === keMaxClock).length;
-    const keShootoutClock = (keAtMaxCount > 1) ? keMaxClock : null;
+    const keShootoutClock = (summaryWentToShootout && keAtMaxCount > 1) ? keMaxClock : null;
 
     for (const event of (data.keyEvents || [])) {
       if (!event.scoringPlay) continue;
@@ -382,7 +385,7 @@ async function fetchSummaryData(leagueCode, eventId, injuries = {}) {
     const detailGoals = detailsList.filter(d => d.scoringPlay && !d.ownGoal);
     const dMaxClock = detailGoals.reduce((max, d) => Math.max(max, d.clock?.value || 0), 0);
     const dAtMaxCount = detailGoals.filter(d => (d.clock?.value || 0) === dMaxClock).length;
-    const dShootoutClock = (dAtMaxCount > 1) ? dMaxClock : null;
+    const dShootoutClock = (summaryWentToShootout && dAtMaxCount > 1) ? dMaxClock : null;
     for (const detail of detailsList) {
       if (!detail.scoringPlay) continue;
       if (detail.ownGoal) continue;
@@ -440,7 +443,11 @@ function extractContributions(event, league, photos = {}, assists = {}) {
   const scoringDetails = details.filter(d => d.scoringPlay && !d.ownGoal);
   const maxClock = scoringDetails.reduce((max, d) => Math.max(max, d.clock?.value || 0), 0);
   const atMaxClockCount = scoringDetails.filter(d => (d.clock?.value || 0) === maxClock).length;
-  const shootoutClockValue = (atMaxClockCount > 1) ? maxClock : null;
+  // Le filtre clock dupliqué ne s'active QUE si le match a réellement eu des TAB
+  // (homeComp.shootoutScore présent) — sinon, plusieurs buts à la même seconde
+  // peuvent légitimement exister (ex: 90+6, corrections ESPN, etc.)
+  const wentToShootout = homeComp?.shootoutScore !== undefined;
+  const shootoutClockValue = (wentToShootout && atMaxClockCount > 1) ? maxClock : null;
 
   for (const detail of details) {
     if (!detail.scoringPlay) continue;
@@ -1462,7 +1469,7 @@ async function main() {
     EUR_IDS.has(m.leagueId) && (m.players?.length || 0) < 10
   );
 
-  const minDays = hasBadEurMatches ? 21 : 14; // fenêtre normale
+  const minDays = 25; // Couvre toute la phase de groupe CDM + 16èmes en cours
   if (hasBadEurMatches) console.log(`⚠️  Matchs européens incomplets détectés → fenêtre étendue à ${minDays} jours`);
 
   const minDaysAgo = new Date();
@@ -1531,11 +1538,11 @@ async function main() {
   // Exception ciblée : réactiver temporairement la LDC (id:7) pour retraiter
   // la finale avec le nouveau support des tirs au but (penaltyWinner).
   // Remettre à false une fois la finale correctement retraitée.
-  const LDC_FINAL_REFETCH = true;
+  const LDC_FINAL_REFETCH = false; // Finale LDC retraitée — désactivé
   // fixtureId de la finale LDC PSG-Arsenal (30/05/2026) à forcer en retraitement
   // malgré storedIds — elle est déjà stockée avec un score nul sans vainqueur.
   // Retirer cette ligne une fois le retraitement confirmé réussi.
-  const FORCE_REFETCH_IDS = new Set(['401862897']);
+  const FORCE_REFETCH_IDS = new Set(['401862897']); // LDC finale uniquement
   for (const league of LEAGUES) {
     const isLdcException = league.id === 7 && LDC_FINAL_REFETCH;
     if (league.id !== 6 && !CLUBS_SEASON_ACTIVE && !isLdcException) {
