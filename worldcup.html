@@ -849,6 +849,8 @@ const J1_FIXTURES = [
 ];
 
 function renderAlerts(list, fixtures) {
+  // Exclure les joueurs des nations éliminées de la CDM
+  list = list.filter(p => !p.cdmEliminated);
   const teamsSeen = new Set();
   const picked = [];
 
@@ -1056,7 +1058,8 @@ function renderAlerts(list, fixtures) {
 // ── GRILLE JOUEURS ──────────────────────────────────────────────────────────
 // ── GRILLE JOUEURS ──────────────────────────────────────────────────────────
 function renderGrid(list, cdmStarted) {
-  const activeList = list.filter(p => p.cdmStatus !== 'absent');
+  // Exclure les absents et les joueurs des nations éliminées de la CDM
+  const activeList = list.filter(p => p.cdmStatus !== 'absent' && !p.cdmEliminated);
 
   // Joueurs CDM avec vraies stats (buts ou passes)
   const withCdmStats = activeList
