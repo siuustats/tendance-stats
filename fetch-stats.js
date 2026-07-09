@@ -1824,7 +1824,7 @@ async function main() {
     .slice(0, 3);
 
   const newEntryCount = Object.values(newHistoryEntries).reduce((s, e) => s + e.length, 0);
-  if (newEntryCount > 0) console.log(`📚 Historique prédictions : \${newEntryCount} prédictions archivées`);
+  if (newEntryCount > 0) console.log(`📚 Historique prédictions : ${newEntryCount} prédictions archivées`);
 
   // ── CALCUL DES PRÉDICTIONS CDM ──────────────────────────────────────────────
   const cdmMatches = trimmed.filter(m => m.leagueId === 6);
@@ -1903,6 +1903,48 @@ async function main() {
   }
   const dedupedPlayers = [...nonCdm, ...Object.values(cdmDedup)];
   console.log(`🔁 Déduplication CDM: ${players.filter(p=>p.leagueId===6).length} → ${Object.keys(cdmDedup).length} joueurs uniques`);
+
+  // ── CALCUL DES ÉQUIPES CDM ÉLIMINÉES ────────────────────────────────────────
+  // Une équipe est éliminée si :
+  //  1) elle a perdu un match à élimination directe (score, ou penaltyWinner si nul)
+  //  2) OU la phase de groupes est finie, elle n'a aucun match de knockout
+  //     et n'apparaît dans aucune fixture nommée à venir (= non qualifiée)
+  // Les matchs de knockout = matchs au-delà des 3 premiers de chaque équipe,
+  // triés par date (même logique que le fix buildStandings).
+  const cdmTeamMatches = {};
+  cdmMatches.forEach(m => {
+    const ht = fixTeamName(m.homeTeam), at = fixTeamName(m.awayTeam);
+    (cdmTeamMatches[ht] = cdmTeamMatches[ht] || []).push(m);
+    (cdmTeamMatches[at] = cdmTeamMatches[at] || []).push(m);
+  });
+  Object.values(cdmTeamMatches).forEach(lm => lm.sort((a, b) => new Date(a.date) - new Date(b.date)));
+  const knockoutStarted = Object.values(cdmTeamMatches).some(lm => lm.length > 3);
+  const cdmEliminatedTeams = new Set();
+  if (knockoutStarted) {
+    const matchWinner = (m) => {
+      if (m.homeGoals === undefined || m.awayGoals === undefined) return null;
+      if (m.homeGoals > m.awayGoals) return fixTeamName(m.homeTeam);
+      if (m.awayGoals > m.homeGoals) return fixTeamName(m.awayTeam);
+      return m.penaltyWinner ? fixTeamName(m.penaltyWinner) : null; // nul => TAB
+    };
+    Object.entries(cdmTeamMatches).forEach(([team, lm]) => {
+      const ko = lm.slice(3);
+      const lostKo = ko.some(m => { const w = matchWinner(m); return w && w !== team; });
+      if (lostKo) { cdmEliminatedTeams.add(team); return; }
+      if (ko.length === 0) {
+        const inFixture = fixtures.some(f => f.leagueId === 6 &&
+          (fixTeamName(f.homeTeam) === team || fixTeamName(f.awayTeam) === team));
+        if (!inFixture) cdmEliminatedTeams.add(team);
+      }
+    });
+  }
+  let elimFlagged = 0;
+  dedupedPlayers.forEach(p => {
+    if (p.leagueId !== 6) return;
+    if (cdmEliminatedTeams.has(fixTeamName(p.teamName))) { p.cdmEliminated = true; elimFlagged++; }
+    else if (p.cdmEliminated) delete p.cdmEliminated;
+  });
+  console.log(`🚫 Équipes CDM éliminées: ${cdmEliminatedTeams.size} | ${elimFlagged} joueur(s) flagué(s)`);
 
   fs.writeFileSync(DATA_FILE, JSON.stringify({
     updatedAt:          new Date().toISOString(),
