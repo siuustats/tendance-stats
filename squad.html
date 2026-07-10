@@ -524,8 +524,21 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
              (m.a.type === teamSlotType && m.a.group === groupLetter);
     });
   } else if (teamRank === 3) {
-    statusMsg = '3e du groupe ' + groupLetter + ' - Possible si meilleur 3e';
-    statusColor = '#00e5a0';
+    if (mj >= 3 && typeof BEST_3RD_OFFICIAL !== 'undefined' && BEST_3RD_OFFICIAL.has(teamName)) {
+      // Meilleur 3e officiellement qualifié - slot 'fixed' dans R32_MATCHES
+      statusMsg = '3e du groupe ' + groupLetter + ' - Qualifi\u00e9 (meilleur 3e)';
+      statusColor = '#d4a843';
+      r32Match = R32_MATCHES.find(function(m) {
+        return (m.h.type === 'fixed' && m.h.name === teamName) ||
+               (m.a.type === 'fixed' && m.a.name === teamName);
+      });
+    } else if (mj >= 3) {
+      statusMsg = '\u274c \u00c9limin\u00e9 en phase de groupes';
+      statusColor = '#ff5050';
+    } else {
+      statusMsg = '3e du groupe ' + groupLetter + ' - Possible si meilleur 3e';
+      statusColor = '#00e5a0';
+    }
   } else {
     statusMsg = '4e du groupe ' + groupLetter + ' - \u00c9limin\u00e9';
     statusColor = '#ff5050';
@@ -557,6 +570,69 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
       + '</div>';
   }
 
+  // ── STATUT PHASE FINALE (générique, toutes les rondes) ─────────────────────
+  // Matchs à élimination directe = matchs joués au-delà des 3 de groupe (tri par date)
+  const teamKoMatches = cdmMatches.filter(function(m){
+    const h = NAME_FIX_ST[m.homeTeam] || m.homeTeam;
+    const a = NAME_FIX_ST[m.awayTeam] || m.awayTeam;
+    return m.homeGoals !== undefined && m.homeGoals !== null && (h === teamName || a === teamName);
+  }).sort(function(a,b){ return new Date(a.date) - new Date(b.date); }).slice(3);
+
+  function koWinnerName(m) {
+    const h = NAME_FIX_ST[m.homeTeam] || m.homeTeam;
+    const a = NAME_FIX_ST[m.awayTeam] || m.awayTeam;
+    if (m.homeGoals > m.awayGoals) return h;
+    if (m.awayGoals > m.homeGoals) return a;
+    return m.penaltyWinner ? (NAME_FIX_ST[m.penaltyWinner] || m.penaltyWinner) : null;
+  }
+
+  if (teamKoMatches.length > 0) {
+    const KO_ELIM = ['16\u00e8mes de finale', '8\u00e8mes de finale', 'quarts de finale', 'demi-finales'];
+    const KO_NEXT = ['les 8\u00e8mes de finale', 'les quarts de finale', 'les demi-finales', 'la finale'];
+    let lostAt = -1, petiteFinaleWon = null;
+    teamKoMatches.forEach(function(m, i){
+      const w = koWinnerName(m);
+      if (!w) return;
+      if (lostAt === -1) {
+        if (w !== teamName) lostAt = i;
+      } else if (lostAt === 3 && i === 4) {
+        petiteFinaleWon = (w === teamName); // match pour la 3e place
+      }
+    });
+    if (lostAt === -1) {
+      if (teamKoMatches.length >= 5) {
+        statusMsg = '\ud83c\udfc6 Champion du Monde 2026';
+        statusColor = '#d4a843';
+      } else {
+        statusMsg = '\ud83c\udfc6 Qualifi\u00e9 pour ' + KO_NEXT[teamKoMatches.length - 1];
+        statusColor = '#00e5a0';
+      }
+    } else if (lostAt === 4) {
+      statusMsg = '\ud83e\udd48 Vice-champion du Monde 2026';
+      statusColor = '#d4a843';
+    } else if (lostAt === 3) {
+      if (petiteFinaleWon === true) {
+        statusMsg = '\ud83e\udd49 3e de la Coupe du Monde 2026';
+        statusColor = '#cd7f32';
+      } else if (petiteFinaleWon === false) {
+        statusMsg = '\u274c \u00c9limin\u00e9 en demi-finales \u00b7 4e place';
+        statusColor = '#ff5050';
+      } else {
+        statusMsg = '\u274c \u00c9limin\u00e9 en demi-finales \u00b7 match pour la 3e place \u00e0 venir';
+        statusColor = '#ff5050';
+      }
+    } else {
+      statusMsg = '\u274c \u00c9limin\u00e9 en ' + KO_ELIM[lostAt];
+      statusColor = '#ff5050';
+    }
+  }
+
+  // Sous-ligne : matchs restants en phase de groupes, récap groupe ensuite
+  let subLine = pts + ' pt' + (pts > 1 ? 's' : '') + ' \u00b7 ' + (3 - mj) + ' match' + (3 - mj > 1 ? 's' : '') + ' restant' + (3 - mj > 1 ? 's' : '');
+  if (mj >= 3) {
+    subLine = 'Phase de groupes : ' + (teamRank === 1 ? '1er' : teamRank + 'e') + ' du groupe ' + groupLetter + ' \u00b7 ' + pts + ' pts';
+  }
+
   // Rang de chaque équipe pour affichage dans les boîtes bracket
   function getRankLabel(tName) {
     for (var gi = 0; gi < (allGroups||[]).length; gi++) {
@@ -577,8 +653,9 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
 
   let bracketHtml = '';
 
-  if (r32Match && teamRank <= 2) {
-    const isHome = r32Match.h.type === teamSlotType && r32Match.h.group === groupLetter;
+  if (r32Match) {
+    const hSlotTeam = getTeamFromSlot(r32Match.h, allGroups || [], st);
+    const isHome = hSlotTeam.name === teamName;
     const oppSlot = isHome ? r32Match.a : r32Match.h;
     const myTeam = { name: teamName, flag: FLAG_MAP[teamName] || '', tbd: false };
     const oppTeam = getTeamFromSlot(oppSlot, allGroups || [], st);
@@ -618,16 +695,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
     const myR32Result = findMatchResult(myT1, myT2, allMatches);
     const myT1Eliminated = myR32Result && myR32Result.name !== myT1.name;
     const myT2Eliminated = myR32Result && myR32Result.name !== myT2.name;
-
-    if (myR32Result) {
-      if (myR32Result.name === teamName) {
-        statusMsg = '\ud83c\udfc6 Qualifi\u00e9 pour les 8\u00e8mes de finale';
-        statusColor = '#00e5a0';
-      } else {
-        statusMsg = '\u274c \u00c9limin\u00e9 en 16\u00e8mes de finale';
-        statusColor = '#ff5050';
-      }
-    }
+    // Le statut est désormais géré par le bloc générique "STATUT PHASE FINALE" ci-dessus
 
     const myBox = '<div class="bracket-match" style="width:'+BOX_W+'">'
       + teamRow(myT1, myT1me, true, myT1Eliminated)
@@ -650,9 +718,14 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
     const partnerWinnerTeam = (partnerMatch && findMatchResult(partnerMatch.tH, partnerMatch.tA, allMatches))
       || { name: partnerNum ? 'W M' + partnerNum : '\u00e0 d\u00e9terminer', tbd: true };
 
+    // Résultat du 8ème (si joué) pour griser le perdant
+    const r16Result = (!myWinnerTeam.tbd && !partnerWinnerTeam.tbd)
+      ? findMatchResult(myWinnerTeam, partnerWinnerTeam, allMatches)
+      : null;
+
     const r16Box = '<div class="bracket-match" style="width:'+BOX_W+'">'
-      + teamRow(myWinnerTeam, !myWinnerTeam.tbd && myWinnerTeam.name === teamName, true)
-      + teamRow(partnerWinnerTeam, false, false)
+      + teamRow(myWinnerTeam, !myWinnerTeam.tbd && myWinnerTeam.name === teamName, true, r16Result && r16Result.name !== myWinnerTeam.name)
+      + teamRow(partnerWinnerTeam, false, false, r16Result && r16Result.name !== partnerWinnerTeam.name)
       + '</div>';
 
     bracketHtml = '<div>'
@@ -675,9 +748,9 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
       + (nextMatchHtml ? '' : '')
     + '</div>';
 
-  } else if (teamRank === 3) {
+  } else if (teamRank === 3 && mj < 3) {
     bracketHtml = '<div style="margin-top:12px;background:#0d0f15;border:1px solid rgba(0,229,160,0.15);border-radius:8px;padding:10px 14px;font-size:12px;color:#00e5a0">Qualification incertaine - d\u00e9pend des autres 3e</div>';
-  } else if (teamRank >= 4 && mj > 0) {
+  } else if ((teamRank >= 3 && mj >= 3) || (teamRank >= 4 && mj > 0)) {
     bracketHtml = '<div style="margin-top:12px;background:#0d0f15;border:1px solid rgba(255,80,80,0.15);border-radius:8px;padding:10px 14px;font-size:12px;color:#ff5050">\u00c9limin\u00e9</div>';
   }
 
@@ -687,7 +760,7 @@ function renderProjection(groupObj, st, highlightId, teamName, allGroups, allMat
       + '<div style="width:290px;flex-shrink:0;display:flex;flex-direction:column">'
         + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:14px;letter-spacing:2px;color:#9ca3af;margin-bottom:12px">\ud83c\udfc6 SITUATION ACTUELLE</div>'
         + '<div style="font-size:14px;font-weight:600;color:' + statusColor + ';line-height:1.4;margin-bottom:8px">' + statusMsg + '</div>'
-        + '<div style="font-size:12px;color:#6b7280;margin-bottom:14px">' + pts + ' pt' + (pts > 1 ? 's' : '') + ' \u00b7 ' + (3 - mj) + ' match' + (3 - mj > 1 ? 's' : '') + ' restant' + (3 - mj > 1 ? 's' : '') + '</div>'
+        + '<div style="font-size:12px;color:#6b7280;margin-bottom:14px">' + subLine + '</div>'
         + nextMatchHtml
       + '</div>'
       + (bracketHtml ? '<div class="situation-bracket" style="margin-left:auto">'
