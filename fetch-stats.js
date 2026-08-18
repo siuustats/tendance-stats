@@ -1117,6 +1117,9 @@ document.addEventListener('click', function(e) {
 function generateSitemap(starPlayers, playerMap) {
   const today = new Date().toISOString().slice(0, 10);
 
+  // Templates exclus du sitemap : player.html, player-cdm.html et squad.html
+  // sont des pages vides sans paramètre d'URL (?id= / ?team=) et sont en noindex.
+  // Le contenu joueur indexable vit dans les pages statiques players/*.html.
   const staticPages = [
     { url: 'https://tendancestats.com/',                    priority: '1.0', freq: 'daily'  },
     { url: 'https://tendancestats.com/club.html',            priority: '0.9', freq: 'daily'  },
@@ -1128,12 +1131,9 @@ function generateSitemap(starPlayers, playerMap) {
     { url: 'https://tendancestats.com/stats-cdm-2026.html', priority: '0.8', freq: 'daily'  },
     { url: 'https://tendancestats.com/classement.html',     priority: '0.8', freq: 'daily'  },
     { url: 'https://tendancestats.com/classement-cdm.html', priority: '0.8', freq: 'daily'  },
-    { url: 'https://tendancestats.com/squad.html',          priority: '0.7', freq: 'weekly' },
     { url: 'https://tendancestats.com/mentions-legales.html', priority: '0.3', freq: 'monthly' },
     { url: 'https://tendancestats.com/confidentialite.html',  priority: '0.3', freq: 'monthly' },
     { url: 'https://tendancestats.com/contact.html',          priority: '0.4', freq: 'monthly' },
-    { url: 'https://tendancestats.com/player.html',         priority: '0.6', freq: 'daily'  },
-    { url: 'https://tendancestats.com/player-cdm.html',     priority: '0.6', freq: 'daily'  },
   ];
 
   // Pages joueurs statiques — uniquement ceux présents dans data.json
