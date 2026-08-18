@@ -964,7 +964,7 @@ function render() {
 
   // KPIs
   const totalGoals = list.reduce((s, p) => s + (p.totalGoals||p.goals||0), 0);
-  const hotCount = list.filter(p => p.hot || (p.trendScore||0) > 0).length;
+  const hotCount = list.filter(p => (p.recent_goals||0) + (p.recent_assists||0) > 0).length;
   document.getElementById('k-players').textContent = list.length;
   document.getElementById('k-hot').textContent = hotCount;
   document.getElementById('k-goals').textContent = totalGoals;
@@ -1140,7 +1140,14 @@ function renderAlerts(list, fixtures) {
 }
 
 function renderGrid(list) {
-  const hot = list.filter(p => p.hot || (p.trendScore||0) > 0).slice(0, 8);
+  // "En forme" = a réellement contribué (but ou passe) sur ses 5 derniers matchs.
+  // Sans ce filtre, un joueur sans stat dont l'équipe a gagné obtient un
+  // trendScore non nul (bonus teamWon) et serait compté à tort.
+  const hot = list
+    .filter(p => (p.recent_goals||0) + (p.recent_assists||0) > 0)
+    .sort((a, b) => (b.trendScore||0) - (a.trendScore||0)
+      || ((b.totalGoals||0)+(b.totalAssists||0)) - ((a.totalGoals||0)+(a.totalAssists||0)))
+    .slice(0, 8);
   const c = document.getElementById('pgrid');
   c.innerHTML = '';
   hot.forEach((p, i) => {
