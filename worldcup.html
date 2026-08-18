@@ -755,7 +755,7 @@ function render() {
 
   // KPIs
   const totalGoals = list.reduce((s, p) => s + (p.totalGoals||0), 0);
-  const hotCount   = list.filter(p => p.hot || (p.trendScore||0) > 0).length;
+  const hotCount   = list.filter(p => (p.recent_goals||0) + (p.recent_assists||0) > 0).length;
   document.getElementById('k-players').textContent = list.length;
   document.getElementById('k-hot').textContent     = hotCount;
   document.getElementById('k-goals').textContent   = totalGoals;
