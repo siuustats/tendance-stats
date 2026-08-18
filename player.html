@@ -10,7 +10,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- End Google Tag Manager -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👤</text></svg>">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="/icons/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/icons/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/icons/site.webmanifest">
   <title>Fiche Joueur — Statistiques & Tendance | Tendance Stats</title>
   <meta name="description" content="Statistiques détaillées du joueur, TendScore, forme récente et historique des matchs. Suivez les performances et tendances en temps réel.">
   <meta name="keywords" content="stats joueur football, forme joueur, TendScore, historique matchs, tendance joueur football">
@@ -331,10 +335,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <script>
     (function() {
       const ref = new URLSearchParams(window.location.search).get('ref');
-      if (ref === 'stats-saison-2026') {
+      if (ref === 'stats-saison-2027') {
+        const el = document.getElementById('backLink');
+        el.href = 'stats-saison-2027.html';
+        el.textContent = '← Stats Saison 2026/2027';
+      } else if (ref === 'stats-saison-2026') {
         const el = document.getElementById('backLink');
         el.href = 'stats-saison-2026.html';
-        el.textContent = '← Stats Saison 2026';
+        el.textContent = '← Stats Saison 2025/2026';
       }
     })();
   </script>
@@ -343,8 +351,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
 <!-- SEO BLOCK -->
 <div style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden" aria-hidden="true">
-  <h1>Statistiques Joueur Football 2025/2026 | TendanceStats</h1>
-  <p>Consultez les statistiques détaillées, TendScore et historique de matchs des joueurs du Top 5 européen. Buts, passes décisives, forme récente et prédictions. Premier League, Ligue 1, La Liga, Serie A, Bundesliga saison 2025/2026.</p>
+  <h1>Statistiques Joueur Football 2026/2027 | TendanceStats</h1>
+  <p>Consultez les statistiques détaillées, TendScore et historique de matchs des joueurs du Top 5 européen. Buts, passes décisives, forme récente et prédictions. Premier League, Ligue 1, La Liga, Serie A, Bundesliga saison 2026/2027.</p>
   <p>Joueurs stars : Mohamed Salah, Erling Haaland, Bukayo Saka, Cole Palmer, Alexander Isak, Phil Foden, Ousmane Dembélé, Kylian Mbappé, Lamine Yamal, Jude Bellingham, Florian Wirtz, Jamal Musiala.</p>
 </div>
 
@@ -727,16 +735,16 @@ init().catch(console.error);
 <div style="background:#080a0f;padding:16px 24px 8px;text-align:center;">
   <div style="font-size:12px;color:#6b7280;margin-bottom:8px;">
     <strong style="color:#9ca3af">Tendance Stats</strong> &nbsp;·&nbsp;
-    Saison 2025/2026 &nbsp;·&nbsp;
+    Saison 2026/2027 &nbsp;·&nbsp;
     Données : <span style="color:#9ca3af">sources publiques</span> &nbsp;·&nbsp;
     
-    <a href="stats-saison-2026.html" style="color:#6b7280;font-size:11px;text-decoration:none;opacity:0.6;transition:opacity .2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">Stats détaillées →</a>
+    <a href="stats-saison-2027.html" style="color:#6b7280;font-size:11px;text-decoration:none;opacity:0.6;transition:opacity .2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">Stats détaillées →</a>
   </div>
   <div style="font-size:11px;color:#2a2f3a;">
     <a href="club.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px;">Accueil</a>·
     <a href="predictions.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px;">Prédictions</a>·
     <a href="classement.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px;">Classement</a>·
-    <a href="stats-saison-2026.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px;">Stats saison 2025/2026</a>
+    <a href="stats-saison-2027.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px;">Stats saison 2026/2027</a>
   </div>
 </div>
 <div style="background:#05060a;border-top:1px solid rgba(255,255,255,0.06);padding:16px 24px;text-align:center;font-size:11px;color:#4b5563;">
@@ -764,8 +772,6 @@ document.addEventListener('click', function(e) {
 });
 </script>
 
-
-<a href="worldcup.html" style="position:fixed;bottom:24px;right:20px;z-index:300;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#d4a843,#b8902a);color:#080608;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;padding:10px 16px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(212,168,67,0.4);transition:transform .2s,box-shadow .2s;" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 6px 28px rgba(212,168,67,0.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(212,168,67,0.4)'">🏆 CDM 2026</a>
 <script src="cookies.js"></script>
 </body>
 </html>

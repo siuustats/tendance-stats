@@ -10,23 +10,27 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <!-- End Google Tag Manager -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TendanceStats — Statistiques Football & Coupe du Monde 2026</title>
-<meta name="description" content="TendanceStats : statistiques football en temps réel, joueurs en forme, TendScore et prédictions. Saison 2025/2026 (Top 5 championnats) + Coupe du Monde 2026 en direct.">
+<title>TendanceStats — Statistiques Football Saison 2026/2027</title>
+<meta name="description" content="TendanceStats : statistiques football en temps réel, joueurs en forme, TendScore et prédictions. Saison 2026/2027 sur les 5 grands championnats européens, plus les archives de la Coupe du Monde 2026.">
 <meta name="keywords" content="statistiques football, joueurs en forme, coupe du monde 2026 stats, CDM 2026, TendScore, Premier League, Ligue 1, La Liga, Serie A, Bundesliga, prédictions football">
 <meta name="author" content="TendanceStats">
 <meta name="robots" content="index, follow">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="TendanceStats">
-<meta property="og:title" content="TendanceStats — Statistiques Football & Coupe du Monde 2026">
-<meta property="og:description" content="Statistiques football en temps réel, joueurs en forme, TendScore et prédictions. Saison 2025/2026 + Coupe du Monde 2026 en direct.">
+<meta property="og:title" content="TendanceStats — Statistiques Football Saison 2026/2027">
+<meta property="og:description" content="Statistiques football en temps réel, joueurs en forme, TendScore et prédictions. Saison 2026/2027 + archives Coupe du Monde 2026.">
 <meta property="og:url" content="https://tendancestats.com">
 <meta property="og:image" content="https://tendancestats.com/logo.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://tendancestats.com/logo.png">
-<meta name="twitter:title" content="TendanceStats — Statistiques Football & Coupe du Monde 2026">
-<meta name="twitter:description" content="Statistiques football en temps réel, joueurs en forme, TendScore et prédictions. Saison 2025/2026 + CDM 2026.">
+<meta name="twitter:title" content="TendanceStats — Statistiques Football Saison 2026/2027">
+<meta name="twitter:description" content="Statistiques football en temps réel, joueurs en forme, TendScore et prédictions. Saison 2026/2027 + archives CDM 2026.">
 <link rel="canonical" href="https://tendancestats.com">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="/icons/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/icons/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/icons/site.webmanifest">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script type="application/ld+json">
 {
@@ -121,8 +125,24 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .hero-sub{font-size:15px;color:var(--m2);max-width:480px;margin:0 auto 36px;line-height:1.7}
 
 /* CARDS */
-.cards-wrap{max-width:960px;margin:0 auto;padding:0 24px 52px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:640px){.cards-wrap{grid-template-columns:1fr;padding:0 16px 40px}}
+.cards-wrap{max-width:960px;margin:0 auto;padding:0 24px 52px;display:grid;grid-template-columns:1fr;gap:20px}
+@media(max-width:640px){.cards-wrap{padding:0 16px 40px}}
+
+/* CARTE ARCHIVE CDM (secondaire, sous les features) */
+.archive-wrap{max-width:960px;margin:0 auto;padding:0 24px 52px}
+@media(max-width:640px){.archive-wrap{padding:0 16px 40px}}
+.archive-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--m);margin-bottom:12px}
+.card-archive{display:flex;align-items:center;gap:18px;background:rgba(212,168,67,0.04);border:1px solid rgba(212,168,67,0.14);border-radius:12px;padding:18px 22px;text-decoration:none;transition:transform .15s,box-shadow .15s}
+.card-archive:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(212,168,67,0.06)}
+.archive-icon{font-size:28px;line-height:1;flex-shrink:0}
+.archive-body{flex:1;min-width:0}
+.archive-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1.2px;color:#f0c060;line-height:1.1;margin-bottom:4px}
+.archive-desc{font-size:12px;color:var(--m);line-height:1.6}
+.archive-cta{font-size:12px;font-weight:600;color:#d4a843;white-space:nowrap;flex-shrink:0}
+@media(max-width:640px){
+  .card-archive{flex-wrap:wrap;gap:12px}
+  .archive-cta{width:100%;text-align:right}
+}
 
 .card{border-radius:16px;padding:30px 26px;cursor:pointer;text-decoration:none;display:block;transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden}
 .card:hover{transform:translateY(-3px)}
@@ -200,14 +220,14 @@ footer{border-top:1px solid var(--border)}
 <div class="hero">
   <div class="hero-eyebrow">Statistiques Football en temps réel</div>
   <h1 class="hero-title" style="color:#f0f2f8">QUI EST<br><span style="background:linear-gradient(135deg,#00ffb3,#d4a843);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;color:#00ffb3">EN FORME ?</span></h1>
-  <p class="hero-sub">TendScore, tendances et prédictions - choisissez votre univers.</p>
+  <p class="hero-sub">TendScore, tendances et prédictions sur les 5 grands championnats européens.</p>
 </div>
 
 <!-- CARDS -->
 <div class="cards-wrap">
 
   <a href="club.html" class="card card-clubs">
-    <div class="card-badge">Saison 2025/2026</div>
+    <div class="card-badge">Saison 2026/2027</div>
     <div class="card-title">STATS CLUBS</div>
     <p class="card-desc">Top 5 championnats européens - Premier League, Ligue 1, La Liga, Serie A, Bundesliga</p>
     <div class="card-stats">
@@ -227,28 +247,6 @@ footer{border-top:1px solid var(--border)}
     <div class="card-cta">Voir les stats clubs →</div>
   </a>
 
-  <a href="worldcup.html" class="card card-cdm">
-    <div class="live-badge"><div class="live-dot"></div>EN COURS</div>
-    <div class="card-badge">CDM 2026</div>
-    <div class="card-title">COUPE DU MONDE</div>
-    <p class="card-desc">USA · Canada · Mexique - 48 nations, stats et prédictions en direct depuis le 11 juin 2026</p>
-    <div class="card-stats">
-      <div>
-        <span class="stat-val">48</span>
-        <span class="stat-label">Nations</span>
-      </div>
-      <div>
-        <span class="stat-val">1000+</span>
-        <span class="stat-label">Joueurs</span>
-      </div>
-      <div>
-        <span class="stat-val">Live</span>
-        <span class="stat-label">Mise à jour</span>
-      </div>
-    </div>
-    <div class="card-cta">Voir les stats CDM →</div>
-  </a>
-
 </div>
 
 <!-- FEATURES -->
@@ -266,15 +264,28 @@ footer{border-top:1px solid var(--border)}
   <div class="feat">
     <span class="feat-icon">⚡</span>
     <div class="feat-title">Données temps réel</div>
-    <p class="feat-desc">Mise à jour automatique après chaque journée - clubs européens et matchs de Coupe du Monde 2026.</p>
+    <p class="feat-desc">Mise à jour automatique après chaque journée des championnats européens.</p>
   </div>
+</div>
+
+<!-- ARCHIVE CDM 2026 -->
+<div class="archive-wrap">
+  <div class="archive-label">Archives</div>
+  <a href="worldcup.html" class="card-archive">
+    <span class="archive-icon">🏆</span>
+    <div class="archive-body">
+      <div class="archive-title">COUPE DU MONDE 2026</div>
+      <p class="archive-desc">USA · Canada · Mexique - Retrouvez les stats complètes des 48 nations, les buteurs du tournoi et les effectifs.</p>
+    </div>
+    <span class="archive-cta">Voir l'archive →</span>
+  </a>
 </div>
 
 <!-- SEO HIDDEN -->
 <div style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden" aria-hidden="true">
   <h2>Statistiques football joueurs en forme 2026</h2>
   <p>TendanceStats est le site de référence pour suivre les statistiques des joueurs de football en forme en 2026. Notre indicateur TendScore analyse les performances des joueurs sur les 5 derniers matchs dans les 5 grands championnats européens : Premier League, Ligue 1, La Liga Serie A et Bundesliga. Découvrez les buteurs en série, les passeurs décisifs et les joueurs à surveiller pour vos pronostics et paris sportifs. TendanceStats couvre également la Coupe du Monde 2026 avec des statistiques en temps réel pour les 48 nations participantes et plus de 1000 joueurs sélectionnés. Stats joueurs Premier League 2026, statistiques Ligue 1 2026, buteurs Liga 2026, joueurs en forme Serie A 2026, Bundesliga stats 2026, coupe du monde 2026 statistiques joueurs, CDM 2026 buteurs, prédictions football 2026, TendScore football, joueurs en série football européen.</p>
-  <p>Liens utiles : <a href="club.html">Stats clubs saison 2025/2026</a> - <a href="worldcup.html">Coupe du Monde 2026 stats</a> - <a href="predictions.html">Prédictions football clubs</a> - <a href="predictions-cdm.html">Prédictions CDM 2026</a> - <a href="classement.html">Classement buteurs clubs</a> - <a href="classement-cdm.html">Classement buteurs CDM 2026</a> - <a href="stats-saison-2026.html">Statistiques saison 2025/2026</a> - <a href="stats-cdm-2026.html">Statistiques Coupe du Monde 2026</a> - <a href="squad.html">Effectifs 48 nations CDM 2026</a></p>
+  <p>Liens utiles : <a href="club.html">Stats clubs saison 2026/2027</a> - <a href="worldcup.html">Coupe du Monde 2026 stats</a> - <a href="predictions.html">Prédictions football clubs</a> - <a href="predictions-cdm.html">Prédictions CDM 2026</a> - <a href="classement.html">Classement buteurs clubs</a> - <a href="classement-cdm.html">Classement buteurs CDM 2026</a> - <a href="stats-saison-2027.html">Statistiques saison 2026/2027</a> - <a href="stats-cdm-2026.html">Statistiques Coupe du Monde 2026</a> - <a href="squad.html">Effectifs 48 nations CDM 2026</a></p>
 </div>
 
 <!-- WINAMAX -->
@@ -292,14 +303,14 @@ footer{border-top:1px solid var(--border)}
 <footer>
 <div style="background:#080a0f;padding:16px 24px 8px;text-align:center">
   <div style="font-size:12px;color:#6b7280;margin-bottom:8px">
-    <strong style="color:#9ca3af">TendanceStats</strong> &nbsp;·&nbsp; Saison 2025/2026 &nbsp;·&nbsp; CDM 2026 en cours
+    <strong style="color:#9ca3af">TendanceStats</strong> &nbsp;·&nbsp; Saison 2026/2027 &nbsp;·&nbsp; Archives CDM 2026
   </div>
   <div style="font-size:11px;color:#2a2f3a">
     <a href="club.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px">Stats Clubs</a>·
     <a href="worldcup.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px">CDM 2026</a>·
     <a href="predictions.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px">Prédictions</a>·
     <a href="classement.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px">Classement</a>·
-    <a href="stats-saison-2026.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px">Stats saison 2025/2026</a>·
+    <a href="stats-saison-2027.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px">Stats saison 2026/2027</a>·
     <a href="stats-cdm-2026.html" style="color:#2a2f3a;text-decoration:none;margin:0 8px">Stats CDM 2026</a>
   </div>
 </div>
@@ -313,8 +324,6 @@ footer{border-top:1px solid var(--border)}
 </div>
 </footer>
 
-<!-- Bouton flottant CDM -->
-<a href="worldcup.html" style="position:fixed;bottom:24px;right:20px;z-index:300;display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#d4a843,#b8902a);color:#080608;font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:1.5px;padding:10px 16px;border-radius:50px;text-decoration:none;box-shadow:0 4px 20px rgba(212,168,67,0.4);transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='scale(1.05)';this.style.boxShadow='0 6px 28px rgba(212,168,67,0.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(212,168,67,0.4)'">🏆 CDM 2026</a>
 
 <script>
 function toggleMenu() {

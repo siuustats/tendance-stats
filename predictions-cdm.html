@@ -20,7 +20,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://tendancestats.com/logo.png">
 <link rel="canonical" href="https://tendancestats.com/predictions-cdm.html">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔮</text></svg>">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="/icons/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/icons/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/icons/site.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -678,7 +682,16 @@ function render() {
     .sort((a,b) => new Date(a.date) - new Date(b.date));
 
   if (!matches.length) {
-    container.innerHTML = '<div class="empty">⏳ Les prédictions seront disponibles après les premiers matchs — les données sont en cours de collecte.</div>';
+    container.innerHTML = ''
+      + '<div class="waiting-card">'
+      + '<h2>🏆 CDM 2026 - Tournoi terminé</h2>'
+      + "<p>La Coupe du Monde 2026 est terminée, il n'y a plus de match à venir à prédire.<br>"
+      + 'Les statistiques complètes du tournoi restent consultables.</p>'
+      + '<div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:20px">'
+      + '<a href="classement-cdm.html" style="font-size:12px;color:var(--g);text-decoration:none;padding:8px 16px;background:rgba(212,168,67,0.08);border:1px solid var(--g-border);border-radius:20px">Classement buteurs CDM</a>'
+      + '<a href="worldcup.html" style="font-size:12px;color:var(--g);text-decoration:none;padding:8px 16px;background:rgba(212,168,67,0.08);border:1px solid var(--g-border);border-radius:20px">Stats CDM 2026</a>'
+      + '<a href="predictions.html" style="font-size:12px;color:#00e5a0;text-decoration:none;padding:8px 16px;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);border-radius:20px">Prédictions saison 2026/2027 →</a>'
+      + '</div></div>';
     return;
   }
 

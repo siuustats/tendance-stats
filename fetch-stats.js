@@ -22,6 +22,11 @@ const LEAGUES = [
   { code: 'fifa.world',       id: 6,     name: 'Coupe du Monde',        flag: 'eu', flagAlt: 'CDM', cls: 'cl',  label: 'CDM'  },
 ];
 
+// CDM 2026 terminée — données conservées en archive dans data.json, mais on
+// arrête d'interroger l'API ESPN pour la ligue 6 (matchs et fixtures).
+// Remettre à true pour la prochaine Coupe du Monde.
+const CDM_ACTIVE = false;
+
 const CDM_TEAM_NAMES = {
   '203':'Mexique','467':'Afrique du Sud','451':'Corée du Sud','450':'Tchéquie',
   '206':'Canada','452':'Bosnie-Herzégovine','4398':'Qatar','475':'Suisse',
@@ -204,6 +209,7 @@ async function fetchFixtures() {
   }
 
   for (const league of LEAGUES) {
+    if (league.id === 6 && !CDM_ACTIVE) continue; // Tournoi terminé
     if (league.id === 6) {
       // CDM — fixtures récupérées via ESPN fifa.world
       for (const date of dates) {
@@ -850,7 +856,11 @@ function generatePlayerPages(players, photosCache) {
   }
 }
 </script>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="/icons/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/icons/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/icons/site.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1014,7 +1024,7 @@ footer{border-top:1px solid #1e2130;padding:20px 0;text-align:center;font-size:1
     ${seoText}
   </div>
   <div style="max-width:860px;margin:0 auto 16px;padding:0 24px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
-    <a href="../stats-saison-2026.html" style="font-size:12px;color:#00e5a0;text-decoration:none;padding:6px 14px;background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.18);border-radius:20px;transition:opacity .2s" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'">⚽ Stats Saison 2025/2026</a>
+    <a href="../stats-saison-2027.html" style="font-size:12px;color:#00e5a0;text-decoration:none;padding:6px 14px;background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.18);border-radius:20px;transition:opacity .2s" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'">⚽ Stats Saison 2026/2027</a>
     <a href="../stats-cdm-2026.html" style="font-size:12px;color:#d4a843;text-decoration:none;padding:6px 14px;background:rgba(212,168,67,0.07);border:1px solid rgba(212,168,67,0.18);border-radius:20px;transition:opacity .2s" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'">🏆 Stats CDM 2026</a>
     <a href="../classement.html" style="font-size:12px;color:#9ca3af;text-decoration:none;padding:6px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;transition:opacity .2s" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'">📊 Classement clubs</a>
     <a href="../classement-cdm.html" style="font-size:12px;color:#9ca3af;text-decoration:none;padding:6px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:20px;transition:opacity .2s" onmouseover="this.style.opacity='.7'" onmouseout="this.style.opacity='1'">📊 Classement CDM</a>
@@ -1113,7 +1123,8 @@ function generateSitemap(starPlayers, playerMap) {
     { url: 'https://tendancestats.com/worldcup.html',       priority: '0.9', freq: 'daily'  },
     { url: 'https://tendancestats.com/predictions.html',    priority: '0.9', freq: 'daily'  },
     { url: 'https://tendancestats.com/predictions-cdm.html',priority: '0.9', freq: 'daily'  },
-    { url: 'https://tendancestats.com/stats-saison-2026.html', priority: '0.8', freq: 'daily' },
+    { url: 'https://tendancestats.com/stats-saison-2027.html', priority: '0.8', freq: 'daily' },
+    { url: 'https://tendancestats.com/stats-saison-2026.html', priority: '0.5', freq: 'monthly' },
     { url: 'https://tendancestats.com/stats-cdm-2026.html', priority: '0.8', freq: 'daily'  },
     { url: 'https://tendancestats.com/classement.html',     priority: '0.8', freq: 'daily'  },
     { url: 'https://tendancestats.com/classement-cdm.html', priority: '0.8', freq: 'daily'  },
@@ -1469,7 +1480,7 @@ async function main() {
     EUR_IDS.has(m.leagueId) && (m.players?.length || 0) < 10
   );
 
-  const minDays = 25; // Couvre toute la phase de groupe CDM + 16èmes en cours
+  const minDays = 14; // Valeur canonique
   if (hasBadEurMatches) console.log(`⚠️  Matchs européens incomplets détectés → fenêtre étendue à ${minDays} jours`);
 
   const minDaysAgo = new Date();
@@ -1533,18 +1544,19 @@ async function main() {
   console.log(`📅 Dates cibles : ${dates.join(', ')}`);
   const newMatches = [];
 
-  // Saison clubs terminée — skipper les ligues clubs jusqu'à la reprise
-  const CLUBS_SEASON_ACTIVE = false; // Remettre à true en août pour la reprise
+  // Saison clubs 2026/2027 en cours
+  const CLUBS_SEASON_ACTIVE = true;
   // Exception ciblée : réactiver temporairement la LDC (id:7) pour retraiter
   // la finale avec le nouveau support des tirs au but (penaltyWinner).
-  // Remettre à false une fois la finale correctement retraitée.
   const LDC_FINAL_REFETCH = false; // Finale LDC retraitée — désactivé
-  // fixtureId de la finale LDC PSG-Arsenal (30/05/2026) à forcer en retraitement
-  // malgré storedIds — elle est déjà stockée avec un score nul sans vainqueur.
-  // Retirer cette ligne une fois le retraitement confirmé réussi.
-  const FORCE_REFETCH_IDS = new Set(['401862897']); // LDC finale uniquement
+  // fixtureId à forcer en retraitement malgré storedIds (vide en temps normal)
+  const FORCE_REFETCH_IDS = new Set();
   for (const league of LEAGUES) {
     const isLdcException = league.id === 7 && LDC_FINAL_REFETCH;
+    if (league.id === 6 && !CDM_ACTIVE) {
+      console.log(`\n🏆 ${league.name} (skippé — tournoi terminé, données archivées)`);
+      continue;
+    }
     if (league.id !== 6 && !CLUBS_SEASON_ACTIVE && !isLdcException) {
       console.log(`\n⚽ ${league.name} (skippé — hors saison)`);
       continue;
@@ -1674,7 +1686,22 @@ async function main() {
   // Supprimer les anciennes versions des matchs re-traités avant de les rajouter
   const reProcessedIds = new Set(newMatches.filter(m => recentIds.has(m.fixtureId) || FORCE_REFETCH_IDS.has(String(m.fixtureId))).map(m => m.fixtureId));
   const existingMatches = (stored.matches || []).filter(m => !reProcessedIds.has(m.fixtureId));
-  const allMatches = [...existingMatches, ...newMatches];
+
+  // ── PURGE NOUVELLE SAISON ───────────────────────────────────────────────────
+  // Les matchs clubs antérieurs au début de la saison 2026/2027 sont supprimés
+  // pour que toutes les stats joueurs repartent de zéro (rebuildPlayers()
+  // reconstruit intégralement les joueurs à partir du tableau matches).
+  // La CDM (leagueId 6) est exemptée : ses données restent en archive.
+  const CLUB_SEASON_START = '2026-08-01';
+  const beforePurge = existingMatches.length;
+  const purgedMatches = existingMatches.filter(m =>
+    m.leagueId === 6 || (m.date || '') >= CLUB_SEASON_START);
+  const purgedCount = beforePurge - purgedMatches.length;
+  if (purgedCount > 0) {
+    console.log(`🧹 Purge saison : ${purgedCount} match(s) clubs antérieur(s) au ${CLUB_SEASON_START} supprimé(s)`);
+  }
+
+  const allMatches = [...purgedMatches, ...newMatches];
   const byLeague   = {};
   for (const m of allMatches) {
     if (!byLeague[m.leagueId]) byLeague[m.leagueId] = [];

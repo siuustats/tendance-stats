@@ -26,7 +26,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <meta name="twitter:title" content="TendanceStats - Coupe du Monde 2026">
   <meta name="twitter:description" content="Suivez les stats, tendances et pronostics de la Coupe du Monde 2026. Joueurs à surveiller, classement buteurs CDM, effectifs des 48 nations qualifiées.">
   <link rel="canonical" href="https://tendancestats.com/worldcup.html">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏆</text></svg>">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="/icons/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/icons/favicon-96x96.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/icons/site.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 <style>
@@ -708,7 +712,9 @@ async function init() {
       if (!ex || (p.totalGames||0) > (ex.totalGames||0) || (p.leagueFlag !== 'eu' && ex.leagueFlag === 'eu')) dedupMap[p.id] = p;
     }
     allPlayers = Object.values(dedupMap);
-    window._fixtures = data.fixtures || [];
+    // Uniquement les fixtures CDM : sur cette page, les fixtures clubs
+    // fausseraient la détection de fin de tournoi et le "prochain match".
+    window._fixtures = (data.fixtures || []).filter(f => f.leagueId === 6);
     window._matches  = (data.matches || []).filter(m => m.leagueId === 6);
     renderGroups(data.matches || []);
 
@@ -849,6 +855,23 @@ const J1_FIXTURES = [
 ];
 
 function renderAlerts(list, fixtures) {
+  const c = document.getElementById('alerts');
+
+  // Tournoi terminé : plus aucun match CDM à venir → pas de prédiction possible
+  const cdmOver = !fixtures.some(f => new Date(f.date) > new Date());
+  if (cdmOver) {
+    const predInfoEl0 = document.getElementById('pred-stars-info');
+    if (predInfoEl0) predInfoEl0.style.display = 'none';
+    c.innerHTML = ''
+      + '<div style="background:rgba(212,168,67,0.05);border:1px solid var(--g-border);border-radius:12px;padding:26px 18px;text-align:center;margin-bottom:8px">'
+      + '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:26px;color:var(--g);letter-spacing:2px;margin-bottom:10px">🏆 Tournoi terminé</div>'
+      + "<p style=\"font-size:13px;color:var(--m2);line-height:1.7;margin:0\">La Coupe du Monde 2026 est terminée, il n'y a plus de match à venir.<br>"
+      + 'Retrouvez les prédictions de la saison des clubs pour continuer à suivre les joueurs en forme.</p>'
+      + '<a href="predictions.html" style="display:inline-block;margin-top:18px;font-size:12px;font-weight:600;color:#00e5a0;text-decoration:none;padding:8px 18px;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);border-radius:20px">Prédictions saison 2026/2027 →</a>'
+      + '</div>';
+    return;
+  }
+
   // Exclure les joueurs des nations éliminées de la CDM
   list = list.filter(p => !p.cdmEliminated);
   const teamsSeen = new Set();
@@ -911,7 +934,6 @@ function renderAlerts(list, fixtures) {
     if (!picked.find(x => x.id === p.id)) picked.push(p);
   }
 
-  const c = document.getElementById('alerts');
   c.innerHTML = '';
 
   // Afficher la mention si des stars sont présentes
@@ -1058,8 +1080,21 @@ function renderAlerts(list, fixtures) {
 // ── GRILLE JOUEURS ──────────────────────────────────────────────────────────
 // ── GRILLE JOUEURS ──────────────────────────────────────────────────────────
 function renderGrid(list, cdmStarted) {
-  // Exclure les absents et les joueurs des nations éliminées de la CDM
-  const activeList = list.filter(p => p.cdmStatus !== 'absent' && !p.cdmEliminated);
+  // Tournoi terminé : plus aucun match CDM à venir
+  const cdmOver = !(window._fixtures || []).some(f => new Date(f.date) > new Date());
+
+  // Exclure les absents et, tant que le tournoi est en cours, les nations éliminées.
+  // Une fois le tournoi fini, on garde tout le monde : la section devient un
+  // palmarès des meilleurs joueurs du tournoi (sinon seul le champion resterait).
+  const activeList = list.filter(p => p.cdmStatus !== 'absent' && (cdmOver || !p.cdmEliminated));
+
+  // Adapter le titre de la section en mode archive
+  if (cdmOver) {
+    const stEl = document.querySelector('#pgrid').closest('.section-block').querySelector('.st');
+    const sbEl = document.querySelector('#pgrid').closest('.section-block').querySelector('.sb');
+    if (stEl) stEl.textContent = '🏆 Meilleurs joueurs du tournoi';
+    if (sbEl) sbEl.textContent = 'CDM 2026';
+  }
 
   // Joueurs CDM avec vraies stats (buts ou passes)
   const withCdmStats = activeList
