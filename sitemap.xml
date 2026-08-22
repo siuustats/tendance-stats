@@ -283,6 +283,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://tendancestats.com/players/rasmus-hojlund.html</loc>
+    <lastmod>2026-08-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://tendancestats.com/players/luka-modric.html</loc>
     <lastmod>2026-08-22</lastmod>
     <changefreq>daily</changefreq>
